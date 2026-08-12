@@ -1,0 +1,50 @@
+---
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import WhatsAppButton from '../components/WhatsAppButton.astro';
+import { SITE } from '../lib/site';
+import '../styles/global.css';
+
+interface Props {
+  title: string;
+  description?: string;
+  whatsappMessage?: string;
+}
+
+const {
+  title,
+  description = 'Vivero real en Panama. Compra plantas online con entrega a domicilio.',
+  whatsappMessage,
+} = Astro.props;
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="description" content={description} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <title>{title} · {SITE.name}</title>
+    <script type="application/ld+json" set:html={JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'GardenStore',
+      name: SITE.name,
+      alternateName: `${SITE.name} ${SITE.byline}`,
+      url: `https://${SITE.domain}`,
+      areaServed: 'Panama',
+      parentOrganization: { '@type': 'Organization', name: 'Vivero Rose', url: 'https://viverorose.com' },
+    })} />
+  </head>
+  <body>
+    <Header />
+    <main>
+      <slot />
+    </main>
+    <Footer />
+    <WhatsAppButton message={whatsappMessage} />
+  </body>
+</html>

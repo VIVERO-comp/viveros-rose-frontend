@@ -1,0 +1,142 @@
+---
+import Base from '../layouts/Base.astro';
+---
+
+<Base title="Carrito" description="Tu carrito de compras.">
+  <section class="section">
+    <div class="container cart-container">
+      <h1>Tu carrito</h1>
+
+      <div data-cart-empty hidden>
+        <p class="lead">Tu carrito esta vacio.</p>
+        <a href="/plantas" class="btn btn--green">Ver plantas</a>
+      </div>
+
+      <div data-cart-full hidden>
+        <div class="cart-items" data-cart-items></div>
+
+        <div class="cart-summary card">
+          <div class="summary-row">
+            <span>Subtotal</span>
+            <strong data-cart-total>$0.00</strong>
+          </div>
+          <p class="help">El costo de entrega se calcula en el checkout segun tu zona.</p>
+          <a href="/checkout" class="btn btn--green" style="width: 100%; justify-content: center;">
+            Continuar al checkout
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<script>
+  import { getCart, setQty, removeFromCart, cartTotal } from '../lib/cart';
+
+  function render() {
+    const items = getCart();
+    const empty = document.querySelector<HTMLElement>('[data-cart-empty]');
+    const full = document.querySelector<HTMLElement>('[data-cart-full]');
+    const list = document.querySelector<HTMLElement>('[data-cart-items]');
+    const total = document.querySelector<HTMLElement>('[data-cart-total]');
+
+    if (!items.length) {
+      empty?.removeAttribute('hidden');
+      full?.setAttribute('hidden', '');
+      return;
+    }
+
+    empty?.setAttribute('hidden', '');
+    full?.removeAttribute('hidden');
+
+    if (list) {
+      list.innerHTML = '';
+      for (const item of items) {
+        const row = document.createElement('div');
+        row.className = 'cart-row';
+        row.innerHTML = `
+          <span class="cart-emoji">${item.emoji}</span>
+          <div class="cart-info">
+            <a href="/plantas/${item.category}/${item.slug}">${item.name}</a>
+            <span class="cart-price">$${item.price.toFixed(2)} c/u</span>
+          </div>
+          <input type="number" min="0" value="${item.qty}" data-qty="${item.sku}" aria-label="Cantidad de ${item.name}" />
+          <strong class="cart-line-total">$${(item.price * item.qty).toFixed(2)}</strong>
+          <button data-remove="${item.sku}" aria-label="Quitar ${item.name}">✕</button>
+        `;
+        list.appendChild(row);
+      }
+
+      list.querySelectorAll<HTMLInputElement>('[data-qty]').forEach((input) => {
+        input.addEventListener('change', () => {
+          setQty(input.dataset.qty!, Number(input.value));
+          render();
+        });
+      });
+
+      list.querySelectorAll<HTMLButtonElement>('[data-remove]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          removeFromCart(btn.dataset.remove!);
+          render();
+        });
+      });
+    }
+
+    if (total) total.textContent = `$${cartTotal().toFixed(2)}`;
+  }
+
+  render();
+</script>
+
+<style is:global>
+  .cart-container { max-width: 46rem; }
+
+  .cart-row {
+    display: grid;
+    grid-template-columns: auto 1fr 5rem auto auto;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .cart-emoji { font-size: 1.8rem; }
+
+  .cart-info {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .cart-info a {
+    color: var(--ink);
+    font-weight: 600;
+  }
+
+  .cart-price {
+    font-size: 0.85rem;
+    color: var(--ink-soft);
+  }
+
+  .cart-row button {
+    background: none;
+    border: none;
+    color: var(--ink-soft);
+    cursor: pointer;
+    font-size: 1rem;
+    padding: 0.3rem;
+  }
+
+  .cart-row button:hover { color: var(--red); }
+
+  .cart-summary {
+    margin-top: 1.5rem;
+    padding: 1.5rem;
+  }
+
+  .summary-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 1.15rem;
+    margin-bottom: 0.5rem;
+  }
+</style>

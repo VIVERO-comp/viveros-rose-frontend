@@ -1,0 +1,185 @@
+---
+import Base from '../layouts/Base.astro';
+import ProductCard from '../components/ProductCard.astro';
+import { categories, products } from '../data/products';
+
+const featured = products.filter((p) => p.available > 0).slice(0, 4);
+---
+
+<Base
+  title="Plantas con entrega a domicilio en Panama"
+  description="Vivero real en Panama. Compra plantas de interior, exterior, florales y frutales online, con entrega a domicilio y asesoria por WhatsApp."
+>
+  <section class="hero">
+    <div class="container hero-inner">
+      <div>
+        <span class="eyebrow">Vivero real · Panama</span>
+        <h1>Plantas de verdad, de un vivero de verdad, hasta tu puerta.</h1>
+        <p class="lead">
+          Producimos y seleccionamos cada planta en nuestro vivero en Panama.
+          Compra online, recibe en casa y escribenos por WhatsApp cuando necesites ayuda.
+        </p>
+        <div class="hero-ctas">
+          <a href="/plantas" class="btn btn--green">Ver plantas</a>
+          <a href="/entrega" class="btn btn--ghost">Zonas de entrega</a>
+        </div>
+      </div>
+      <div class="hero-visual" aria-hidden="true">🌿</div>
+    </div>
+  </section>
+
+  <section class="section section--tight">
+    <div class="container">
+      <div class="trust-row">
+        <div class="trust-item">🚚 <strong>Entrega a domicilio</strong> en la ciudad y alrededores</div>
+        <div class="trust-item">🌱 <strong>Inventario real</strong> — lo que ves esta en el vivero</div>
+        <div class="trust-item">💬 <strong>Asesoria por WhatsApp</strong> antes y despues de comprar</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <h2>Compra por categoria</h2>
+      <div class="grid grid--4">
+        {categories.map((cat) => (
+          <a href={`/plantas/${cat.slug}`} class="card cat-card">
+            <div class="cat-emoji">{cat.emoji}</div>
+            <h3>{cat.name}</h3>
+            <p>{cat.description}</p>
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <div class="section-head">
+        <h2>Disponibles ahora</h2>
+        <a href="/plantas">Ver todo el catalogo →</a>
+      </div>
+      <div class="grid grid--4">
+        {featured.map((product) => <ProductCard product={product} />)}
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container split">
+      <div class="card split-card">
+        <h2>Un vivero con nombre y apellido</h2>
+        <p>
+          Detras de Plantas Panama esta Vivero Rose: anos produciendo plantas para
+          hogares, supermercados y proyectos de paisajismo en todo el pais.
+        </p>
+        <a href="/vivero" class="btn btn--primary">Conoce el vivero</a>
+      </div>
+      <div class="card split-card">
+        <h2>¿Proyecto grande?</h2>
+        <p>
+          Hacemos paisajismo residencial y comercial, y suplimos plantas al por
+          mayor a supermercados y distribuidores.
+        </p>
+        <div class="split-actions">
+          <a href="/paisajismo" class="btn btn--ghost">Paisajismo</a>
+          <a href="/mayorista" class="btn btn--ghost">Mayorista</a>
+        </div>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .hero {
+    background: linear-gradient(180deg, #f1efe8, var(--bg));
+    padding: 4rem 0 3rem;
+  }
+
+  .hero-inner {
+    display: grid;
+    grid-template-columns: 3fr 2fr;
+    gap: 2rem;
+    align-items: center;
+  }
+
+  @media (max-width: 800px) {
+    .hero-inner { grid-template-columns: 1fr; }
+    .hero-visual { display: none; }
+  }
+
+  .hero-ctas {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+    flex-wrap: wrap;
+  }
+
+  .hero-visual {
+    font-size: 9rem;
+    text-align: center;
+    filter: drop-shadow(0 8px 20px rgba(47, 107, 63, 0.25));
+  }
+
+  .trust-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+  }
+
+  @media (max-width: 700px) {
+    .trust-row { grid-template-columns: 1fr; }
+  }
+
+  .trust-item {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 0.9rem 1.1rem;
+    font-size: 0.95rem;
+  }
+
+  .cat-card {
+    padding: 1.4rem;
+    color: var(--ink);
+  }
+
+  .cat-card:hover {
+    text-decoration: none;
+    box-shadow: var(--shadow);
+  }
+
+  .cat-emoji { font-size: 2rem; margin-bottom: 0.5rem; }
+
+  .cat-card p {
+    font-size: 0.9rem;
+    color: var(--ink-soft);
+    margin: 0;
+  }
+
+  .section-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .split {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+  }
+
+  @media (max-width: 700px) {
+    .split { grid-template-columns: 1fr; }
+  }
+
+  .split-card { padding: 2rem; }
+
+  .split-actions {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+</style>

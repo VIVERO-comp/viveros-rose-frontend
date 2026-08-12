@@ -1,0 +1,107 @@
+---
+import { NAV, SITE, whatsappLink } from '../lib/site';
+---
+
+<footer class="site-footer">
+  <div class="container footer-grid">
+    <div>
+      <p class="footer-brand">{SITE.name}</p>
+      <p class="footer-byline">{SITE.byline}</p>
+      <p class="footer-note">
+        Vivero real en Panama. Plantas producidas y seleccionadas localmente,
+        con entrega a domicilio.
+      </p>
+    </div>
+
+    <nav aria-label="Enlaces del pie">
+      <p class="footer-title">Explora</p>
+      <ul>
+        {NAV.filter((n) => n.href !== '/').map((item) => (
+          <li><a href={item.href}>{item.label}</a></li>
+        ))}
+        <li><a href="/guia">Guias de cuidado</a></li>
+        <li><a href="/pedido">Rastrear pedido</a></li>
+      </ul>
+    </nav>
+
+    <div>
+      <p class="footer-title">Contacto</p>
+      <ul>
+        <li><a href={whatsappLink('Hola, tengo una consulta sobre sus plantas.')}>WhatsApp</a></li>
+        <li><a href="/contacto">Formulario de contacto</a></li>
+        <li><a href="https://viverorose.com" rel="noopener">viverorose.com (corporativo)</a></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="container footer-bottom">
+    <p>© {new Date().getFullYear()} Vivero Rose. Todos los derechos reservados.</p>
+  </div>
+</footer>
+
+<style>
+  .site-footer {
+    margin-top: 4rem;
+    background: var(--ink);
+    color: #d8ddd9;
+    padding: 3rem 0 1.5rem;
+  }
+
+  .footer-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr;
+    gap: 2rem;
+  }
+
+  @media (max-width: 700px) {
+    .footer-grid { grid-template-columns: 1fr; }
+  }
+
+  .footer-brand {
+    font-family: var(--font-heading);
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 0.1rem;
+  }
+
+  .footer-byline {
+    color: #9fb3a5;
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+  }
+
+  .footer-note {
+    font-size: 0.9rem;
+    max-width: 26rem;
+  }
+
+  .footer-title {
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 0.75rem;
+  }
+
+  ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  li { margin-bottom: 0.5rem; }
+
+  a {
+    color: #d8ddd9;
+    font-size: 0.95rem;
+  }
+
+  a:hover { color: #fff; }
+
+  .footer-bottom {
+    margin-top: 2.5rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+    font-size: 0.85rem;
+    color: #9fb3a5;
+  }
+</style>

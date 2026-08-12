@@ -1,0 +1,58 @@
+---
+import Base from '../layouts/Base.astro';
+import { whatsappLink } from '../lib/site';
+---
+
+<Base
+  title="Paisajismo"
+  description="Diseno, instalacion y mantenimiento de jardines residenciales y comerciales en Panama, por Vivero Rose."
+  whatsappMessage="Hola, me interesa una cotizacion de paisajismo."
+>
+  <section class="section">
+    <div class="container">
+      <span class="eyebrow">Servicios</span>
+      <h1>Paisajismo residencial y comercial</h1>
+      <p class="lead">
+        Disenamos, instalamos y mantenemos jardines con plantas de nuestra propia
+        produccion. Del plano a la primera poda, un solo equipo.
+      </p>
+
+      <div class="grid grid--3" style="margin: 2.5rem 0;">
+        <div class="card service-card">
+          <h3>🏡 Residencial</h3>
+          <p>Jardines de casa, terrazas y balcones. Proyectos a la medida del espacio y del tiempo que tienes para mantenerlo.</p>
+        </div>
+        <div class="card service-card">
+          <h3>🏢 Comercial</h3>
+          <p>Plazas, oficinas y proyectos inmobiliarios. Instalacion por etapas y plantas adaptadas a cada exposicion.</p>
+        </div>
+        <div class="card service-card">
+          <h3>🔧 Mantenimiento</h3>
+          <p>Planes mensuales de poda, fertilizacion y reposicion para que el jardin se mantenga como el primer dia.</p>
+        </div>
+      </div>
+
+      <div class="cta-box card">
+        <h2>Cuentanos tu proyecto</h2>
+        <p>Envianos fotos del espacio por WhatsApp y te preparamos una propuesta.</p>
+        <a href={whatsappLink('Hola, me interesa una cotizacion de paisajismo.')} class="btn btn--whatsapp" target="_blank" rel="noopener">
+          Cotizar por WhatsApp
+        </a>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .service-card { padding: 1.5rem; }
+  .service-card p { margin: 0; color: var(--ink-soft); font-size: 0.95rem; }
+
+  .cta-box {
+    padding: 2.5rem;
+    text-align: center;
+    background: var(--green-tint);
+    border-color: transparent;
+  }
+
+  .cta-box p { color: var(--ink-soft); }
+</style>

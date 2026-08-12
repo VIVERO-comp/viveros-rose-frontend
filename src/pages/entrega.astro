@@ -1,0 +1,68 @@
+---
+import Base from '../layouts/Base.astro';
+
+const zones = [
+  { zone: 'Ciudad de Panama (centro)', price: '$5.00', time: '24-48 horas' },
+  { zone: 'Panama Este (hasta Tocumen)', price: '$7.00', time: '48 horas' },
+  { zone: 'Panama Oeste (Arraijan, La Chorrera)', price: '$10.00', time: '48-72 horas' },
+  { zone: 'Colon', price: '$15.00', time: '72 horas' },
+  { zone: 'Interior del pais', price: 'Cotizar por WhatsApp', time: 'Segun ruta' },
+];
+---
+
+<Base
+  title="Entrega a domicilio"
+  description="Zonas de entrega, tarifas y tiempos. Llevamos tus plantas hasta tu puerta en la ciudad de Panama y alrededores."
+>
+  <section class="section">
+    <div class="container">
+      <span class="eyebrow">Entrega</span>
+      <h1>Llevamos tus plantas hasta tu puerta</h1>
+      <p class="lead">
+        Nuestro propio equipo transporta las plantas con cuidado. Tarifas claras,
+        sin sorpresas al momento de pagar.
+      </p>
+
+      <div style="margin: 2rem 0; overflow-x: auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>Zona</th>
+              <th>Tarifa</th>
+              <th>Tiempo estimado</th>
+            </tr>
+          </thead>
+          <tbody>
+            {zones.map((z) => (
+              <tr>
+                <td>{z.zone}</td>
+                <td>{z.price}</td>
+                <td>{z.time}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="grid grid--3">
+        <div class="card info-card">
+          <h3>📦 Empaque seguro</h3>
+          <p>Cada planta viaja protegida para llegar en las mismas condiciones en que salio del vivero.</p>
+        </div>
+        <div class="card info-card">
+          <h3>📅 Coordinacion por WhatsApp</h3>
+          <p>Al confirmar tu pedido coordinamos contigo el dia y la franja de entrega.</p>
+        </div>
+        <div class="card info-card">
+          <h3>🏪 Retiro en vivero</h3>
+          <p>¿Prefieres recoger? Puedes retirar tu pedido directamente en nuestro vivero sin costo.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .info-card { padding: 1.5rem; }
+  .info-card p { margin: 0; color: var(--ink-soft); font-size: 0.95rem; }
+</style>

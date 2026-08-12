@@ -1,0 +1,68 @@
+---
+import Base from '../layouts/Base.astro';
+---
+
+<Base
+  title="Nuestro vivero"
+  description="Conoce el vivero detras de Plantas Panama: Vivero Rose, produccion local de plantas en Panama."
+>
+  <section class="section">
+    <div class="container">
+      <span class="eyebrow">Nuestro Vivero</span>
+      <h1>Un vivero de verdad, en Panama</h1>
+      <p class="lead">
+        Plantas Panama es la tienda online de Vivero Rose. No somos un marketplace:
+        cada planta que ves en el catalogo esta creciendo en nuestras instalaciones.
+      </p>
+
+      <div class="photo-strip" aria-hidden="true">
+        <div class="photo-placeholder">🌱</div>
+        <div class="photo-placeholder">🏞️</div>
+        <div class="photo-placeholder">👩‍🌾</div>
+      </div>
+
+      <div class="story">
+        <h2>De la produccion a tu casa</h2>
+        <p>
+          Vivero Rose lleva anos produciendo plantas ornamentales, florales y frutales
+          para hogares, supermercados y proyectos de paisajismo en todo Panama.
+          Con Plantas Panama, esa misma produccion llega directo a tu puerta.
+        </p>
+        <p>
+          Cuando compras aqui, el inventario que ves es el inventario real del vivero:
+          nuestro sistema esta conectado a la operacion fisica, no a una hoja de calculo.
+        </p>
+
+        <h2>Visitanos</h2>
+        <p>
+          El vivero esta abierto al publico. Ven a caminar entre las plantas, recibe
+          asesoria de nuestro equipo y llevate tus plantas el mismo dia.
+        </p>
+        <a href="/contacto" class="btn btn--green">Como llegar</a>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .photo-strip {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin: 2.5rem 0;
+  }
+
+  @media (max-width: 700px) {
+    .photo-strip { grid-template-columns: 1fr; }
+  }
+
+  .photo-strip .photo-placeholder {
+    border-radius: var(--radius-lg);
+  }
+
+  .story {
+    max-width: 44rem;
+  }
+
+  .story h2 { margin-top: 2rem; }
+</style>

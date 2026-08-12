@@ -1,0 +1,151 @@
+---
+// Pagina publica de rastreo. En el sitio estatico funciona como buscador:
+// el numero de pedido se consulta al backend (GET /api/orders/{orderNumber})
+// desde el cliente. No requiere login: el numero de pedido es la credencial.
+import Base from '../../layouts/Base.astro';
+import { whatsappLink } from '../../lib/site';
+---
+
+<Base title="Rastrear pedido" description="Consulta el estado de tu pedido con tu numero de orden. Sin necesidad de cuenta.">
+  <section class="section">
+    <div class="container tracking-container">
+      <span class="eyebrow">Seguimiento</span>
+      <h1>Rastrea tu pedido</h1>
+      <p class="lead">
+        Ingresa el numero de pedido que recibiste por correo
+        (por ejemplo, <code>VR-20260812-A7K3</code>).
+      </p>
+
+      <form class="tracking-form card">
+        <div class="field">
+          <label for="order-number">Numero de pedido</label>
+          <input type="text" id="order-number" name="order-number" placeholder="VR-20260812-A7K3" required />
+        </div>
+        <button type="submit" class="btn btn--green">Consultar estado</button>
+      </form>
+
+      <div class="tracking-result card" hidden>
+        <h3>Pedido <span data-result-number></span></h3>
+        <ol class="status-steps">
+          <li data-step="recibido">Recibido</li>
+          <li data-step="preparando">Preparando</li>
+          <li data-step="en-camino">En camino</li>
+          <li data-step="entregado">Entregado</li>
+        </ol>
+        <p class="tracking-message" data-result-message></p>
+        <a class="btn btn--whatsapp" data-result-whatsapp target="_blank" rel="noopener">
+          Consultar por WhatsApp
+        </a>
+      </div>
+
+      <p class="lost-link">
+        ¿Perdiste tu numero de pedido? Escribenos por
+        <a href={whatsappLink('Hola, perdi mi numero de pedido y quiero recuperarlo.')} target="_blank" rel="noopener">WhatsApp</a>
+        con el correo que usaste al comprar.
+      </p>
+    </div>
+  </section>
+</Base>
+
+<script>
+  const form = document.querySelector<HTMLFormElement>('.tracking-form');
+  const input = document.querySelector<HTMLInputElement>('#order-number');
+  const result = document.querySelector<HTMLElement>('.tracking-result');
+  const numberEl = document.querySelector<HTMLElement>('[data-result-number]');
+  const messageEl = document.querySelector<HTMLElement>('[data-result-message]');
+  const waLink = document.querySelector<HTMLAnchorElement>('[data-result-whatsapp]');
+
+  async function lookup(orderNumber: string) {
+    if (numberEl) numberEl.textContent = orderNumber;
+    if (waLink) {
+      waLink.href = `https://wa.me/50760000000?text=${encodeURIComponent(`Hola, quiero informacion de mi pedido ${orderNumber}.`)}`;
+    }
+
+    // v1: GET /api/orders/{orderNumber} devolvera el estado real desde Odoo.
+    // Mientras el backend no este desplegado, se informa al cliente.
+    try {
+      const res = await fetch(`/api/orders/${encodeURIComponent(orderNumber)}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (messageEl) messageEl.textContent = `Estado actual: ${data.status}`;
+        result?.removeAttribute('hidden');
+        return;
+      }
+    } catch {
+      // backend aun no disponible
+    }
+
+    if (messageEl) {
+      messageEl.textContent =
+        'El rastreo automatico estara disponible muy pronto. Mientras tanto, consulta el estado de tu pedido por WhatsApp con un solo clic:';
+    }
+    result?.removeAttribute('hidden');
+  }
+
+  form?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const value = input?.value.trim();
+    if (value) lookup(value);
+  });
+
+  // Soporta llegar con ?n=VR-... desde el correo o la pagina de exito.
+  const prefill = new URLSearchParams(window.location.search).get('n');
+  if (prefill && input) {
+    input.value = prefill;
+    lookup(prefill);
+  }
+</script>
+
+<style>
+  .tracking-container { max-width: 40rem; }
+
+  .tracking-form {
+    padding: 1.75rem;
+    margin: 1.5rem 0;
+  }
+
+  .tracking-result {
+    padding: 1.75rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .status-steps {
+    display: flex;
+    gap: 0.5rem;
+    list-style: none;
+    padding: 0;
+    margin: 1rem 0;
+    flex-wrap: wrap;
+  }
+
+  .status-steps li {
+    padding: 0.35rem 0.9rem;
+    border-radius: 999px;
+    background: var(--bg);
+    border: 1px solid var(--line);
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--ink-soft);
+  }
+
+  .status-steps li.active {
+    background: var(--green);
+    border-color: var(--green);
+    color: #fff;
+  }
+
+  .tracking-message { color: var(--ink-soft); }
+
+  .lost-link {
+    font-size: 0.95rem;
+    color: var(--ink-soft);
+  }
+
+  code {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 0.1rem 0.4rem;
+    font-size: 0.9em;
+  }
+</style>

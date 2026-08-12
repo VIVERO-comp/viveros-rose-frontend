@@ -1,0 +1,59 @@
+---
+import Base from '../layouts/Base.astro';
+import { whatsappLink } from '../lib/site';
+---
+
+<Base
+  title="Contacto"
+  description="Escribenos por WhatsApp o visitanos en el vivero. Estamos en Panama."
+>
+  <section class="section">
+    <div class="container">
+      <span class="eyebrow">Contacto</span>
+      <h1>Hablemos</h1>
+      <p class="lead">
+        WhatsApp es la via mas rapida: respondemos en horario de vivero,
+        de lunes a sabado.
+      </p>
+
+      <div class="grid grid--2" style="margin-top: 2rem;">
+        <div class="card contact-card">
+          <h3>💬 WhatsApp</h3>
+          <p>Consultas de plantas, pedidos, entregas y cotizaciones.</p>
+          <a href={whatsappLink('Hola, tengo una consulta.')} class="btn btn--whatsapp" target="_blank" rel="noopener">
+            Abrir WhatsApp
+          </a>
+        </div>
+
+        <div class="card contact-card">
+          <h3>📍 Visitanos</h3>
+          <p>
+            Vivero Rose, Panama.<br />
+            Lunes a sabado, 8:00 a.m. – 4:00 p.m.
+          </p>
+          <p class="help">La direccion exacta y el mapa se publicaran aqui.</p>
+        </div>
+
+        <div class="card contact-card">
+          <h3>📦 ¿Ya compraste?</h3>
+          <p>Rastrea tu pedido con el numero que recibiste por correo.</p>
+          <a href="/pedido" class="btn btn--ghost">Rastrear pedido</a>
+        </div>
+
+        <div class="card contact-card">
+          <h3>🏢 Mayorista y paisajismo</h3>
+          <p>Para supermercados, distribuidores y proyectos de paisajismo.</p>
+          <div style="display: flex; gap: 0.6rem; flex-wrap: wrap;">
+            <a href="/mayorista" class="btn btn--ghost">Mayorista</a>
+            <a href="/paisajismo" class="btn btn--ghost">Paisajismo</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .contact-card { padding: 1.75rem; }
+  .contact-card p { color: var(--ink-soft); }
+</style>

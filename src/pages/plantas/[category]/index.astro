@@ -1,0 +1,43 @@
+---
+import Base from '../../../layouts/Base.astro';
+import ProductCard from '../../../components/ProductCard.astro';
+import { categories, getProductsByCategory } from '../../../data/products';
+
+export function getStaticPaths() {
+  return categories.map((cat) => ({
+    params: { category: cat.slug },
+    props: { category: cat },
+  }));
+}
+
+const { category } = Astro.props;
+const items = getProductsByCategory(category.slug);
+---
+
+<Base title={category.name} description={category.description}>
+  <section class="section">
+    <div class="container">
+      <nav class="breadcrumb" aria-label="Miga de pan">
+        <a href="/plantas">Plantas</a> / <span>{category.name}</span>
+      </nav>
+      <h1>{category.emoji} {category.name}</h1>
+      <p class="lead">{category.description}</p>
+
+      <div class="grid grid--4" style="margin-top: 2rem;">
+        {items.map((product) => <ProductCard product={product} />)}
+      </div>
+
+      {items.length === 0 && (
+        <p>No hay productos en esta categoria por el momento.</p>
+      )}
+    </div>
+  </section>
+</Base>
+
+<style>
+  .breadcrumb {
+    font-size: 0.9rem;
+    color: var(--ink-soft);
+    margin-bottom: 1rem;
+  }
+</style>

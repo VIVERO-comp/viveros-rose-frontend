@@ -1,0 +1,60 @@
+---
+import type { Product } from '../data/products';
+import { formatPrice } from '../data/products';
+import StockBadge from './StockBadge.astro';
+
+interface Props {
+  product: Product;
+}
+
+const { product } = Astro.props;
+const url = `/plantas/${product.category}/${product.slug}`;
+---
+
+<article class="card product-card">
+  <a href={url} class="photo-link" aria-hidden="true" tabindex="-1">
+    <div class="photo-placeholder">{product.emoji}</div>
+  </a>
+  <div class="product-body">
+    <StockBadge sku={product.sku} available={product.available} />
+    <h3><a href={url}>{product.name}</a></h3>
+    <p class="scientific">{product.scientificName}</p>
+    <p class="price">{formatPrice(product.price)}</p>
+  </div>
+</article>
+
+<style>
+  .product-card {
+    display: flex;
+    flex-direction: column;
+    transition: box-shadow 0.15s ease;
+  }
+
+  .product-card:hover {
+    box-shadow: var(--shadow);
+  }
+
+  .product-body {
+    padding: 1rem 1.1rem 1.2rem;
+  }
+
+  h3 {
+    font-size: 1.05rem;
+    margin: 0.5rem 0 0.1rem;
+  }
+
+  h3 a { color: var(--ink); }
+
+  .scientific {
+    font-size: 0.85rem;
+    font-style: italic;
+    color: var(--ink-soft);
+    margin-bottom: 0.4rem;
+  }
+
+  .price {
+    font-weight: 700;
+    font-size: 1.1rem;
+    margin: 0;
+  }
+</style>

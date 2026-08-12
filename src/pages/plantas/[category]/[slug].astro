@@ -1,0 +1,184 @@
+---
+import Base from '../../../layouts/Base.astro';
+import StockBadge from '../../../components/StockBadge.astro';
+import { formatPrice, getCategory, products } from '../../../data/products';
+
+export function getStaticPaths() {
+  return products.map((product) => ({
+    params: { category: product.category, slug: product.slug },
+    props: { product },
+  }));
+}
+
+const { product } = Astro.props;
+const category = getCategory(product.category)!;
+const outOfStock = product.available <= 0;
+const whatsappMessage = `Hola, me interesa "${product.name}" (${product.sku}) que vi en plantaspanama.com.`;
+---
+
+<Base
+  title={product.name}
+  description={product.description}
+  whatsappMessage={whatsappMessage}
+>
+  <section class="section">
+    <div class="container product-layout">
+      <div>
+        <nav class="breadcrumb" aria-label="Miga de pan">
+          <a href="/plantas">Plantas</a> /
+          <a href={`/plantas/${category.slug}`}>{category.name}</a> /
+          <span>{product.name}</span>
+        </nav>
+        <div class="photo-placeholder product-photo">{product.emoji}</div>
+      </div>
+
+      <div class="product-info">
+        <StockBadge sku={product.sku} available={product.available} />
+        <h1>{product.name}</h1>
+        <p class="scientific">{product.scientificName}</p>
+        <p class="price">{formatPrice(product.price)}</p>
+        <p>{product.description}</p>
+
+        <div class="buy-box">
+          <div class="qty-row" hidden={outOfStock}>
+            <label for="qty">Cantidad</label>
+            <input type="number" id="qty" value="1" min="1" max={Math.max(product.available, 1)} />
+          </div>
+          <button
+            class="btn btn--green add-to-cart"
+            disabled={outOfStock}
+            data-sku={product.sku}
+            data-name={product.name}
+            data-price={product.price}
+            data-slug={product.slug}
+            data-category={product.category}
+            data-emoji={product.emoji}
+          >
+            {outOfStock ? 'Agotado' : 'Agregar al carrito'}
+          </button>
+          <p class="added-note" hidden>✓ Agregado. <a href="/carrito">Ver carrito</a></p>
+        </div>
+
+        <div class="care card">
+          <h3>Cuidados</h3>
+          <ul>
+            <li><strong>Luz:</strong> {product.care.light}</li>
+            <li><strong>Riego:</strong> {product.care.water}</li>
+            <li><strong>Dificultad:</strong> {product.care.difficulty}</li>
+          </ul>
+        </div>
+
+        <p class="delivery-note">
+          🚚 Entrega a domicilio en la ciudad de Panama y alrededores.
+          <a href="/entrega">Ver zonas y tarifas</a>.
+        </p>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<script>
+  import { addToCart } from '../../../lib/cart';
+
+  const btn = document.querySelector<HTMLButtonElement>('.add-to-cart');
+  const qtyInput = document.querySelector<HTMLInputElement>('#qty');
+  const note = document.querySelector<HTMLElement>('.added-note');
+
+  btn?.addEventListener('click', () => {
+    const d = btn.dataset;
+    addToCart(
+      {
+        sku: d.sku!,
+        name: d.name!,
+        price: Number(d.price),
+        slug: d.slug!,
+        category: d.category!,
+        emoji: d.emoji!,
+      },
+      Math.max(1, Number(qtyInput?.value ?? 1)),
+    );
+    note?.removeAttribute('hidden');
+  });
+</script>
+
+<style>
+  .product-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2.5rem;
+    align-items: start;
+  }
+
+  @media (max-width: 800px) {
+    .product-layout { grid-template-columns: 1fr; }
+  }
+
+  .breadcrumb {
+    font-size: 0.9rem;
+    color: var(--ink-soft);
+    margin-bottom: 1rem;
+  }
+
+  .product-photo {
+    border-radius: var(--radius-lg);
+    font-size: 5rem;
+  }
+
+  .scientific {
+    font-style: italic;
+    color: var(--ink-soft);
+    margin: -0.3rem 0 0.6rem;
+  }
+
+  .price {
+    font-size: 1.6rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+  }
+
+  .buy-box {
+    margin: 1.5rem 0;
+    padding: 1.25rem;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+  }
+
+  .qty-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+  }
+
+  .qty-row label { margin: 0; }
+  .qty-row input { width: 5rem; }
+
+  .added-note {
+    margin: 0.75rem 0 0;
+    color: var(--green-dark);
+    font-weight: 600;
+  }
+
+  .care {
+    padding: 1.25rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .care ul {
+    margin: 0;
+    padding-left: 1.2rem;
+  }
+
+  .care li { margin-bottom: 0.35rem; }
+
+  .delivery-note {
+    font-size: 0.95rem;
+    color: var(--ink-soft);
+  }
+
+  button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+</style>

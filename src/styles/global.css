@@ -1,0 +1,265 @@
+/* Sistema visual — Plantas Panama
+   Verde usado con intencion, neutros calidos, texto oscuro, CTAs de alto contraste. */
+
+:root {
+  --bg: #faf8f4;
+  --surface: #ffffff;
+  --ink: #1e2321;
+  --ink-soft: #55605a;
+  --line: #e6e1d8;
+
+  --green: #2f6b3f;
+  --green-dark: #24522f;
+  --green-tint: #eaf2ec;
+
+  --amber: #b07d18;
+  --amber-tint: #fdf3dd;
+  --red: #a83232;
+  --red-tint: #fbeaea;
+
+  --whatsapp: #1fa855;
+
+  --radius: 10px;
+  --radius-lg: 16px;
+  --shadow: 0 2px 12px rgba(30, 35, 33, 0.08);
+
+  --font-ui: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+  --font-heading: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+
+  --max-width: 1120px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: 16px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  line-height: 1.2;
+  margin: 0 0 0.5em;
+  letter-spacing: -0.01em;
+}
+
+h1 { font-size: clamp(2rem, 5vw, 3rem); }
+h2 { font-size: clamp(1.5rem, 3.5vw, 2.1rem); }
+h3 { font-size: 1.25rem; }
+
+p { margin: 0 0 1em; }
+
+a {
+  color: var(--green);
+  text-decoration: none;
+}
+
+a:hover { text-decoration: underline; }
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+.container {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 0 1.25rem;
+}
+
+.section {
+  padding: 3.5rem 0;
+}
+
+.section--tight {
+  padding: 2rem 0;
+}
+
+.eyebrow {
+  display: inline-block;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--green);
+  margin-bottom: 0.75rem;
+}
+
+.lead {
+  font-size: 1.15rem;
+  color: var(--ink-soft);
+  max-width: 40rem;
+}
+
+/* Botones */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.4rem;
+  border-radius: var(--radius);
+  border: 1px solid transparent;
+  font-family: var(--font-ui);
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.btn:hover { text-decoration: none; }
+
+.btn--primary {
+  background: var(--ink);
+  color: #fff;
+}
+
+.btn--primary:hover { background: #000; }
+
+.btn--green {
+  background: var(--green);
+  color: #fff;
+}
+
+.btn--green:hover { background: var(--green-dark); }
+
+.btn--ghost {
+  background: transparent;
+  color: var(--ink);
+  border-color: var(--line);
+}
+
+.btn--ghost:hover {
+  border-color: var(--ink-soft);
+  background: var(--surface);
+}
+
+.btn--whatsapp {
+  background: var(--whatsapp);
+  color: #fff;
+}
+
+.btn--whatsapp:hover { background: #178a45; }
+
+/* Tarjetas */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.grid {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.grid--2 { grid-template-columns: repeat(2, 1fr); }
+.grid--3 { grid-template-columns: repeat(3, 1fr); }
+.grid--4 { grid-template-columns: repeat(4, 1fr); }
+
+@media (max-width: 900px) {
+  .grid--4 { grid-template-columns: repeat(2, 1fr); }
+  .grid--3 { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 560px) {
+  .grid--4, .grid--3, .grid--2 { grid-template-columns: 1fr; }
+}
+
+/* Badges de stock */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+}
+
+.badge--in-stock { background: var(--green-tint); color: var(--green-dark); }
+.badge--low { background: var(--amber-tint); color: var(--amber); }
+.badge--out { background: var(--red-tint); color: var(--red); }
+
+/* Formularios */
+label {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin-bottom: 0.35rem;
+}
+
+input, textarea, select {
+  width: 100%;
+  padding: 0.7rem 0.85rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  font-family: var(--font-ui);
+  font-size: 1rem;
+  color: var(--ink);
+}
+
+input:focus, textarea:focus, select:focus {
+  outline: 2px solid var(--green);
+  outline-offset: 1px;
+  border-color: var(--green);
+}
+
+.field { margin-bottom: 1.1rem; }
+
+.help {
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+  margin-top: 0.3rem;
+}
+
+/* Tablas */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+th, td {
+  text-align: left;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--line);
+}
+
+th {
+  background: var(--green-tint);
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+tr:last-child td { border-bottom: none; }
+
+/* Placeholder de imagen de producto (hasta tener fotografia real) */
+.photo-placeholder {
+  aspect-ratio: 4 / 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(160deg, var(--green-tint), #dcebe0);
+  color: var(--green-dark);
+  font-family: var(--font-heading);
+  font-size: 2.5rem;
+}

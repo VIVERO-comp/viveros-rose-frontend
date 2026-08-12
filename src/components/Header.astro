@@ -1,0 +1,161 @@
+---
+import { NAV, SITE } from '../lib/site';
+
+const currentPath = Astro.url.pathname;
+---
+
+<header class="site-header">
+  <div class="container header-inner">
+    <a href="/" class="brand">
+      <span class="brand-mark">🌿</span>
+      <span class="brand-name">{SITE.name}</span>
+    </a>
+
+    <nav class="main-nav" aria-label="Navegacion principal">
+      {NAV.map((item) => (
+        <a
+          href={item.href}
+          class:list={['nav-link', { active: currentPath === item.href || (item.href !== '/' && currentPath.startsWith(item.href)) }]}
+        >
+          {item.label}
+        </a>
+      ))}
+    </nav>
+
+    <div class="header-actions">
+      <a href="/carrito" class="cart-link" aria-label="Carrito de compras">
+        🛒 <span class="cart-count" data-cart-count>0</span>
+      </a>
+      <button class="menu-toggle" aria-label="Abrir menu" aria-expanded="false">☰</button>
+    </div>
+  </div>
+
+  <nav class="mobile-nav" aria-label="Navegacion movil" hidden>
+    {NAV.map((item) => (
+      <a href={item.href} class="mobile-link">{item.label}</a>
+    ))}
+  </nav>
+</header>
+
+<script>
+  import { cartCount } from '../lib/cart';
+
+  function refreshCount() {
+    document.querySelectorAll('[data-cart-count]').forEach((el) => {
+      el.textContent = String(cartCount());
+    });
+  }
+  refreshCount();
+  document.addEventListener('cart:updated', refreshCount);
+
+  const toggle = document.querySelector('.menu-toggle');
+  const mobileNav = document.querySelector('.mobile-nav') as HTMLElement | null;
+  toggle?.addEventListener('click', () => {
+    const open = mobileNav?.hasAttribute('hidden') ?? false;
+    if (open) {
+      mobileNav?.removeAttribute('hidden');
+      toggle.setAttribute('aria-expanded', 'true');
+    } else {
+      mobileNav?.setAttribute('hidden', '');
+      toggle.setAttribute('aria-expanded', 'false');
+    }
+  });
+</script>
+
+<style>
+  .site-header {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: rgba(250, 248, 244, 0.95);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .header-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    height: 64px;
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: var(--font-heading);
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--ink);
+  }
+
+  .brand:hover { text-decoration: none; }
+
+  .main-nav {
+    display: flex;
+    gap: 1.25rem;
+  }
+
+  .nav-link {
+    color: var(--ink-soft);
+    font-size: 0.95rem;
+    font-weight: 500;
+  }
+
+  .nav-link:hover { color: var(--ink); text-decoration: none; }
+  .nav-link.active { color: var(--green); font-weight: 700; }
+
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .cart-link {
+    color: var(--ink);
+    font-weight: 600;
+  }
+
+  .cart-count {
+    display: inline-block;
+    min-width: 1.3rem;
+    text-align: center;
+    background: var(--green);
+    color: #fff;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    padding: 0.1rem 0.3rem;
+    vertical-align: top;
+  }
+
+  .menu-toggle {
+    display: none;
+    background: none;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    font-size: 1.2rem;
+    padding: 0.3rem 0.6rem;
+    cursor: pointer;
+  }
+
+  .mobile-nav {
+    display: none;
+    flex-direction: column;
+    border-top: 1px solid var(--line);
+    background: var(--bg);
+  }
+
+  .mobile-link {
+    padding: 0.85rem 1.25rem;
+    color: var(--ink);
+    font-weight: 600;
+    border-bottom: 1px solid var(--line);
+  }
+
+  @media (max-width: 860px) {
+    .main-nav { display: none; }
+    .menu-toggle { display: block; }
+    .mobile-nav:not([hidden]) { display: flex; }
+  }
+</style>

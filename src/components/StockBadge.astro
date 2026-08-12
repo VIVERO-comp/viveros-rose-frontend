@@ -1,0 +1,17 @@
+---
+// Badge de disponibilidad. El atributo data-sku permite que un script de
+// pagina lo actualice en el cliente con datos frescos del stock proxy.
+import { stockLabel, stockStatus } from '../lib/stock';
+
+interface Props {
+  sku: string;
+  available: number;
+}
+
+const { sku, available } = Astro.props;
+const status = stockStatus(available);
+---
+
+<span class:list={['badge', `badge--${status === 'in-stock' ? 'in-stock' : status}`]} data-sku={sku} data-stock-badge>
+  {stockLabel(available)}
+</span>

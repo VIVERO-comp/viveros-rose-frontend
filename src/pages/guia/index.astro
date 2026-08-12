@@ -1,0 +1,56 @@
+---
+import Base from '../../layouts/Base.astro';
+import { guides } from '../../data/guides';
+---
+
+<Base
+  title="Guias de cuidado"
+  description="Guias practicas para cuidar tus plantas en el clima de Panama, escritas por el equipo del vivero."
+>
+  <section class="section">
+    <div class="container">
+      <span class="eyebrow">Guias</span>
+      <h1>Cuida tus plantas como lo hacemos en el vivero</h1>
+      <p class="lead">
+        Consejos practicos para el clima panameno, escritos por quienes producen
+        las plantas que vendemos.
+      </p>
+
+      <div class="grid grid--3" style="margin-top: 2rem;">
+        {guides.map((guide) => (
+          <a href={`/guia/${guide.slug}`} class="card guide-card">
+            <h3>{guide.title}</h3>
+            <p>{guide.excerpt}</p>
+            <span class="read-more">Leer guia →</span>
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .guide-card {
+    padding: 1.5rem;
+    color: var(--ink);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .guide-card:hover {
+    text-decoration: none;
+    box-shadow: var(--shadow);
+  }
+
+  .guide-card p {
+    color: var(--ink-soft);
+    font-size: 0.95rem;
+    flex: 1;
+  }
+
+  .read-more {
+    color: var(--green);
+    font-weight: 600;
+    font-size: 0.9rem;
+  }
+</style>

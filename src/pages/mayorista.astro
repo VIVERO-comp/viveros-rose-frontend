@@ -1,0 +1,69 @@
+---
+import Base from '../layouts/Base.astro';
+import { whatsappLink } from '../lib/site';
+---
+
+<Base
+  title="Ventas al por mayor"
+  description="Suplimos plantas al por mayor a supermercados, ferreterias y distribuidores en Panama. Vivero Rose."
+  whatsappMessage="Hola, me interesa informacion de ventas al por mayor."
+>
+  <section class="section">
+    <div class="container">
+      <span class="eyebrow">Mayorista</span>
+      <h1>Suplimos plantas a supermercados y distribuidores</h1>
+      <p class="lead">
+        Vivero Rose es proveedor establecido de cadenas de supermercados en Panama.
+        Produccion constante, calidad uniforme y logistica propia.
+      </p>
+
+      <div class="grid grid--2" style="margin: 2.5rem 0;">
+        <div class="card b2b-card">
+          <h3>Lo que ofrecemos</h3>
+          <ul>
+            <li>Produccion continua de ornamentales, florales y frutales</li>
+            <li>Presentaciones estandarizadas por tamano y maceta</li>
+            <li>Entregas programadas con flota propia</li>
+            <li>Reposicion y rotacion en punto de venta</li>
+          </ul>
+        </div>
+        <div class="card b2b-card">
+          <h3>Como trabajar con nosotros</h3>
+          <ol>
+            <li>Contactanos con el tipo de punto de venta y volumen estimado.</li>
+            <li>Coordinamos una visita al vivero o enviamos catalogo mayorista.</li>
+            <li>Definimos calendario de entregas y condiciones comerciales.</li>
+          </ol>
+        </div>
+      </div>
+
+      <div class="contact-row">
+        <a href={whatsappLink('Hola, me interesa informacion de ventas al por mayor.')} class="btn btn--primary" target="_blank" rel="noopener">
+          Contactar al equipo mayorista
+        </a>
+        <span class="alt">o escribe a <a href="mailto:mayorista@viverorose.com">mayorista@viverorose.com</a></span>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .b2b-card { padding: 1.75rem; }
+
+  .b2b-card ul, .b2b-card ol {
+    margin: 0;
+    padding-left: 1.2rem;
+    color: var(--ink-soft);
+  }
+
+  .b2b-card li { margin-bottom: 0.5rem; }
+
+  .contact-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .alt { color: var(--ink-soft); font-size: 0.95rem; }
+</style>

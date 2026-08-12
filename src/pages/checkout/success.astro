@@ -1,0 +1,67 @@
+---
+import Base from '../../layouts/Base.astro';
+import { whatsappLink } from '../../lib/site';
+---
+
+<Base title="¡Gracias por tu compra!" description="Tu pedido fue recibido.">
+  <section class="section">
+    <div class="container success-container">
+      <div class="success-icon">✅</div>
+      <h1>¡Gracias por tu compra!</h1>
+      <p class="lead">
+        Recibimos tu pedido. Te enviamos un correo con el numero de pedido
+        y el enlace para darle seguimiento.
+      </p>
+
+      <div class="card success-card">
+        <p><strong>Numero de pedido:</strong> <span data-order-number>—</span></p>
+        <p class="help">Guardalo: es lo unico que necesitas para rastrear tu entrega.</p>
+        <div class="success-actions">
+          <a href="/pedido" class="btn btn--green" data-track-link>Rastrear mi pedido</a>
+          <a href={whatsappLink('Hola, acabo de hacer un pedido en plantaspanama.com.')} class="btn btn--whatsapp" target="_blank" rel="noopener">
+            Contactar por WhatsApp
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<script>
+  import { clearCart } from '../../lib/cart';
+
+  // El numero de pedido llega como query param desde el flujo de pago:
+  // /checkout/success?order=VR-20260812-A7K3
+  const params = new URLSearchParams(window.location.search);
+  const order = params.get('order');
+
+  if (order) {
+    const el = document.querySelector('[data-order-number]');
+    if (el) el.textContent = order;
+    const link = document.querySelector<HTMLAnchorElement>('[data-track-link]');
+    if (link) link.href = `/pedido?n=${encodeURIComponent(order)}`;
+    clearCart();
+  }
+</script>
+
+<style>
+  .success-container {
+    max-width: 36rem;
+    text-align: center;
+  }
+
+  .success-icon { font-size: 3.5rem; margin-bottom: 1rem; }
+
+  .success-card {
+    margin-top: 2rem;
+    padding: 2rem;
+  }
+
+  .success-actions {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 1.25rem;
+  }
+</style>

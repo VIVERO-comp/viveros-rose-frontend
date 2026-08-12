@@ -1,0 +1,56 @@
+---
+import Base from '../../layouts/Base.astro';
+import { guides } from '../../data/guides';
+
+export function getStaticPaths() {
+  return guides.map((guide) => ({
+    params: { slug: guide.slug },
+    props: { guide },
+  }));
+}
+
+const { guide } = Astro.props;
+---
+
+<Base title={guide.title} description={guide.excerpt}>
+  <section class="section">
+    <div class="container">
+      <article class="guide">
+        <nav class="breadcrumb" aria-label="Miga de pan">
+          <a href="/guia">Guias</a> / <span>{guide.title}</span>
+        </nav>
+        <h1>{guide.title}</h1>
+        {guide.body.map((paragraph) => <p>{paragraph}</p>)}
+
+        <div class="guide-cta card">
+          <p><strong>¿Buscas plantas para poner esto en practica?</strong></p>
+          <a href="/plantas" class="btn btn--green">Ver catalogo</a>
+        </div>
+      </article>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .guide {
+    max-width: 42rem;
+  }
+
+  .breadcrumb {
+    font-size: 0.9rem;
+    color: var(--ink-soft);
+    margin-bottom: 1rem;
+  }
+
+  .guide p {
+    font-size: 1.05rem;
+  }
+
+  .guide-cta {
+    margin-top: 2.5rem;
+    padding: 1.75rem;
+    text-align: center;
+    background: var(--green-tint);
+    border-color: transparent;
+  }
+</style>

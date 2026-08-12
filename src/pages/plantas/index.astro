@@ -1,0 +1,61 @@
+---
+import Base from '../../layouts/Base.astro';
+import ProductCard from '../../components/ProductCard.astro';
+import { categories, products } from '../../data/products';
+---
+
+<Base
+  title="Catalogo de plantas"
+  description="Todas nuestras plantas disponibles: interior, exterior, florales y frutales, con disponibilidad real del vivero."
+>
+  <section class="section">
+    <div class="container">
+      <span class="eyebrow">Catalogo</span>
+      <h1>Plantas</h1>
+      <p class="lead">
+        Disponibilidad real de nuestro vivero. Si dice “En stock”, esta en el vivero.
+      </p>
+
+      <div class="filters" role="navigation" aria-label="Filtrar por categoria">
+        <a href="/plantas" class="filter active">Todas</a>
+        {categories.map((cat) => (
+          <a href={`/plantas/${cat.slug}`} class="filter">{cat.name}</a>
+        ))}
+      </div>
+
+      <div class="grid grid--4">
+        {products.map((product) => <ProductCard product={product} />)}
+      </div>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .filters {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin: 1.5rem 0 2rem;
+  }
+
+  .filter {
+    padding: 0.45rem 1rem;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: var(--surface);
+    color: var(--ink);
+    font-size: 0.9rem;
+    font-weight: 600;
+  }
+
+  .filter:hover {
+    text-decoration: none;
+    border-color: var(--green);
+  }
+
+  .filter.active {
+    background: var(--green);
+    border-color: var(--green);
+    color: #fff;
+  }
+</style>
