@@ -4,6 +4,8 @@
 // oscuro cuyos "chips" de tema cambian la ayuda del mensaje. Sin backend de
 // formularios: al enviar se abre WhatsApp con el mensaje armado.
 import Base from '../layouts/Base.astro';
+import BackArrow from '../components/BackArrow.astro';
+import Icon from '../components/Icon.astro';
 import { SITE, whatsappLink } from '../lib/site';
 
 const topics = [
@@ -19,7 +21,9 @@ const topics = [
 <Base
   title="Contacto"
   description="Escríbenos por WhatsApp, correo o visítanos en el vivero. Estamos en Panamá."
+  chrome="bare"
 >
+  <BackArrow />
   <div class="contact-grid">
     <section class="contact-left">
       <!-- FOTO PENDIENTE: lateral de contacto — vertical, minimo 960×1080 px -->
@@ -34,17 +38,17 @@ const topics = [
 
         <div class="contact-cards">
           <a href={whatsappLink('Hola, tengo una consulta.')} class="c-card c-card--dark" target="_blank" rel="noopener">
-            <span class="c-kicker">💬 WhatsApp</span>
+            <span class="c-kicker"><Icon name="message-circle" size={15} /> WhatsApp</span>
             <span class="c-main">Escríbenos ahora</span>
             <span class="c-note">El canal más rápido: respondemos en minutos.</span>
           </a>
           <a href="mailto:hola@viverorose.com" class="c-card c-card--glass">
-            <span class="c-kicker">✉️ Correo</span>
+            <span class="c-kicker"><Icon name="mail" size={15} /> Correo</span>
             <span class="c-main">hola@viverorose.com</span>
             <span class="c-note">Cotizaciones y pedidos al mayor.</span>
           </a>
           <div class="c-card c-card--light c-card--wide">
-            <span class="c-kicker c-kicker--green">📍 Visítanos</span>
+            <span class="c-kicker c-kicker--green"><Icon name="map-pin" size={15} /> Visítanos</span>
             <span class="c-main">{SITE.address}</span>
             <span class="c-note">
               {SITE.hours} ·
@@ -131,9 +135,11 @@ const topics = [
 </script>
 
 <style>
+  /* El diseno es una pantalla completa a dos columnas. */
   .contact-grid {
     display: grid;
     grid-template-columns: minmax(0, 1.02fr) minmax(0, 0.98fr);
+    min-height: 100vh;
   }
 
   @media (max-width: 900px) {

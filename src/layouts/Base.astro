@@ -11,7 +11,9 @@ interface Props {
   whatsappMessage?: string;
   // 'minimal': cabecera reducida sin nav ni footer, como Carrito/Checkout/
   // Pedidos en el diseno. El enlace de la derecha se configura por pagina.
-  chrome?: 'full' | 'minimal';
+  // 'bare': sin cabecera ni footer del sitio (Servicios, Mayoristas, Eventos
+  // y Contacto van solo con la flecha de retorno; es intencional del diseno).
+  chrome?: 'full' | 'minimal' | 'bare';
   minimalLinkHref?: string;
   minimalLinkLabel?: string;
 }
@@ -34,9 +36,11 @@ const {
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- Instrument Serif (italica) solo se usa en los heros de las paginas
+         sin navbar (Servicios, Mayoristas), como en el handoff. -->
     <link
       rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap"
     />
     <meta name="description" content={description} />
     <meta property="og:title" content={title} />
@@ -54,9 +58,8 @@ const {
     })} />
   </head>
   <body>
-    {chrome === 'full' ? (
-      <Header />
-    ) : (
+    {chrome === 'full' && <Header />}
+    {chrome === 'minimal' && (
       <header class="minimal-header">
         <div class="container minimal-inner">
           <a href="/" class="minimal-brand">PLANTAS PANAMÁ</a>

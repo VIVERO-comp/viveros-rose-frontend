@@ -1,0 +1,107 @@
+---
+// Pie reducido de las paginas sin navbar (Servicios, Mayoristas, Eventos,
+// Contacto): marca VIVERO ROSE (la marca matriz atiende estos servicios),
+// columna "Sitio" y una tercera columna configurable por pagina.
+import { SITE, whatsappLink } from '../lib/site';
+
+interface FooterLink {
+  href: string;
+  label: string;
+  external?: boolean;
+}
+
+interface Props {
+  thirdTitle: string;
+  thirdLinks: FooterLink[];
+}
+
+const { thirdTitle, thirdLinks } = Astro.props;
+
+const siteLinks: FooterLink[] = [
+  { href: '/', label: 'Inicio' },
+  { href: '/plantas', label: 'Plantas' },
+  { href: '/colecciones', label: 'Colecciones' },
+  { href: 'https://viverorose.com/', label: 'Nosotros', external: true },
+  { href: '/mayorista', label: 'Venta al mayor' },
+];
+---
+
+<footer class="mini-footer">
+  <div class="container mini-grid">
+    <div class="mini-brand-col">
+      <p class="mini-brand">VIVERO ROSE</p>
+      <p class="mini-note"><strong>Dirección</strong><br />{SITE.address}</p>
+      <p class="mini-note"><strong>Horario</strong><br />{SITE.hours}</p>
+      <a href={whatsappLink('Hola, tengo una consulta.')} target="_blank" rel="noopener">
+        WhatsApp +{SITE.whatsappNumber.slice(0, 3)} {SITE.whatsappNumber.slice(3)}
+      </a>
+    </div>
+    <nav aria-label="Sitio">
+      <p class="mini-title">Sitio</p>
+      {
+        siteLinks.map((l) =>
+          l.external ? (
+            <a href={l.href} target="_blank" rel="noopener">{l.label}</a>
+          ) : (
+            <a href={l.href}>{l.label}</a>
+          ),
+        )
+      }
+    </nav>
+    <nav aria-label={thirdTitle}>
+      <p class="mini-title">{thirdTitle}</p>
+      {thirdLinks.map((l) => <a href={l.href}>{l.label}</a>)}
+    </nav>
+  </div>
+  <div class="mini-band">
+    <p>© {new Date().getFullYear()} Vivero Rose</p>
+  </div>
+</footer>
+
+<style>
+  .mini-footer { border-top: 1px solid var(--line); }
+
+  .mini-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 36.8px;
+    padding-top: 55px;
+    padding-bottom: 55px;
+  }
+
+  .mini-brand-col { display: flex; flex-direction: column; gap: 13.8px; }
+
+  .mini-brand { font-size: 22px; letter-spacing: 0.1em; margin: 0; }
+
+  .mini-note {
+    font-size: 14px;
+    color: rgba(27, 42, 31, 0.72);
+    line-height: 1.7;
+    margin: 0;
+  }
+
+  .mini-brand-col a { font-size: 14px; }
+
+  nav { display: flex; flex-direction: column; gap: 9.2px; }
+
+  .mini-title {
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin: 0;
+  }
+
+  nav a { font-size: 14px; color: var(--ink); }
+
+  .mini-band { border-top: 1px solid var(--line); }
+
+  .mini-band p {
+    max-width: var(--max-width);
+    margin: 0 auto;
+    padding: 22px 1.5rem;
+    text-align: center;
+    font-size: 12px;
+    color: var(--ink-faint);
+  }
+</style>

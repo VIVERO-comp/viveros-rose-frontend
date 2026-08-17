@@ -320,6 +320,10 @@ const paisajismoMessage = whatsappLink('Hola, quiero cotizar un proyecto de pais
     align-items: center;
   }
 
+  /* El contenedor es hijo de un flex: sin width 100% se encoge al contenido
+     y el texto del hero queda centrado; el diseno lo lleva a la izquierda. */
+  .hero-content .container { width: 100%; }
+
   .hero-copy { max-width: 600px; color: #eef5f0; }
 
   .hero-kicker {

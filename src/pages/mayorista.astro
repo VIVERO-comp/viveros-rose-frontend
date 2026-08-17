@@ -3,21 +3,24 @@
 // pastilla, tres tarjetas de propuesta de valor, banda CTA oscura y bloque de
 // contacto con formulario que arma la cotizacion por WhatsApp.
 import Base from '../layouts/Base.astro';
+import BackArrow from '../components/BackArrow.astro';
+import Icon from '../components/Icon.astro';
+import MiniFooter from '../components/MiniFooter.astro';
 import { SITE, whatsappLink } from '../lib/site';
 
 const cards = [
   {
-    icon: '🌱',
+    icon: 'sprout',
     title: 'Desde 50 unidades',
     body: 'Material uniforme del mismo lote, en la altura y el tamaño de maceta que necesites.',
   },
   {
-    icon: '🏷️',
+    icon: 'tag',
     title: 'Precio por volumen',
     body: 'Lista de precios mayorista según cantidad, con condiciones para clientes recurrentes.',
   },
   {
-    icon: '🚚',
+    icon: 'truck',
     title: 'Entrega a obra',
     body: 'Coordinamos la fecha con tu cronograma y entregamos en la ciudad de Panamá e interior.',
   },
@@ -34,8 +37,10 @@ const clientTypes = [
 <Base
   title="Venta al mayor"
   description="Suplimos plantas al por mayor a constructoras, empresas y revendedores en Panamá. Producción por lote y entrega programada."
+  chrome="bare"
   whatsappMessage="Hola, me interesa información de ventas al por mayor."
 >
+  <BackArrow />
   <section class="may-hero">
     <!-- FOTO PENDIENTE: hero mayorista — banda a lo ancho, minimo 1920×560 px -->
     <div class="may-hero-photo" data-medidas="Foto hero · 1920×560" aria-hidden="true"></div>
@@ -51,7 +56,7 @@ const clientTypes = [
   <section class="container may-cards">
     {cards.map((c) => (
       <div class="may-card">
-        <span class="may-icon" aria-hidden="true">{c.icon}</span>
+        <span class="may-icon" aria-hidden="true"><Icon name={c.icon} size={22} /></span>
         <p class="may-title">{c.title}</p>
         <p class="may-body">{c.body}</p>
       </div>
@@ -83,8 +88,8 @@ const clientTypes = [
           <a href={whatsappLink('Hola, me interesa información de ventas al por mayor.')} class="btn btn--green" target="_blank" rel="noopener">Escríbenos por WhatsApp</a>
           <div class="contact-facts">
             <span>✉️ <a href="mailto:mayorista@viverorose.com" class="light-link">mayorista@viverorose.com</a></span>
-            <span>🕐 <strong>Horario:</strong> {SITE.hours}</span>
-            <span>📍 {SITE.address}</span>
+            <span><Icon name="clock" size={17} class="fact-icon" /> <strong>Horario:</strong> {SITE.hours}</span>
+            <span><Icon name="map-pin" size={17} class="fact-icon" /> {SITE.address}</span>
           </div>
         </div>
       </div>
@@ -117,6 +122,14 @@ const clientTypes = [
       </form>
     </div>
   </section>
+  <MiniFooter
+    thirdTitle="Servicios"
+    thirdLinks={[
+      { href: '/servicios#diseno', label: 'Diseño de jardines' },
+      { href: '/servicios#mantenimiento', label: 'Mantenimiento' },
+      { href: '/servicios#proyectos', label: 'Proyectos comerciales' },
+    ]}
+  />
 </Base>
 
 <script>
@@ -236,7 +249,9 @@ const clientTypes = [
     gap: 0.7rem;
   }
 
-  .may-icon { font-size: 1.4rem; }
+  .may-icon { color: var(--green-deep); display: inline-flex; }
+
+  :global(.fact-icon) { color: var(--green-light); flex: none; }
   .may-title { font-size: 1.25rem; font-weight: 600; margin: 0; }
 
   .may-body {

@@ -4,6 +4,9 @@
 // un script muestra la activa segun la URL, para que la pagina siga siendo
 // 100% estatica.
 import Base from '../layouts/Base.astro';
+import BackArrow from '../components/BackArrow.astro';
+import Icon from '../components/Icon.astro';
+import MiniFooter from '../components/MiniFooter.astro';
 import { SITE, whatsappLink } from '../lib/site';
 
 const variants = [
@@ -56,17 +59,17 @@ const variants = [
 
 const infoCards = [
   {
-    icon: '📅',
+    icon: 'calendar-check',
     title: 'Reserva con 2 semanas',
     body: 'Confirmamos disponibilidad del material y agendamos el montaje según tu fecha.',
   },
   {
-    icon: '🚚',
+    icon: 'truck',
     title: 'Montaje y retiro',
     body: 'Llevamos, colocamos y retiramos todo el día siguiente al evento. Tú no mueves nada.',
   },
   {
-    icon: '🔁',
+    icon: 'repeat',
     title: 'Alquiler o compra',
     body: 'Puedes alquilar el montaje o quedarte con las plantas al precio del vivero.',
   },
@@ -78,8 +81,10 @@ const eventTypes = ['Boda', 'Cumpleaños o social', 'Feria o activación', 'Even
 <Base
   title="Plantas para eventos"
   description="Alquiler y montaje de plantas para bodas, ferias y activaciones en Panamá. Entrega, montaje y retiro incluidos."
+  chrome="bare"
   whatsappMessage="Hola, quiero cotizar plantas para un evento."
 >
+  <BackArrow />
   {variants.map((v, i) => (
     <section class="ev-hero" data-variant={v.slug} hidden={i !== 0}>
       <!-- FOTO PENDIENTE: hero de eventos ({v.slug}) — banda a lo ancho, minimo 1920×600 px -->
@@ -108,7 +113,7 @@ const eventTypes = ['Boda', 'Cumpleaños o social', 'Feria o activación', 'Even
           <h2>{v.title}</h2>
           <p class="ev-body">{v.body}</p>
           <ul class="ev-features">
-            {v.features.map((f) => <li>✓ {f}</li>)}
+            {v.features.map((f) => <li><Icon name="check" size={17} class="check-icon" /> {f}</li>)}
           </ul>
           <a href={whatsappLink(`Hola, quiero cotizar plantas para un evento (${v.label}).`)} class="btn btn--ghost" target="_blank" rel="noopener">Cotizar por WhatsApp</a>
         </div>
@@ -134,7 +139,7 @@ const eventTypes = ['Boda', 'Cumpleaños o social', 'Feria o activación', 'Even
   <section class="container ev-cards">
     {infoCards.map((c) => (
       <div class="ev-card">
-        <span class="ev-icon" aria-hidden="true">{c.icon}</span>
+        <span class="ev-icon" aria-hidden="true"><Icon name={c.icon} size={22} /></span>
         <p class="ev-card-title">{c.title}</p>
         <p class="ev-card-body">{c.body}</p>
       </div>
@@ -152,8 +157,8 @@ const eventTypes = ['Boda', 'Cumpleaños o social', 'Feria o activación', 'Even
           <p>Fecha, lugar y cantidad de invitados. Con eso te armamos la propuesta y el presupuesto.</p>
           <a href={whatsappLink('Hola, quiero cotizar plantas para un evento.')} class="btn btn--green" target="_blank" rel="noopener">Escríbenos por WhatsApp</a>
           <div class="contact-facts">
-            <span>🕐 <strong>Horario:</strong> {SITE.hours}</span>
-            <span>📍 {SITE.address}</span>
+            <span><Icon name="clock" size={17} class="fact-icon" /> <strong>Horario:</strong> {SITE.hours}</span>
+            <span><Icon name="map-pin" size={17} class="fact-icon" /> {SITE.address}</span>
           </div>
         </div>
       </div>
@@ -191,6 +196,14 @@ const eventTypes = ['Boda', 'Cumpleaños o social', 'Feria o activación', 'Even
       </form>
     </div>
   </section>
+  <MiniFooter
+    thirdTitle="Eventos"
+    thirdLinks={[
+      { href: '/eventos?e=bodas', label: 'Bodas y eventos sociales' },
+      { href: '/eventos?e=ferias', label: 'Ferias y activaciones' },
+      { href: '/eventos?e=alquiler', label: 'Alquiler de plantas' },
+    ]}
+  />
 </Base>
 
 <script>
@@ -430,7 +443,11 @@ const eventTypes = ['Boda', 'Cumpleaños o social', 'Feria o activación', 'Even
     gap: 0.7rem;
   }
 
-  .ev-icon { font-size: 1.4rem; }
+  .ev-icon { color: var(--green-deep); display: inline-flex; }
+
+  li :global(.check-icon) { color: var(--green-deep); flex: none; }
+
+  :global(.fact-icon) { color: var(--green-light); flex: none; }
   .ev-card-title { font-size: 1.2rem; font-weight: 600; margin: 0; }
 
   .ev-card-body {

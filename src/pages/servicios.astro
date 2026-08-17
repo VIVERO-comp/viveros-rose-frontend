@@ -4,6 +4,9 @@
 // tres viven en una sola pagina estatica como bloques con ancla (#diseno,
 // #mantenimiento, #proyectos), que es a donde apuntan el navbar y el footer.
 import Base from '../layouts/Base.astro';
+import BackArrow from '../components/BackArrow.astro';
+import Icon from '../components/Icon.astro';
+import MiniFooter from '../components/MiniFooter.astro';
 import { SITE, whatsappLink } from '../lib/site';
 
 const blocks = [
@@ -60,8 +63,10 @@ const interests = ['Diseño de jardines', 'Mantenimiento', 'Proyectos comerciale
 <Base
   title="Servicios de paisajismo"
   description="Diseño de jardines, mantenimiento y proyectos comerciales en Panamá, con material de nuestro propio vivero."
+  chrome="bare"
   whatsappMessage="Hola, me interesa una cotización de paisajismo."
 >
+  <BackArrow />
   <section class="serv-hero">
     <!-- FOTO PENDIENTE: hero de servicios — banda a lo ancho, minimo 1920×620 px -->
     <div class="serv-hero-photo" data-medidas="Foto hero · 1920×620" aria-hidden="true"></div>
@@ -155,8 +160,8 @@ const interests = ['Diseño de jardines', 'Mantenimiento', 'Proyectos comerciale
           <p>Cuéntanos qué necesitas y te respondemos en menos de un día hábil.</p>
           <a href={whatsappLink('Hola, quiero cotizar un servicio de paisajismo.')} class="btn btn--green" target="_blank" rel="noopener">Escríbenos por WhatsApp</a>
           <div class="contact-facts">
-            <span>🕐 <strong>Horario:</strong> {SITE.hours}</span>
-            <span>📍 {SITE.address}</span>
+            <span><Icon name="clock" size={17} class="fact-icon" /> <strong>Horario:</strong> {SITE.hours}</span>
+            <span><Icon name="map-pin" size={17} class="fact-icon" /> {SITE.address}</span>
           </div>
         </div>
       </div>
@@ -183,6 +188,14 @@ const interests = ['Diseño de jardines', 'Mantenimiento', 'Proyectos comerciale
       </form>
     </div>
   </section>
+  <MiniFooter
+    thirdTitle="Servicios"
+    thirdLinks={[
+      { href: '/servicios#diseno', label: 'Diseño de jardines' },
+      { href: '/servicios#mantenimiento', label: 'Mantenimiento' },
+      { href: '/servicios#proyectos', label: 'Proyectos comerciales' },
+    ]}
+  />
 </Base>
 
 <script>
@@ -591,4 +604,5 @@ const interests = ['Diseño de jardines', 'Mantenimiento', 'Proyectos comerciale
   }
 
   .form-submit { justify-content: center; }
+  :global(.fact-icon) { color: var(--green-light); flex: none; }
 </style>
