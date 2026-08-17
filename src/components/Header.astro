@@ -26,21 +26,20 @@ const megaColumns = [
   {
     title: 'Colecciones populares',
     links: [
-      ...['mas-vendidas', 'recien', 'interior', 'exterior', 'faciles'].map(col),
+      ...['mas-vendidas', 'recien', 'pet-friendly', 'interior', 'exterior', 'faciles'].map(col),
       { href: '/plantas', label: 'Todas las plantas' },
     ],
   },
   {
-    title: 'Por condición',
-    links: ['poca-luz', 'jardin', 'ultimas'].map(col),
+    title: 'Ofertas',
+    links: ['oferta', 'poca-luz', 'jardin', 'ultimas'].map(col),
   },
   {
     title: 'Tipo de planta',
     links: [
-      { href: '/plantas/florales', label: 'Florales' },
+      ...['rosales', 'veraneras', 'palmas', 'crotos'].map(col),
       { href: '/plantas/frutales', label: 'Frutales injertados' },
-      { href: '/plantas/interior', label: 'Plantas de interior' },
-      { href: '/plantas/exterior', label: 'Plantas de exterior' },
+      { href: '/plantas/florales', label: 'Florales' },
     ],
   },
   {

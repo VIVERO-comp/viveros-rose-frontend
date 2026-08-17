@@ -20,6 +20,8 @@ const status = stockStatus(available);
   // Refresco en cliente: consulta el stock proxy por todos los SKU visibles y
   // actualiza texto y clase de cada badge. Si PUBLIC_STOCK_PROXY_URL no esta
   // configurada, fetchStock devuelve null y el stock de build queda tal cual.
+  // PENDIENTE (repo vivero-rose-stock-proxy): habilitar CORS para el dominio
+  // de la tienda; sin eso el navegador bloquea esta llamada en produccion.
   import { fetchStock, stockLabel, stockStatus } from '../lib/stock';
 
   async function refreshBadges() {

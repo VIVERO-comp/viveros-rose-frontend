@@ -14,6 +14,8 @@ export interface ProductFacts {
   light: string; // texto libre de care.light
   available: number;
   price: number;
+  size: string; // pequena | mediana | grande | '' si no esta definido
+  pet: string; // 'si' | 'no' | '' si no esta definido (no se inventa)
 }
 
 export function factsOf(p: Product): ProductFacts {
@@ -24,6 +26,8 @@ export function factsOf(p: Product): ProductFacts {
     light: p.care.light,
     available: p.available,
     price: p.price,
+    size: p.size ?? '',
+    pet: p.petFriendly === undefined ? '' : p.petFriendly ? 'si' : 'no',
   };
 }
 
@@ -100,6 +104,44 @@ export const collections: CollectionDef[] = [
     name: 'Últimas unidades',
     blurb: 'Quedan pocas: se van por orden de pedido.',
     test: (p) => p.available > 0 && p.available <= 5,
+  },
+  {
+    slug: 'pet-friendly',
+    name: 'Aptas para mascotas',
+    blurb: 'Especies no tóxicas para perros y gatos.',
+    // Solo cuenta el "si" explicito del catalogo; sin dato no se asume nada.
+    test: (p) => p.pet === 'si',
+  },
+  {
+    slug: 'oferta',
+    name: 'En oferta',
+    blurb: '15% de descuento en plantas de exterior durante la temporada de lluvias.',
+    test: (p) => p.category === 'exterior',
+  },
+  // Tipos de planta del diseno (filtros por nombre sobre el catalogo real).
+  {
+    slug: 'rosales',
+    name: 'Rosales',
+    blurb: 'Rosales de vivero para jardineras con sol de mañana.',
+    test: (p) => /rosa/i.test(p.name),
+  },
+  {
+    slug: 'veraneras',
+    name: 'Veraneras',
+    blurb: 'Buganvillas de floración intensa, la reina del jardín panameño.',
+    test: (p) => /veranera/i.test(p.name),
+  },
+  {
+    slug: 'palmas',
+    name: 'Palmas',
+    blurb: 'Para cercas vivas, entradas y esquinas de terraza.',
+    test: (p) => /palma/i.test(p.name),
+  },
+  {
+    slug: 'crotos',
+    name: 'Crotos y follaje',
+    blurb: 'Color permanente y bajo mantenimiento.',
+    test: (p) => /croto/i.test(p.name),
   },
 ];
 

@@ -5,11 +5,13 @@
 // (?c= coleccion, ?q= busqueda del navbar). El catalogo y los badges de stock
 // no cambian: ProductCard/StockBadge siguen conectados por SKU al stock proxy.
 import Base from '../../layouts/Base.astro';
+import Icon from '../../components/Icon.astro';
 import ProductCard from '../../components/ProductCard.astro';
 import NewsletterBand from '../../components/NewsletterBand.astro';
 import { products } from '../../data/products';
 import { collections, factsOf } from '../../data/collections';
 
+// Orden del sidebar segun el diseno (Shop Plantas).
 const sidebarSlugs = [
   'all',
   'mas-vendidas',
@@ -18,13 +20,17 @@ const sidebarSlugs = [
   'exterior',
   'florales',
   'frutales',
+  'pet-friendly',
   'faciles',
-  'ultimas',
+  'oferta',
 ];
 const sidebar = sidebarSlugs.map((slug) => collections.find((c) => c.slug === slug)!);
 
-const popularSlugs = ['faciles', 'recien', 'frutales', 'jardin', 'interior'];
+const popularSlugs = ['faciles', 'pet-friendly', 'frutales', 'jardin', 'interior'];
 const popular = popularSlugs.map((slug) => collections.find((c) => c.slug === slug)!);
+
+// Paginacion del diseno: de 8 en 8 con "Ver mas plantas".
+const PAGE_SIZE = 8;
 ---
 
 <Base
@@ -62,19 +68,29 @@ const popular = popularSlugs.map((slug) => collections.find((c) => c.slug === sl
         <p class="aside-title">Filtrar por</p>
         <div class="filter-groups" data-filters>
           <div class="filter-group">
-            <p class="filter-name">Nivel de cuidado</p>
+            <p class="filter-name"><Icon name="ruler" size={15} class="filter-icon" /> Tamaño</p>
+            <label><input type="checkbox" data-filter="size" value="pequena" /> Pequeña</label>
+            <label><input type="checkbox" data-filter="size" value="mediana" /> Mediana</label>
+            <label><input type="checkbox" data-filter="size" value="grande" /> Grande</label>
+          </div>
+          <div class="filter-group">
+            <p class="filter-name"><Icon name="paw-print" size={15} class="filter-icon" /> Mascotas</p>
+            <label><input type="checkbox" data-filter="pet" value="si" /> Solo aptas para mascotas</label>
+          </div>
+          <div class="filter-group">
+            <p class="filter-name"><Icon name="sparkles" size={15} class="filter-icon" /> Nivel de cuidado</p>
             <label><input type="checkbox" data-filter="care" value="Facil" /> Fácil</label>
             <label><input type="checkbox" data-filter="care" value="Media" /> Media</label>
             <label><input type="checkbox" data-filter="care" value="Exigente" /> Exigente</label>
           </div>
           <div class="filter-group">
-            <p class="filter-name">Luz</p>
+            <p class="filter-name"><Icon name="sun" size={15} class="filter-icon" /> Luz</p>
             <label><input type="checkbox" data-filter="light" value="sol" /> Sol pleno</label>
             <label><input type="checkbox" data-filter="light" value="indirecta" /> Luz indirecta</label>
             <label><input type="checkbox" data-filter="light" value="baja" /> Poca luz</label>
           </div>
           <div class="filter-group">
-            <p class="filter-name">Disponibilidad</p>
+            <p class="filter-name"><Icon name="package-check" size={15} class="filter-icon" /> Disponibilidad</p>
             <label><input type="checkbox" data-filter="stock" value="in" /> Solo en stock</label>
           </div>
         </div>
@@ -109,6 +125,8 @@ const popular = popularSlugs.map((slug) => collections.find((c) => c.slug === sl
               data-light={f.light}
               data-available={f.available}
               data-price={f.price}
+              data-size={f.size}
+              data-pet={f.pet}
             >
               <ProductCard product={product} />
             </div>
@@ -119,6 +137,10 @@ const popular = popularSlugs.map((slug) => collections.find((c) => c.slug === sl
       <div class="no-results" data-no-results hidden>
         <p>No hay plantas con esos filtros.</p>
         <button type="button" class="clear-filters" data-clear-filters>Quitar filtros</button>
+      </div>
+
+      <div class="show-more" data-show-more-wrap hidden>
+        <button type="button" class="btn btn--green" data-show-more>Ver más plantas</button>
       </div>
     </div>
   </div>
@@ -174,6 +196,14 @@ const popular = popularSlugs.map((slug) => collections.find((c) => c.slug === sl
     document.querySelectorAll<HTMLButtonElement>('[data-clear-filters]')
   );
 
+  const showMoreWrap = document.querySelector<HTMLElement>('[data-show-more-wrap]');
+  const showMoreBtn = document.querySelector<HTMLButtonElement>('[data-show-more]');
+
+  // Paginacion del diseno: 8 visibles, "Ver mas plantas" agrega de a 8 y
+  // cualquier cambio de filtro reinicia a 8.
+  const PAGE_SIZE = 8;
+  let visibleCount = PAGE_SIZE;
+
   function factsFrom(card: HTMLElement) {
     return {
       name: card.dataset.name ?? '',
@@ -182,6 +212,8 @@ const popular = popularSlugs.map((slug) => collections.find((c) => c.slug === sl
       light: card.dataset.light ?? '',
       available: Number(card.dataset.available ?? 0),
       price: Number(card.dataset.price ?? 0),
+      size: card.dataset.size ?? '',
+      pet: card.dataset.pet ?? '',
     };
   }
 
@@ -190,25 +222,41 @@ const popular = popularSlugs.map((slug) => collections.find((c) => c.slug === sl
   }
 
   function apply() {
+    const size = checkedValues('size');
+    const petOnly = checkedValues('pet').length > 0;
     const care = checkedValues('care');
     const light = checkedValues('light');
     const inStockOnly = checkedValues('stock').length > 0;
-    const hasFilters = care.length > 0 || light.length > 0 || inStockOnly;
+    const hasFilters =
+      size.length > 0 || petOnly || care.length > 0 || light.length > 0 || inStockOnly;
 
-    let visible = 0;
-    for (const card of cards) {
+    // Se filtra en el orden actual del DOM (que refleja el orden elegido).
+    const ordered = grid
+      ? (Array.from(grid.children) as HTMLElement[]).filter((el) => el.matches('[data-card]'))
+      : cards;
+
+    let matches = 0;
+    for (const card of ordered) {
       const f = factsFrom(card);
       let show = collection.test(f);
       if (show && query) show = f.name.toLowerCase().includes(query);
+      if (show && size.length) show = size.includes(f.size);
+      // Sin dato de mascotas no se asume nada: solo pasa el "si" explicito.
+      if (show && petOnly) show = f.pet === 'si';
       if (show && care.length) show = care.includes(f.care);
       if (show && light.length) show = light.some((l) => f.light.toLowerCase().includes(l));
       if (show && inStockOnly) show = f.available > 0;
-      card.hidden = !show;
-      if (show) visible += 1;
+      if (show) {
+        matches += 1;
+        card.hidden = matches > visibleCount;
+      } else {
+        card.hidden = true;
+      }
     }
 
-    if (countEl) countEl.textContent = `${visible} ${visible === 1 ? 'planta' : 'plantas'}`;
-    if (noResults) noResults.hidden = visible > 0;
+    if (countEl) countEl.textContent = `${matches} ${matches === 1 ? 'planta' : 'plantas'}`;
+    if (noResults) noResults.hidden = matches > 0;
+    if (showMoreWrap) showMoreWrap.hidden = matches <= visibleCount;
     clearButtons.forEach((b) => {
       if (b.closest('[data-no-results]')) return;
       b.hidden = !hasFilters;
@@ -227,16 +275,27 @@ const popular = popularSlugs.map((slug) => collections.find((c) => c.slug === sl
       return Number(a.dataset.index) - Number(b.dataset.index);
     });
     sorted.forEach((card) => grid.appendChild(card));
+    apply();
   }
 
-  checks.forEach((c) => c.addEventListener('change', apply));
+  checks.forEach((c) =>
+    c.addEventListener('change', () => {
+      visibleCount = PAGE_SIZE;
+      apply();
+    })
+  );
   sortSelect?.addEventListener('change', sortCards);
   clearButtons.forEach((b) =>
     b.addEventListener('click', () => {
       checks.forEach((c) => (c.checked = false));
+      visibleCount = PAGE_SIZE;
       apply();
     })
   );
+  showMoreBtn?.addEventListener('click', () => {
+    visibleCount += PAGE_SIZE;
+    apply();
+  });
 
   // Estado inicial (coleccion de la URL o busqueda del navbar).
   apply();
@@ -372,10 +431,15 @@ const popular = popularSlugs.map((slug) => collections.find((c) => c.slug === sl
   }
 
   .filter-name {
+    display: flex;
+    align-items: center;
+    gap: 7px;
     font-size: 0.82rem;
     font-weight: 600;
     margin: 0 0 0.55rem;
   }
+
+  .filter-name :global(.filter-icon) { color: var(--green-deep); }
 
   .filter-group label {
     display: flex;
@@ -453,6 +517,14 @@ const popular = popularSlugs.map((slug) => collections.find((c) => c.slug === sl
   }
 
   .no-results p { font-size: 1.2rem; margin-bottom: 0.55rem; }
+
+  .show-more {
+    display: flex;
+    justify-content: center;
+    margin-top: 2.3rem;
+  }
+
+  .show-more[hidden] { display: none; }
 
   /* Colecciones populares */
   .popular { padding-bottom: 4.6rem; }

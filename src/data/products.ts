@@ -30,6 +30,10 @@ export interface Product {
   // mascotas en vez de mostrar un dato inventado. Solo esta definido en las
   // especies cuya toxicidad es conocida; completar el resto con el equipo.
   petFriendly?: boolean;
+  // Porte de la planta tal como se vende (filtro "Tamano" del catalogo).
+  // Valores iniciales estimados por el nombre/descripcion; revisar con el
+  // equipo del vivero. Si falta, el filtro de tamano no muestra el producto.
+  size?: 'pequena' | 'mediana' | 'grande';
 }
 
 export const categories: Category[] = [
@@ -71,6 +75,7 @@ export const products: Product[] = [
       'Rosal clasico de flor roja, producido en nuestro vivero. Ideal para jardineras y borduras con sol directo de manana.',
     care: { light: 'Sol directo (4-6 h)', water: '3 veces por semana', difficulty: 'Media' },
     available: 47,
+    size: 'pequena',
     emoji: '🌹',
     petFriendly: true,
   },
@@ -85,6 +90,7 @@ export const products: Product[] = [
       'El clasico "fiddle leaf fig" en tamano mediano (80-100 cm). Hojas grandes y esculturales para interiores luminosos.',
     care: { light: 'Luz indirecta brillante', water: '1 vez por semana', difficulty: 'Exigente' },
     available: 4,
+    size: 'mediana',
     emoji: '🌿',
     petFriendly: false,
   },
@@ -99,6 +105,7 @@ export const products: Product[] = [
       'Follaje plateado que tolera poca luz. Una de las plantas de interior mas nobles para oficinas y apartamentos.',
     care: { light: 'Luz baja a media', water: 'Cada 7-10 dias', difficulty: 'Facil' },
     available: 22,
+    size: 'pequena',
     emoji: '🍃',
     petFriendly: false,
   },
@@ -113,6 +120,7 @@ export const products: Product[] = [
       'Ejemplar grande con hojas fenestradas. Crece rapido en el clima humedo de Panama con luz indirecta.',
     care: { light: 'Luz indirecta', water: '1-2 veces por semana', difficulty: 'Facil' },
     available: 9,
+    size: 'grande',
     emoji: '🌱',
     petFriendly: false,
   },
@@ -127,6 +135,7 @@ export const products: Product[] = [
       'Buganvilla de floracion intensa, resistente al sol pleno. La reina de los jardines panamenos.',
     care: { light: 'Sol pleno', water: '2 veces por semana', difficulty: 'Facil' },
     available: 60,
+    size: 'mediana',
     emoji: '🌺',
   },
   {
@@ -140,6 +149,7 @@ export const products: Product[] = [
       'Palma multiplicadora ideal para cercas vivas y esquinas de terraza. Tolera sol y sombra parcial.',
     care: { light: 'Sol o sombra parcial', water: '2-3 veces por semana', difficulty: 'Facil' },
     available: 15,
+    size: 'mediana',
     emoji: '🌴',
     petFriendly: true,
   },
@@ -154,6 +164,7 @@ export const products: Product[] = [
       'Arbusto compacto de flor roja continua. El estandar para borduras y setos bajos en Panama.',
     care: { light: 'Sol pleno', water: '3 veces por semana', difficulty: 'Facil' },
     available: 120,
+    size: 'pequena',
     emoji: '🔥',
   },
   {
@@ -167,6 +178,7 @@ export const products: Product[] = [
       'Arbol de mango injertado que produce en 2-3 anos. Fruta dulce de tamano medio, ideal para patio.',
     care: { light: 'Sol pleno', water: '2 veces por semana el primer ano', difficulty: 'Facil' },
     available: 0,
+    size: 'grande',
     emoji: '🥭',
   },
   {
@@ -180,6 +192,7 @@ export const products: Product[] = [
       'Limonero injertado de produccion temprana. Perfecto para macetas grandes o directo al suelo.',
     care: { light: 'Sol pleno', water: '2-3 veces por semana', difficulty: 'Media' },
     available: 3,
+    size: 'mediana',
     emoji: '🍋',
   },
   {
@@ -193,6 +206,7 @@ export const products: Product[] = [
       'Follaje multicolor de bajo mantenimiento. Da estructura y color permanente a cualquier jardin.',
     care: { light: 'Sol pleno o parcial', water: '2 veces por semana', difficulty: 'Facil' },
     available: 80,
+    size: 'pequena',
     emoji: '🍂',
     petFriendly: false,
   },

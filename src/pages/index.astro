@@ -1,19 +1,46 @@
 ---
-// Home segun el diseno "Home Plantas Panama" (claude.ai/design).
-// Los enlaces del diseno se adaptaron a las rutas reales del sitio y las
-// fotos son placeholders marcados con sus medidas.
+// Home del handoff (Home Plantas Panama.dc.html): hero con acuarela, franja
+// de garantias, "Recien del vivero", tarjetas de interior/patio, colecciones
+// y tipos, banda del quiz, "Las mas vendidas", Club Vivero Rose, paisajismo,
+// resenas, guias y newsletter. El catalogo sigue siendo src/data/products.ts
+// y las tarjetas conservan su StockBadge conectado al stock proxy.
 import Base from '../layouts/Base.astro';
+import Icon from '../components/Icon.astro';
+import NewsletterBand from '../components/NewsletterBand.astro';
 import ProductCard from '../components/ProductCard.astro';
-import { categories, products } from '../data/products';
+import { products } from '../data/products';
+import { collections } from '../data/collections';
 import { guides } from '../data/guides';
 import { whatsappLink } from '../lib/site';
 
-const featured = products.filter((p) => p.available > 0).slice(0, 4);
-const bestsellers = products
-  .filter((p) => !featured.some((f) => f.sku === p.sku))
-  .slice(0, 4);
+const bySlug = (slug: string) => products.find((p) => p.slug === slug)!;
 
-const [mainGuide, ...otherGuides] = guides;
+// Selecciones curadas del diseno (productos reales del catalogo).
+const featured = ['rosa-roja', 'veranera-fucsia', 'aglaonema-silver-bay', 'monstera-deliciosa'].map(bySlug);
+const bestsellers = ['ixora-roja', 'palma-areca', 'ficus-lyrata', 'mango-calidad'].map(bySlug);
+
+const colName = (slug: string) => collections.find((c) => c.slug === slug)!.name;
+
+// Tiles de "Compra por coleccion" (copia del diseno, filtros reales).
+const collectionTiles = [
+  { label: 'Fáciles de cuidar', slug: 'faciles' },
+  { label: 'Poca luz', slug: 'poca-luz' },
+  { label: 'Sol pleno', slug: 'jardin' },
+  { label: 'Cercas vivas', slug: 'palmas' },
+  { label: 'Frutales de patio', slug: 'frutales' },
+  { label: 'Para regalar', slug: 'mas-vendidas' },
+];
+
+// Tiles de "Compra por tipo" (el diseno lista suculentas, pero el catalogo
+// actual no tiene: se muestra Florales en su lugar).
+const typeTiles = [
+  { label: 'Rosales', slug: 'rosales' },
+  { label: 'Veraneras', slug: 'veraneras' },
+  { label: 'Palmas', slug: 'palmas' },
+  { label: 'Crotos', slug: 'crotos' },
+  { label: 'Frutales', slug: 'frutales' },
+  { label: 'Florales', slug: 'florales' },
+];
 
 const reviews = [
   {
@@ -29,259 +56,221 @@ const reviews = [
     author: 'Ana L. — Clayton',
   },
 ];
+
+const mainGuide = guides[0];
+const otherGuides = guides.slice(1);
+
+// El "test de la planta ideal" no tiene backend: la promesa del diseno
+// ("te decimos que hay disponible hoy") se cumple por WhatsApp.
+const quizMessage = whatsappLink(
+  'Hola, quiero ayuda para elegir una planta. Luz que tengo: ___ · Espacio: ___ · Tiempo para cuidarla: ___',
+);
+const clubMessage = whatsappLink('Hola, quiero unirme al Club Vivero Rose.');
+const paisajismoMessage = whatsappLink('Hola, quiero cotizar un proyecto de paisajismo.');
 ---
 
 <Base
-  title="Plantas con entrega a domicilio en Panamá"
-  description="Vivero real en Panamá. Compra plantas de interior, exterior, florales y frutales online, con entrega a domicilio y asesoría por WhatsApp."
+  title="Plantas del vivero, entregadas en tu casa"
+  description="Vivero real en Panamá. Compra plantas online con inventario actualizado, entrega en la ciudad de Panamá y asesoría por WhatsApp."
 >
   <section class="hero">
-    <!-- FOTO PENDIENTE: hero-acuarela.jpg — banda a lo ancho, minimo 1920×620 px -->
+    <!-- FOTO PENDIENTE: hero acuarela — a lo ancho, minimo 1920×620 px -->
     <div class="hero-photo" data-medidas="Foto hero · 1920×620" aria-hidden="true"></div>
     <div class="hero-scrim" aria-hidden="true"></div>
-    <div class="container hero-inner">
-      <div class="hero-copy">
-        <span class="hero-eyebrow">Vivero propio en Panamá</span>
-        <h1>
-          Plantas del vivero, <span class="hero-accent">entregadas</span> en tu casa
-        </h1>
-        <p class="hero-lead">
-          Inventario real actualizado cada día, entrega en la ciudad de Panamá y
-          asesoría por WhatsApp con la gente que siembra las plantas.
-        </p>
-        <div class="hero-ctas">
-          <a href={whatsappLink('Hola, vengo de plantaspanama.com y tengo una consulta.')} class="btn btn--green" target="_blank" rel="noopener">
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z" /></svg>
-            Escríbenos por WhatsApp
-          </a>
-          <a href="/plantas" class="btn btn--light">
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z" /><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12" /></svg>
-            Comprar plantas
-          </a>
+    <div class="hero-content">
+      <div class="container">
+        <div class="hero-copy">
+          <p class="hero-kicker">Vivero propio en Panamá</p>
+          <h1>
+            Plantas del vivero, <span class="hero-underline">entregadas</span> en tu casa
+          </h1>
+          <p class="hero-sub">
+            Inventario real actualizado cada día, entrega en la ciudad de Panamá y asesoría por
+            WhatsApp con la gente que siembra las plantas.
+          </p>
+          <div class="hero-ctas">
+            <a
+              href={whatsappLink('Hola, vengo de plantaspanama.com y tengo una consulta.')}
+              class="btn btn--green hero-btn"
+              target="_blank"
+              rel="noopener"
+            >
+              <Icon name="message-circle" size={18} /> Escríbenos por WhatsApp
+            </a>
+            <a href="/plantas" class="btn hero-btn hero-btn--light">
+              <Icon name="leaf" size={18} /> Comprar plantas
+            </a>
+          </div>
         </div>
       </div>
     </div>
   </section>
 
-  <section class="trust-band">
-    <div class="container trust-row">
-      <div class="trust-item">
-        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2" /><path d="M15 18H9" /><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14" /><circle cx="17" cy="18" r="2" /><circle cx="7" cy="18" r="2" /></svg>
-        <span>Directo del vivero</span>
-      </div>
-      <div class="trust-item">
-        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
-        <span>Entrega en 24–48 h</span>
-      </div>
-      <div class="trust-item">
-        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
-        <span>Asesoría por WhatsApp</span>
-      </div>
-      <div class="trust-item">
-        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 20h10" /><path d="M10 20c5.5-2.5.8-6.4 3-10" /><path d="M9.5 9.4c1.1.8 1.8 2.2 2.3 3.7-2 .4-3.5.4-4.8-.3-1.2-.6-2.3-1.9-3-4.2 2.8-.5 4.4 0 5.5.8z" /><path d="M14.1 6a7 7 0 0 0-1.1 4c1.9-.1 3.3-.6 4.3-1.4 1-1 1.6-2.3 1.7-4.6-2.7.1-4 1-4.9 2z" /></svg>
-        <span>Guía de cuidado incluida</span>
-      </div>
+  <section class="assurance-band">
+    <div class="container assurance-grid">
+      <div><Icon name="truck" size={22} class="assurance-icon" /><span>Directo del vivero</span></div>
+      <div><Icon name="clock" size={22} class="assurance-icon" /><span>Entrega en 24–48 h</span></div>
+      <div><Icon name="message-square" size={22} class="assurance-icon" /><span>Asesoría por WhatsApp</span></div>
+      <div><Icon name="sprout" size={22} class="assurance-icon" /><span>Guía de cuidado incluida</span></div>
     </div>
   </section>
 
-  <section id="catalogo" class="section">
-    <div class="container">
-      <div class="section-head">
-        <h2>Recién del vivero</h2>
-        <a href="/plantas" class="see-all">Ver todo</a>
-      </div>
-      <div class="grid grid--4">
-        {featured.map((product) => <ProductCard product={product} />)}
-      </div>
+  <section id="catalogo" class="container home-section home-section--first">
+    <div class="section-head">
+      <h2>Recién del vivero</h2>
+      <a href="/plantas?c=recien" class="see-all">Ver todo</a>
+    </div>
+    <div class="cards-4">
+      {featured.map((p) => <ProductCard product={p} />)}
     </div>
   </section>
 
-  <section class="section--tight">
-    <div class="container duo-grid">
+  <section class="container home-section--tight">
+    <div class="duo-grid">
       <a href="/plantas/interior" class="duo-card">
-        <!-- FOTO PENDIENTE: banner interior — proporcion 16:10, minimo 1000×625 px -->
-        <div class="duo-photo" data-medidas="Foto 16:10 · 1000×625" aria-hidden="true"></div>
-        <div class="duo-scrim" aria-hidden="true"></div>
+        <!-- FOTO PENDIENTE: banda interior — 16:10, minimo 1200×750 px -->
+        <div class="duo-photo" data-medidas="Foto 16:10 · 1200×750" aria-hidden="true"></div>
+        <div class="duo-overlay" aria-hidden="true"></div>
         <div class="duo-copy">
-          <span class="tag-eyebrow">Conoce más</span>
+          <p class="duo-kicker">Conoce más</p>
           <h3>Interior</h3>
-          <p>Follaje para apartamentos con luz filtrada y aire acondicionado.</p>
+          <p class="duo-sub">Follaje para apartamentos con luz filtrada y aire acondicionado.</p>
         </div>
       </a>
       <a href="/plantas/exterior" class="duo-card">
-        <!-- FOTO PENDIENTE: banner patio y jardin — proporcion 16:10, minimo 1000×625 px -->
-        <div class="duo-photo" data-medidas="Foto 16:10 · 1000×625" aria-hidden="true"></div>
-        <div class="duo-scrim" aria-hidden="true"></div>
+        <!-- FOTO PENDIENTE: banda patio y jardin — 16:10, minimo 1200×750 px -->
+        <div class="duo-photo" data-medidas="Foto 16:10 · 1200×750" aria-hidden="true"></div>
+        <div class="duo-overlay" aria-hidden="true"></div>
         <div class="duo-copy">
-          <span class="tag-eyebrow">Conoce más</span>
+          <p class="duo-kicker">Conoce más</p>
           <h3>Patio y jardín</h3>
-          <p>Especies de sol pleno que aguantan la lluvia y el calor del istmo.</p>
+          <p class="duo-sub">Especies de sol pleno que aguantan la lluvia y el calor del istmo.</p>
         </div>
       </a>
     </div>
   </section>
 
-  <section class="section">
-    <div class="container">
-      <hr class="rule" />
-      <h2>Compra por categoría</h2>
-      <div class="tile-grid">
-        {categories.map((cat) => (
-          <a href={`/plantas/${cat.slug}`} class="cat-tile">{cat.name}</a>
-        ))}
-      </div>
+  <section class="container home-section">
+    <hr class="section-rule" />
+    <h2 class="tiles-title">Compra por colección</h2>
+    <div class="tiles-6">
+      {collectionTiles.map((t) => <a href={`/plantas?c=${t.slug}`} class="tile">{t.label}</a>)}
+    </div>
+  </section>
+
+  <section class="container home-section--tight">
+    <h2 class="tiles-title">Compra por tipo de planta</h2>
+    <div class="tiles-6">
+      {typeTiles.map((t) => <a href={`/plantas?c=${t.slug}`} class="tile">{t.label}</a>)}
     </div>
   </section>
 
   <section class="quiz-band">
-    <!-- FOTO PENDIENTE: quiz-banda.png — banda a lo ancho, minimo 1920×460 px -->
+    <!-- FOTO PENDIENTE: banda del quiz (acuarela) — a lo ancho, minimo 1920×460 px -->
     <div class="quiz-photo" data-medidas="Foto banda · 1920×460" aria-hidden="true"></div>
-    <div class="container quiz-inner">
-      <div class="quiz-card">
-        <h2>Encuentra tu planta ideal</h2>
-        <p>
-          Cuéntanos cuánta luz tienes, cuánto espacio y cuánto tiempo quieres
-          dedicarle. Te decimos qué hay disponible hoy en el vivero.
-        </p>
-        <a
-          href={whatsappLink('Hola, quiero ayuda para elegir una planta. Les cuento cuánta luz y espacio tengo.')}
-          class="btn btn--green"
-          target="_blank"
-          rel="noopener"
-        >Ayúdame a elegir</a>
-      </div>
-    </div>
-  </section>
-
-  <section class="section">
-    <div class="container">
-      <div class="section-head">
-        <h2>Las más vendidas</h2>
-        <a href="/plantas" class="see-all">Ver todo</a>
-      </div>
-      <div class="grid grid--4">
-        {bestsellers.map((product) => <ProductCard product={product} />)}
-      </div>
-    </div>
-  </section>
-
-  <section class="section">
-    <div class="container">
-      <hr class="rule" />
-      <div class="club-grid">
-        <figure class="club-figure">
-          <!-- FOTO PENDIENTE: imagen del club — bloque de minimo 620×420 px -->
-          <div class="club-photo" data-medidas="Foto · 620×420" aria-hidden="true"></div>
-        </figure>
-        <div>
-          <span class="eyebrow">Programa de lealtad</span>
-          <h2>Club Vivero Rose</h2>
-          <p class="lead">
-            Recordatorios de riego según la temporada, precios de socio en cada
-            pedido y aviso anticipado cuando sale una tanda nueva del vivero.
+    <div class="quiz-content">
+      <div class="container quiz-align">
+        <div class="quiz-card">
+          <h2>Encuentra tu planta ideal</h2>
+          <p>
+            Tres preguntas: cuánta luz tienes, cuánto espacio y cuánto tiempo quieres dedicarle. Te
+            decimos qué hay disponible hoy.
           </p>
-          <a
-            href={whatsappLink('Hola, quiero unirme al Club Vivero Rose.')}
-            class="btn btn--green"
-            target="_blank"
-            rel="noopener"
-          >Quiero unirme</a>
+          <a href={quizMessage} class="btn btn--green" target="_blank" rel="noopener">Hacer el test</a>
         </div>
       </div>
-      <hr class="rule rule--bottom" />
     </div>
   </section>
 
-  <section id="paisajismo" class="section--tight">
-    <div class="container">
-      <span class="eyebrow">Paisajismo</span>
-      <h2 class="pais-title">Jardines que sembramos nosotros</h2>
-      <p class="lead">
-        Diseñamos, sembramos y mantenemos jardines residenciales y comerciales
-        con material del propio vivero. Cotizamos en sitio y entregamos un plan
-        de mantenimiento por temporada.
-      </p>
-      <div class="pais-ctas">
-        <a href={whatsappLink('Hola, quiero cotizar un proyecto de paisajismo.')} class="btn btn--green" target="_blank" rel="noopener">
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z" /></svg>
-          Cotizar por WhatsApp
-        </a>
-        <a href="/paisajismo" class="btn btn--ghost">Ver proyectos</a>
+  <section class="container home-section">
+    <div class="section-head">
+      <h2>Las más vendidas</h2>
+      <a href="/plantas?c=mas-vendidas" class="see-all">Ver todo</a>
+    </div>
+    <div class="cards-4">
+      {bestsellers.map((p) => <ProductCard product={p} />)}
+    </div>
+  </section>
+
+  <section class="container home-section">
+    <hr class="section-rule" />
+    <div class="club-grid">
+      <!-- FOTO PENDIENTE: club vivero rose — apaisada, minimo 800×560 px -->
+      <div class="club-photo" data-medidas="Foto · 800×560" aria-hidden="true"></div>
+      <div>
+        <p class="kicker">Programa de lealtad</p>
+        <h2>Club Vivero Rose</h2>
+        <p class="club-copy">
+          Recordatorios de riego según la temporada, precios de socio en cada pedido y aviso
+          anticipado cuando sale una tanda nueva del vivero.
+        </p>
+        <a href={clubMessage} class="btn btn--green" target="_blank" rel="noopener">Quiero unirme</a>
       </div>
     </div>
+    <hr class="section-rule section-rule--after" />
+  </section>
+
+  <section id="paisajismo" class="container home-section--tight">
+    <p class="kicker">Paisajismo</p>
+    <h2 class="paisajismo-title">Jardines que sembramos nosotros</h2>
+    <p class="paisajismo-copy">
+      Diseñamos, sembramos y mantenemos jardines residenciales y comerciales con material del propio
+      vivero. Cotizamos en sitio y entregamos un plan de mantenimiento por temporada.
+    </p>
+    <a href={paisajismoMessage} class="btn btn--green paisajismo-btn" target="_blank" rel="noopener">
+      <Icon name="message-circle" size={16} /> Cotizar por WhatsApp
+    </a>
   </section>
 
   <section class="reviews-band">
-    <div class="container">
+    <div class="container reviews-inner">
       <h2>Lo que dicen los clientes</h2>
       <div class="reviews-grid">
-        {reviews.map((r) => (
-          <figure class="review-card">
-            <div class="stars" aria-label="5 estrellas">★★★★★</div>
-            <blockquote>{r.text}</blockquote>
-            <figcaption>{r.author}</figcaption>
-          </figure>
-        ))}
+        {
+          reviews.map((r) => (
+            <figure class="review-card">
+              <div class="review-stars" aria-label="5 estrellas">★★★★★</div>
+              <blockquote>{r.text}</blockquote>
+              <figcaption>{r.author}</figcaption>
+            </figure>
+          ))
+        }
       </div>
     </div>
   </section>
 
-  <section class="section">
-    <div class="container">
-      <div class="section-head">
-        <h2>Guías de cuidado</h2>
-        <a href="/guia" class="see-all">Ver todas</a>
-      </div>
-      <div class="guides-grid">
-        <a href={`/guia/${mainGuide.slug}`} class="guide-main">
-          <!-- FOTO PENDIENTE: guia principal — bloque de minimo 740×420 px -->
-          <div class="guide-photo" data-medidas="Foto · 740×420" aria-hidden="true"></div>
-          <h3>{mainGuide.title}</h3>
-          <p>{mainGuide.excerpt}</p>
-        </a>
-        <div class="guides-side">
-          <span class="tag-eyebrow tag-eyebrow--soft">Últimas guías</span>
-          {otherGuides.map((g) => (
-            <a href={`/guia/${g.slug}`} class="guide-mini">
-              <!-- FOTO PENDIENTE: miniatura de guia — cuadrada, minimo 96×96 px -->
-              <div class="guide-thumb" data-medidas="96×96" aria-hidden="true"></div>
+  <section class="container home-section">
+    <div class="section-head">
+      <h2>Guías de cuidado</h2>
+      <a href="/guia" class="see-all">Ver todas</a>
+    </div>
+    <div class="guides-grid">
+      <a href={`/guia/${mainGuide.slug}`} class="guide-main">
+        <!-- FOTO PENDIENTE: guia principal — apaisada, minimo 1000×560 px -->
+        <div class="guide-photo" data-medidas="Foto · 1000×560" aria-hidden="true"></div>
+        <h3>{mainGuide.title}</h3>
+        <p>{mainGuide.excerpt}</p>
+      </a>
+      <div class="guides-side">
+        <p class="guides-side-kicker">Últimas guías</p>
+        {
+          otherGuides.map((g) => (
+            <a href={`/guia/${g.slug}`} class="guide-row">
+              <!-- FOTO PENDIENTE: miniatura de guia — cuadrada, minimo 200×200 px -->
+              <div class="guide-thumb" data-medidas="200×200" aria-hidden="true" />
               <div>
                 <h4>{g.title}</h4>
-                <p>{g.excerpt}</p>
+                <p class="guide-row-excerpt">{g.excerpt}</p>
               </div>
             </a>
-          ))}
-        </div>
+          ))
+        }
       </div>
     </div>
   </section>
 
-  <section class="news-band">
-    <div class="container news-inner">
-      <p class="news-copy">Recibe lo que sale del vivero, avisos de temporada y ofertas.</p>
-      <form class="news-form" data-news-form>
-        <input type="email" name="email" placeholder="Tu correo" required aria-label="Tu correo" />
-        <button type="submit" class="btn btn--green">Suscribirme</button>
-      </form>
-    </div>
-  </section>
+  <NewsletterBand />
 </Base>
-
-<script>
-  import { whatsappLink } from '../lib/site';
-
-  // Sin backend de newsletter todavia: la suscripcion llega por WhatsApp.
-  const form = document.querySelector('[data-news-form]') as HTMLFormElement | null;
-  form?.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const email = (form.elements.namedItem('email') as HTMLInputElement).value;
-    window.open(
-      whatsappLink(`Hola, quiero recibir novedades del vivero. Mi correo: ${email}`),
-      '_blank',
-      'noopener'
-    );
-  });
-</script>
 
 <style>
   /* Hero */
@@ -291,8 +280,6 @@ const reviews = [
     overflow: hidden;
     border-bottom: 1px solid var(--line);
     background: var(--card-dark);
-    display: flex;
-    align-items: center;
   }
 
   .hero-photo {
@@ -318,150 +305,154 @@ const reviews = [
   .hero-scrim {
     position: absolute;
     inset: 0;
-    background: linear-gradient(to right, rgba(27, 42, 31, 0.88) 0%, rgba(27, 42, 31, 0.7) 45%, rgba(27, 42, 31, 0.42) 100%);
+    background: linear-gradient(
+      to right,
+      rgba(27, 42, 31, 0.88) 0%,
+      rgba(27, 42, 31, 0.7) 45%,
+      rgba(27, 42, 31, 0.42) 100%
+    );
   }
 
-  .hero-inner {
-    position: relative;
-    width: 100%;
+  .hero-content {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
   }
 
-  .hero-copy {
-    max-width: 600px;
-    color: #eef5f0;
-  }
+  .hero-copy { max-width: 600px; color: #eef5f0; }
 
-  .hero-eyebrow {
-    display: block;
-    font-size: 0.72rem;
+  .hero-kicker {
+    font-size: 11px;
     letter-spacing: 0.18em;
     text-transform: uppercase;
     color: #ffffff;
-    margin-bottom: 1.15rem;
+    margin: 0 0 18.4px;
   }
 
-  .hero-copy h1 { color: #eef5f0; margin-bottom: 1.15rem; }
+  .hero h1 {
+    font-weight: 400;
+    font-size: clamp(34px, 5vw, 62px);
+    line-height: 1.06;
+    letter-spacing: -0.015em;
+    margin: 0 0 18.4px;
+    color: #eef5f0;
+  }
 
-  .hero-accent {
-    color: #8ce6a8;
+  .hero-underline {
+    color: var(--green-light);
     text-decoration: underline;
     text-decoration-thickness: 2px;
     text-underline-offset: 6px;
   }
 
-  .hero-lead {
-    font-size: 1.1rem;
+  .hero-sub {
+    font-size: 17px;
     line-height: 1.6;
     color: rgba(255, 255, 255, 0.86);
     max-width: 34rem;
-    margin-bottom: 1.7rem;
+    margin: 0 0 27.6px;
   }
 
-  .hero-ctas {
-    display: flex;
-    gap: 0.85rem;
-    flex-wrap: wrap;
-  }
+  .hero-ctas { display: flex; gap: 13.8px; flex-wrap: wrap; }
 
-  .btn--light {
+  .hero-btn { font-size: 16px; padding: 15px 28px; }
+
+  .hero-btn--light {
     background: #f4f7f1;
     border-color: #f4f7f1;
     color: #16321f;
   }
 
-  .btn--light:hover { background: #ffffff; color: #16321f; }
+  .hero-btn--light:hover { background: #ffffff; color: #16321f; }
 
-  @media (max-width: 700px) {
-    .hero { height: auto; padding: 4rem 0; }
-  }
-
-  /* Banda de confianza */
-  .trust-band {
+  /* Franja de garantias */
+  .assurance-band {
     background: var(--surface-2);
     border-bottom: 1px solid var(--line);
   }
 
-  .trust-row {
+  .assurance-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 1.7rem;
-    padding-top: 1.7rem;
-    padding-bottom: 1.7rem;
+    gap: 27.6px;
+    padding-top: 27.6px;
+    padding-bottom: 27.6px;
   }
 
-  .trust-item {
+  .assurance-grid > div {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 0.55rem;
+    gap: 9.2px;
     text-align: center;
-    font-size: 1.05rem;
+    font-size: 17px;
   }
 
-  .trust-item svg { color: var(--green); }
+  .assurance-grid :global(.assurance-icon) { color: var(--green); }
 
-  @media (max-width: 800px) {
-    .trust-row { grid-template-columns: repeat(2, 1fr); }
-  }
+  /* Secciones */
+  .home-section { padding-top: 73.6px; }
+  .home-section--first { padding-top: 73.6px; }
+  .home-section--tight { padding-top: 55px; }
 
-  /* Encabezados de seccion */
   .section-head {
     display: flex;
     align-items: baseline;
     justify-content: space-between;
-    gap: 1.7rem;
-    flex-wrap: wrap;
-    margin-bottom: 1.7rem;
+    gap: 27.6px;
+    margin-bottom: 27.6px;
   }
 
-  .section-head h2 { margin: 0; }
+  .section-head h2,
+  .tiles-title { font-size: 36px; margin: 0; }
+
+  .tiles-title { margin-bottom: 27.6px; }
 
   .see-all {
-    font-size: 0.82rem;
+    font-size: 13px;
     text-decoration: underline;
     color: var(--green-deep);
+    white-space: nowrap;
   }
 
-  .rule {
+  .section-rule {
     height: 1px;
     border: 0;
-    margin: 0 0 2.3rem;
+    margin: 0 0 36.8px;
     background: var(--line);
   }
 
-  .rule--bottom { margin: 2.3rem 0 0; }
+  .section-rule--after { margin: 36.8px 0 0; }
 
-  /* Banners interior / patio */
+  .cards-4 {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 18.4px;
+  }
+
+  /* Interior / Patio */
   .duo-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 1.7rem;
-  }
-
-  @media (max-width: 800px) {
-    .duo-grid { grid-template-columns: 1fr; }
+    gap: 27.6px;
   }
 
   .duo-card {
     position: relative;
     display: block;
     aspect-ratio: 16 / 10;
-    border-radius: 24px;
+    border-radius: var(--radius-photo);
     overflow: hidden;
     outline: 1px solid var(--line);
     background: var(--surface-2);
     color: #eef5f0;
-    text-decoration: none;
   }
 
   .duo-card:hover { text-decoration: none; color: #eef5f0; }
   .duo-card:hover h3 { text-decoration: underline; }
 
-  .duo-photo {
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(150deg, var(--green-tint), var(--surface-2));
-  }
+  .duo-photo { position: absolute; inset: 0; background: var(--surface-2); }
 
   .duo-photo::after {
     content: attr(data-medidas);
@@ -477,10 +468,17 @@ const reviews = [
     border-radius: 999px;
   }
 
-  .duo-scrim {
+  .duo-overlay {
     position: absolute;
     inset: 0;
-    background: linear-gradient(to top, rgba(27, 42, 31, 0.94) 0%, rgba(27, 42, 31, 0.9) 30%, rgba(27, 42, 31, 0.8) 48%, rgba(27, 42, 31, 0.35) 72%, rgba(27, 42, 31, 0) 100%);
+    background: linear-gradient(
+      to top,
+      rgba(27, 42, 31, 0.94) 0%,
+      rgba(27, 42, 31, 0.9) 30%,
+      rgba(27, 42, 31, 0.8) 48%,
+      rgba(27, 42, 31, 0.35) 72%,
+      rgba(27, 42, 31, 0) 100%
+    );
     pointer-events: none;
   }
 
@@ -489,86 +487,76 @@ const reviews = [
     left: 0;
     right: 0;
     bottom: 0;
-    padding: 1.7rem;
+    padding: 27.6px;
     display: flex;
     flex-direction: column;
-    gap: 0.55rem;
+    gap: 9.2px;
   }
 
-  .tag-eyebrow {
-    font-size: 0.72rem;
+  .duo-kicker {
+    font-size: 11px;
     letter-spacing: 0.16em;
     text-transform: uppercase;
     color: #ffffff;
+    margin: 0;
   }
 
-  .tag-eyebrow--soft { color: var(--ink-soft); }
-
   .duo-copy h3 {
-    font-size: 2rem;
+    font-weight: 600;
+    font-size: 32px;
     line-height: 1.1;
     margin: 0;
     color: #eef5f0;
   }
 
-  .duo-copy p {
-    font-size: 0.9rem;
+  .duo-sub {
+    font-size: 14px;
     line-height: 1.6;
     color: rgba(255, 255, 255, 0.82);
     margin: 0;
     max-width: 28rem;
   }
 
-  /* Teselas de categoria */
-  .tile-grid {
+  /* Tiles de coleccion y tipo */
+  .tiles-6 {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 1.15rem;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 18.4px;
   }
 
-  @media (max-width: 800px) {
-    .tile-grid { grid-template-columns: repeat(2, 1fr); }
-  }
-
-  .cat-tile {
+  .tile {
     display: flex;
     align-items: center;
     justify-content: center;
     text-align: center;
     min-height: 96px;
-    padding: 1.15rem 0.85rem;
-    border: 1px solid rgba(27, 42, 31, 0.2);
+    padding: 18.4px 13.8px;
+    border: 1px solid var(--line-strong);
     border-radius: var(--radius-lg);
     background: var(--bg);
     color: var(--ink);
-    font-size: 0.95rem;
+    font-size: 15px;
     font-weight: 500;
   }
 
-  .cat-tile:hover {
+  .tile:hover {
     background: var(--surface-2);
-    color: var(--ink);
     text-decoration: none;
+    color: var(--ink);
   }
 
   /* Banda del quiz */
   .quiz-band {
+    margin-top: 73.6px;
     position: relative;
-    margin-top: 2.3rem;
-    min-height: 460px;
-    display: flex;
-    align-items: center;
-    overflow: hidden;
     border-top: 1px solid var(--line);
     border-bottom: 1px solid var(--line);
-    background: var(--surface);
+    height: 460px;
+    overflow: hidden;
+    background: #f4f7f1;
   }
 
-  .quiz-photo {
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(120deg, var(--green-tint), var(--surface) 55%, var(--surface-2));
-  }
+  .quiz-photo { position: absolute; inset: 0; background: var(--green-tint); }
 
   .quiz-photo::after {
     content: attr(data-medidas);
@@ -584,49 +572,49 @@ const reviews = [
     border-radius: 999px;
   }
 
-  .quiz-inner {
-    position: relative;
-    width: 100%;
+  .quiz-content {
+    position: absolute;
+    inset: 0;
     display: flex;
-    justify-content: flex-end;
-    padding-top: 2.3rem;
-    padding-bottom: 2.3rem;
+    align-items: center;
   }
+
+  .quiz-align { width: 100%; display: flex; justify-content: flex-end; }
 
   .quiz-card {
     max-width: 420px;
     background: var(--bg);
     border: 1px solid var(--line);
-    padding: 2.3rem;
+    padding: 36.8px;
+  }
+
+  .quiz-card h2 {
+    font-size: 32px;
+    line-height: 1.1;
+    margin: 0 0 13.8px;
   }
 
   .quiz-card p {
-    font-size: 0.95rem;
+    font-size: 15px;
     line-height: 1.6;
-    color: var(--ink-soft);
-    margin-bottom: 1.4rem;
+    color: rgba(27, 42, 31, 0.75);
+    margin: 0 0 22px;
   }
 
   /* Club */
   .club-grid {
     display: grid;
     grid-template-columns: 1fr 1.4fr;
-    gap: 3.4rem;
+    gap: 55px;
     align-items: center;
   }
 
-  @media (max-width: 800px) {
-    .club-grid { grid-template-columns: 1fr; gap: 1.7rem; }
-  }
-
-  .club-figure { margin: 0; }
-
   .club-photo {
     position: relative;
-    border-radius: 24px;
+    border-radius: var(--radius-photo);
     overflow: hidden;
     outline: 1px solid rgba(27, 42, 31, 0.12);
-    background: linear-gradient(160deg, var(--green-tint), var(--surface-2));
+    background: var(--surface-2);
     min-height: 280px;
   }
 
@@ -645,94 +633,101 @@ const reviews = [
     border-radius: 999px;
   }
 
-  /* Paisajismo */
-  .pais-title {
-    font-weight: 400;
-    font-size: clamp(2rem, 4vw, 2.9rem);
+  .kicker {
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--green-deep);
+    margin: 0 0 13.8px;
   }
 
-  .pais-ctas {
-    display: flex;
-    gap: 0.85rem;
-    flex-wrap: wrap;
-    margin-top: 0.85rem;
+  .club-grid h2 { font-size: 36px; line-height: 1.1; margin: 0 0 13.8px; }
+
+  .club-copy {
+    font-size: 16px;
+    line-height: 1.65;
+    color: rgba(27, 42, 31, 0.75);
+    max-width: 38rem;
+    margin-bottom: 9.2px;
   }
+
+  /* Paisajismo */
+  .paisajismo-title {
+    font-weight: 400;
+    font-size: clamp(32px, 4vw, 46px);
+    line-height: 1.08;
+    margin: 0 0 18.4px;
+  }
+
+  .paisajismo-copy {
+    font-size: 16px;
+    line-height: 1.65;
+    color: rgba(27, 42, 31, 0.75);
+    max-width: 34rem;
+  }
+
+  .paisajismo-btn { margin-top: 13.8px; }
 
   /* Resenas */
   .reviews-band {
     background: var(--surface-2);
     border-top: 1px solid var(--line);
     border-bottom: 1px solid var(--line);
-    margin-top: 3.5rem;
-    padding: 3.4rem 0;
+    margin-top: 73.6px;
   }
 
-  .reviews-band h2 { margin-bottom: 2.3rem; }
+  .reviews-inner { padding-top: 55px; padding-bottom: 55px; }
+  .reviews-inner h2 { font-size: 36px; margin: 0 0 36.8px; }
 
   .reviews-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 1.7rem;
-  }
-
-  @media (max-width: 800px) {
-    .reviews-grid { grid-template-columns: 1fr; }
+    gap: 27.6px;
   }
 
   .review-card {
     margin: 0;
-    padding: 1.7rem;
+    padding: 27.6px;
     border: 1px solid var(--line);
     background: var(--bg);
     display: flex;
     flex-direction: column;
-    gap: 0.85rem;
+    gap: 13.8px;
   }
 
-  .stars {
-    color: var(--green);
-    letter-spacing: 0.2em;
-    font-size: 0.82rem;
-  }
+  .review-stars { color: var(--green); letter-spacing: 0.2em; font-size: 13px; }
 
   .review-card blockquote {
     margin: 0;
-    font-size: 0.95rem;
+    font-size: 15px;
     line-height: 1.65;
   }
 
   .review-card figcaption {
-    font-size: 0.75rem;
+    font-size: 12px;
     letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: var(--ink-soft);
+    color: var(--ink-faint);
   }
 
   /* Guias */
   .guides-grid {
     display: grid;
     grid-template-columns: 1.5fr 1fr;
-    gap: 2.3rem;
+    gap: 36.8px;
+    padding-bottom: 73.6px;
   }
 
-  @media (max-width: 800px) {
-    .guides-grid { grid-template-columns: 1fr; }
-  }
-
-  .guide-main {
-    display: block;
-    color: var(--ink);
-  }
-
+  .guide-main { display: block; color: var(--ink); }
   .guide-main:hover { text-decoration: none; color: var(--ink); }
   .guide-main:hover h3 { text-decoration: underline; }
 
   .guide-photo {
     position: relative;
-    border-radius: 24px;
+    border-radius: var(--radius-photo);
     overflow: hidden;
     outline: 1px solid rgba(27, 42, 31, 0.12);
-    background: linear-gradient(160deg, var(--green-tint), var(--surface-2));
+    background: var(--surface-2);
     min-height: 280px;
   }
 
@@ -754,109 +749,99 @@ const reviews = [
   }
 
   .guide-main h3 {
-    font-size: 1.6rem;
+    font-weight: 600;
+    font-size: 27px;
     line-height: 1.15;
-    margin: 1.15rem 0 0.55rem;
+    margin: 18.4px 0 9.2px;
   }
 
   .guide-main p {
-    font-size: 0.95rem;
+    font-size: 15px;
     line-height: 1.65;
-    color: var(--ink-soft);
+    color: rgba(27, 42, 31, 0.75);
     margin: 0;
   }
 
   .guides-side {
     display: flex;
     flex-direction: column;
-    gap: 1.15rem;
+    gap: 18.4px;
     border-left: 1px solid var(--line);
-    padding-left: 2.3rem;
+    padding-left: 36.8px;
   }
 
-  @media (max-width: 800px) {
-    .guides-side { border-left: 0; padding-left: 0; }
+  .guides-side-kicker {
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin: 0;
   }
 
-  .guide-mini {
+  .guide-row {
     display: grid;
     grid-template-columns: 96px 1fr;
-    gap: 0.85rem;
+    gap: 13.8px;
     align-items: start;
     color: var(--ink);
-    padding-bottom: 1.15rem;
+    padding-bottom: 18.4px;
     border-bottom: 1px solid var(--line);
   }
 
-  .guide-mini:hover { text-decoration: none; color: var(--ink); }
-  .guide-mini:hover h4 { text-decoration: underline; }
+  .guide-row:hover { text-decoration: none; color: var(--ink); }
+  .guide-row:hover h4 { text-decoration: underline; }
 
   .guide-thumb {
     position: relative;
-    width: 96px;
-    height: 96px;
-    border-radius: 14px;
+    aspect-ratio: 1 / 1;
+    border-radius: var(--radius);
     overflow: hidden;
     outline: 1px solid rgba(27, 42, 31, 0.12);
-    background: linear-gradient(160deg, var(--green-tint), var(--surface-2));
+    background: var(--surface-2);
   }
 
-  .guide-mini h4 {
-    font-size: 1.1rem;
+  .guide-row h4 {
+    font-weight: 600;
+    font-size: 18px;
     line-height: 1.2;
-    margin: 0 0 0.3rem;
+    margin: 0 0 5px;
   }
 
-  .guide-mini p {
-    font-size: 0.78rem;
-    color: var(--ink-soft);
-    margin: 0;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-
-  /* Newsletter */
-  .news-band {
-    margin-top: 3.5rem;
-    border-top: 1px solid var(--line);
-    border-bottom: 1px solid var(--line);
-  }
-
-  .news-inner {
-    padding-top: 2.3rem;
-    padding-bottom: 2.3rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 1.7rem;
-    flex-wrap: wrap;
-  }
-
-  .news-copy {
-    font-size: 1.35rem;
+  .guide-row-excerpt {
+    font-size: 12px;
+    color: var(--ink-faint);
     margin: 0;
   }
 
-  .news-form {
-    display: flex;
-    gap: 0.55rem;
-    align-items: center;
-  }
+  /* Movil (768px, punto de quiebre unificado del handoff) */
+  @media (max-width: 768px) {
+    .hero { height: auto; }
 
-  .news-form input {
-    min-width: 260px;
-    min-height: 40px;
-    padding: 6px 14px;
-    font-size: 0.9rem;
-    background: transparent;
-    border: 1px solid var(--line);
-    border-radius: 999px;
-  }
+    .hero-content { position: relative; padding: 55px 0; }
 
-  @media (max-width: 560px) {
-    .news-form { flex-wrap: wrap; }
-    .news-form input { min-width: 0; flex: 1; }
+    .assurance-grid { grid-template-columns: repeat(2, 1fr); }
+
+    .cards-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+    .duo-grid { grid-template-columns: 1fr; }
+
+    .tiles-6 { grid-template-columns: repeat(2, 1fr); }
+
+    .section-head h2,
+    .tiles-title,
+    .reviews-inner h2,
+    .club-grid h2 { font-size: 25px; }
+
+    .quiz-band { height: auto; }
+    .quiz-content { position: relative; padding: 36.8px 0; }
+    .quiz-align { justify-content: stretch; }
+    .quiz-card { max-width: none; width: 100%; }
+
+    .club-grid { grid-template-columns: 1fr; gap: 27.6px; }
+
+    .reviews-grid { grid-template-columns: 1fr; }
+
+    .guides-grid { grid-template-columns: 1fr; }
+    .guides-side { border-left: 0; padding-left: 0; }
   }
 </style>
