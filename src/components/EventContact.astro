@@ -1,0 +1,188 @@
+---
+// Bloque de contacto de eventos (mismo patron que ServiceContact): foto
+// oscura a la izquierda y formulario con fecha y tipo de evento a la
+// derecha; el tipo llega preseleccionado desde cada mini pagina.
+import Icon from './Icon.astro';
+import { SITE, whatsappLink } from '../lib/site';
+import { eventFormTypes } from '../data/events';
+
+interface Props {
+  selectedType?: string;
+  whatsappMessage?: string;
+}
+
+const { selectedType, whatsappMessage = 'Hola, quiero cotizar plantas para un evento.' } = Astro.props;
+---
+
+<section class="container contact-split-wrap">
+  <div class="contact-split">
+    <div class="contact-photo-col">
+      <!-- FOTO PENDIENTE: lateral del formulario — vertical, minimo 640×760 px -->
+      <div class="contact-photo" data-medidas="Foto · 640×760" aria-hidden="true"></div>
+      <div class="contact-scrim" aria-hidden="true"></div>
+      <div class="contact-copy">
+        <h2>Cuéntanos de tu evento</h2>
+        <p>Fecha, lugar y cantidad de invitados. Con eso te armamos la propuesta y el presupuesto.</p>
+        <a href={whatsappLink(whatsappMessage)} class="btn btn--green" target="_blank" rel="noopener">
+          Escríbenos por WhatsApp
+        </a>
+        <div class="contact-facts">
+          <span><Icon name="clock" size={17} class="fact-icon" /> <strong>Horario:</strong> {SITE.hours}</span>
+          <span><Icon name="map-pin" size={17} class="fact-icon" /> {SITE.address}</span>
+        </div>
+      </div>
+    </div>
+    <form class="contact-form" data-evento-form>
+      <div class="field">
+        <label for="e-nombre">Nombre</label>
+        <input type="text" id="e-nombre" name="nombre" required />
+      </div>
+      <div class="field">
+        <label for="e-contacto">WhatsApp o correo</label>
+        <input type="text" id="e-contacto" name="contacto" placeholder="+507 …" required />
+      </div>
+      <div class="two-col">
+        <div class="field">
+          <label for="e-fecha">Fecha del evento</label>
+          <input type="date" id="e-fecha" name="fecha" />
+        </div>
+        <div class="field">
+          <label for="e-tipo">Tipo de evento</label>
+          <select id="e-tipo" name="tipo">
+            {
+              eventFormTypes.map((t) => (
+                <option value={t} selected={t === selectedType}>{t}</option>
+              ))
+            }
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label for="e-detalle">Lugar e invitados</label>
+        <textarea
+          id="e-detalle"
+          name="detalle"
+          rows="4"
+          placeholder="Ej. salón en Costa del Este, 120 invitados"
+        ></textarea>
+      </div>
+      <button type="submit" class="btn btn--green form-submit">Solicitar propuesta</button>
+    </form>
+  </div>
+</section>
+
+<script>
+  import { whatsappLink } from '../lib/site';
+
+  // Formulario de eventos → WhatsApp (sin backend de formularios).
+  const form = document.querySelector<HTMLFormElement>('[data-evento-form]');
+  form?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    if (!form.reportValidity()) return;
+    const d = new FormData(form);
+    const message =
+      `Hola, quiero cotizar plantas para un evento.\n\n` +
+      `Nombre: ${d.get('nombre')}\nContacto: ${d.get('contacto')}\n` +
+      `Fecha: ${d.get('fecha') || 'Por definir'}\nTipo: ${d.get('tipo')}\n` +
+      `Lugar e invitados: ${d.get('detalle') || '—'}`;
+    window.open(whatsappLink(message), '_blank', 'noopener');
+  });
+</script>
+
+<style>
+  .contact-split-wrap { padding: 0 1.5rem 4.6rem; }
+
+  .contact-split {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+    border-radius: 20px;
+    overflow: hidden;
+    outline: 1px solid var(--line);
+  }
+
+  .contact-photo-col {
+    position: relative;
+    min-height: 540px;
+    background: var(--card-dark);
+  }
+
+  .contact-photo {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(150deg, #2a4432, var(--card-dark) 70%);
+  }
+
+  .contact-photo::after {
+    content: attr(data-medidas);
+    position: absolute;
+    right: 12px;
+    top: 12px;
+    z-index: 1;
+    font-size: 0.6rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: rgba(238, 245, 240, 0.7);
+    background: rgba(27, 42, 31, 0.55);
+    padding: 2px 8px;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+
+  .contact-scrim {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom, rgba(27, 42, 31, 0.55), rgba(27, 42, 31, 0.78));
+  }
+
+  .contact-copy {
+    position: relative;
+    padding: 2.9rem;
+    color: #ffffff;
+  }
+
+  .contact-copy h2 {
+    color: #ffffff;
+    font-weight: 400;
+    font-size: clamp(1.7rem, 3vw, 2.5rem);
+    margin: 0 0 1.15rem;
+  }
+
+  .contact-copy > p {
+    color: rgba(255, 255, 255, 0.85);
+    margin: 0 0 1.7rem;
+    max-width: 32rem;
+  }
+
+  .contact-facts {
+    border-top: 1px solid rgba(255, 255, 255, 0.25);
+    margin-top: 2.3rem;
+    padding-top: 1.4rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    font-size: 0.95rem;
+  }
+
+  .contact-facts span { display: flex; align-items: center; gap: 10px; }
+
+  :global(.fact-icon) { color: var(--green-light); flex: none; }
+
+  .contact-form {
+    background: #ffffff;
+    padding: 2.9rem;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0 0.85rem;
+  }
+
+  @media (max-width: 560px) {
+    .two-col { grid-template-columns: 1fr; }
+  }
+
+  .form-submit { justify-content: center; }
+</style>

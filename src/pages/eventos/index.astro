@@ -1,0 +1,189 @@
+---
+// Indice de eventos: navbar completo del sitio y hero oscuro compacto
+// (mismo patron que /servicios), con las tres tarjetas que abren cada mini
+// pagina. Las mini paginas van sin navbar (chrome bare).
+import Base from '../../layouts/Base.astro';
+import EventContact from '../../components/EventContact.astro';
+import ObraBand from '../../components/ObraBand.astro';
+import { events } from '../../data/events';
+---
+
+<Base
+  title="Plantas para eventos"
+  description="Alquiler y montaje de plantas para bodas, ferias y activaciones en Panamá. Entrega, montaje y retiro incluidos."
+  whatsappMessage="Hola, quiero cotizar plantas para un evento."
+>
+  <section class="svc-hero">
+    <!-- FOTO PENDIENTE: banda de eventos — a lo ancho, minimo 1920×220 px -->
+    <div class="svc-hero-photo" data-medidas="Foto banda · 1920×220" aria-hidden="true"></div>
+    <div class="svc-hero-scrim" aria-hidden="true"></div>
+    <div class="container svc-hero-inner">
+      <p class="svc-crumb"><a href="/">Inicio</a> / Eventos</p>
+      <h1>Eventos</h1>
+      <p class="svc-sub">
+        Alquilamos y montamos plantas para bodas, ferias y activaciones. Entrega, montaje y retiro
+        incluidos.
+      </p>
+    </div>
+  </section>
+
+  <section class="container services-grid-wrap">
+    <div class="services-grid">
+      {
+        events.map((e) => (
+          <a href={`/eventos/${e.slug}`} class="service-card">
+            <!-- FOTO PENDIENTE: evento {e.slug} — 4:3, minimo 800×600 px -->
+            <div class="service-photo" data-medidas="Foto 4:3 · 800×600" aria-hidden="true" />
+            <div class="service-copy">
+              <h2>{e.name}</h2>
+              <p>{e.cardLine}</p>
+              <span class="btn btn--green service-btn">Ver el servicio</span>
+            </div>
+          </a>
+        ))
+      }
+    </div>
+  </section>
+
+  <ObraBand />
+
+  <EventContact />
+</Base>
+
+<style>
+  /* Hero compacto: mismo lenguaje que el hero del catalogo, mas bajo. */
+  .svc-hero {
+    position: relative;
+    height: 220px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    background: var(--card-dark);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .svc-hero-photo {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(150deg, #2a4432, var(--card-dark) 70%);
+  }
+
+  .svc-hero-photo::after {
+    content: attr(data-medidas);
+    position: absolute;
+    right: 14px;
+    top: 14px;
+    font-size: 0.62rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(238, 245, 240, 0.65);
+    background: rgba(27, 42, 31, 0.55);
+    padding: 2px 8px;
+    border-radius: 999px;
+  }
+
+  .svc-hero-scrim {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to right, rgba(27, 42, 31, 0.72), rgba(27, 42, 31, 0.25));
+  }
+
+  .svc-hero-inner { position: relative; width: 100%; }
+
+  .svc-crumb {
+    font-size: 0.72rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: #8ce6a8;
+    margin: 0 0 0.55rem;
+  }
+
+  .svc-crumb a { color: #8ce6a8; }
+
+  .svc-hero h1 {
+    color: #eef5f0;
+    font-weight: 600;
+    font-size: clamp(2rem, 4vw, 2.9rem);
+    margin: 0;
+  }
+
+  .svc-sub {
+    font-size: 1.05rem;
+    color: rgba(255, 255, 255, 0.85);
+    margin: 0.55rem 0 0;
+    max-width: 38rem;
+  }
+
+  /* Tarjetas de eventos (mismo patron que /servicios) */
+  .services-grid-wrap { padding-top: 2.3rem; padding-bottom: 74px; }
+
+  .services-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 27.6px;
+  }
+
+  @media (max-width: 768px) {
+    .services-grid { grid-template-columns: 1fr; }
+  }
+
+  .service-card {
+    display: flex;
+    flex-direction: column;
+    background: #ffffff;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-cart);
+    overflow: hidden;
+    color: var(--ink);
+  }
+
+  .service-card:hover { text-decoration: none; color: var(--ink); border-color: var(--green); }
+  .service-card:hover h2 { text-decoration: underline; }
+
+  .service-photo {
+    position: relative;
+    aspect-ratio: 4 / 3;
+    background: var(--surface-2);
+  }
+
+  .service-photo::after {
+    content: attr(data-medidas);
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 0.6rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: rgba(27, 42, 31, 0.5);
+    background: rgba(238, 245, 240, 0.85);
+    padding: 2px 7px;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+
+  .service-copy {
+    padding: 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 9.2px;
+    flex: 1;
+  }
+
+  .service-copy h2 { font-size: 22px; font-weight: 600; margin: 0; }
+
+  .service-copy p {
+    font-size: 15px;
+    line-height: 1.6;
+    color: var(--ink-soft);
+    margin: 0;
+    flex: 1;
+  }
+
+  .service-btn {
+    justify-content: center;
+    align-self: flex-start;
+    font-size: 15px;
+    padding: 12px 24px;
+  }
+</style>

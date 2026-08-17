@@ -1,0 +1,337 @@
+---
+// Mini pagina de un tipo de evento: mismo diseno que las mini paginas de
+// servicios (hero con pildora, pestañas, bloque con checks y foto, galeria,
+// tarjetas informativas, banda de mayoristas y contacto), con el contenido
+// de src/data/events.ts. La flecha vuelve a /eventos.
+import Base from '../../layouts/Base.astro';
+import BackArrow from '../../components/BackArrow.astro';
+import EventContact from '../../components/EventContact.astro';
+import Icon from '../../components/Icon.astro';
+import MiniFooter from '../../components/MiniFooter.astro';
+import ObraBand from '../../components/ObraBand.astro';
+import { whatsappLink } from '../../lib/site';
+import { eventCards, events } from '../../data/events';
+
+export function getStaticPaths() {
+  return events.map((event) => ({
+    params: { slug: event.slug },
+    props: { event },
+  }));
+}
+
+const { event } = Astro.props;
+---
+
+<Base
+  title={event.metaTitle}
+  description={event.metaDescription}
+  chrome="bare"
+  whatsappMessage={event.whatsappMessage}
+>
+  <BackArrow href="/eventos" />
+
+  <section class="ev-hero">
+    <!-- FOTO PENDIENTE: hero de eventos ({event.slug}) — banda a lo ancho, minimo 1920×600 px -->
+    <div class="ev-hero-photo" data-medidas="Foto hero · 1920×600" aria-hidden="true"></div>
+    <div class="ev-hero-scrim" aria-hidden="true"></div>
+    <div class="ev-hero-copy">
+      <span class="hero-pill">{event.heroKicker}</span>
+      <h1>{event.heroTitle}</h1>
+      <span class="hero-divider" aria-hidden="true"></span>
+      <p>{event.heroSub}</p>
+    </div>
+  </section>
+
+  <section class="container ev-main">
+    <div class="ev-tabs" aria-label="Tipo de evento">
+      {
+        events.map((e) => (
+          <a href={`/eventos/${e.slug}`} class:list={['ev-tab', { on: e.slug === event.slug }]}>
+            {e.name}
+          </a>
+        ))
+      }
+    </div>
+
+    <div class="ev-block">
+      <div>
+        <span class="eyebrow">{event.blockKicker}</span>
+        <h2>{event.blockTitle}</h2>
+        {event.description.map((p) => <p class="ev-body">{p}</p>)}
+        <ul class="ev-features">
+          {
+            event.incluye.map((f) => (
+              <li>
+                <Icon name="check" size={17} class="check-icon" /> {f}
+              </li>
+            ))
+          }
+        </ul>
+        <a href={whatsappLink(event.whatsappMessage)} class="btn btn--ghost" target="_blank" rel="noopener">
+          Cotizar por WhatsApp
+        </a>
+      </div>
+      <!-- FOTO PENDIENTE: foto del bloque ({event.slug}) — vertical, minimo 640×760 px -->
+      <div class="ev-photo" data-medidas="Foto · 640×760" aria-hidden="true"></div>
+    </div>
+  </section>
+
+  <section class="ev-gallery-band">
+    <div class="container">
+      <span class="eyebrow">Montajes recientes</span>
+      <h2 class="gallery-title">Cómo se ve en el lugar</h2>
+      <!-- FOTOS PENDIENTES: 4 montajes de {event.slug} — bloques de minimo 480×300 px c/u -->
+      <div class="ev-gallery">
+        {[1, 2, 3, 4].map(() => (
+          <div class="gallery-photo" data-medidas="Foto · 480×300" aria-hidden="true"></div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="container ev-cards">
+    {
+      eventCards.map((c) => (
+        <div class="ev-card">
+          <span class="ev-icon" aria-hidden="true">
+            <Icon name={c.icon as any} size={22} />
+          </span>
+          <p class="ev-card-title">{c.title}</p>
+          <p class="ev-card-body">{c.body}</p>
+        </div>
+      ))
+    }
+  </section>
+
+  <ObraBand />
+
+  <EventContact selectedType={event.formType} whatsappMessage={event.whatsappMessage} />
+
+  <MiniFooter
+    thirdTitle="Eventos"
+    thirdLinks={events.map((e) => ({ href: `/eventos/${e.slug}`, label: e.name }))}
+  />
+</Base>
+
+<style>
+  /* Hero (mismo patron que servicios/eventos del handoff) */
+  .ev-hero {
+    position: relative;
+    height: 600px;
+    overflow: hidden;
+    background: var(--card-dark);
+  }
+
+  .ev-hero-photo {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(150deg, #2a4432, var(--card-dark) 70%);
+  }
+
+  .ev-hero-photo::after,
+  .ev-photo::after,
+  .gallery-photo::after {
+    content: attr(data-medidas);
+    position: absolute;
+    right: 12px;
+    top: 12px;
+    z-index: 1;
+    font-size: 0.6rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: rgba(238, 245, 240, 0.7);
+    background: rgba(27, 42, 31, 0.55);
+    padding: 2px 8px;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+
+  .gallery-photo::after {
+    color: rgba(27, 42, 31, 0.5);
+    background: rgba(238, 245, 240, 0.85);
+  }
+
+  .ev-hero-scrim {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom, rgba(27, 42, 31, 0.55), rgba(27, 42, 31, 0.74));
+  }
+
+  .ev-hero-copy {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 0 2.3rem;
+    color: #ffffff;
+  }
+
+  .hero-pill {
+    display: inline-block;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    border-radius: 999px;
+    padding: 0.5rem 1.4rem;
+    font-size: 0.75rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    margin-bottom: 1.7rem;
+  }
+
+  .ev-hero-copy h1 {
+    color: #ffffff;
+    font-weight: 400;
+    font-size: clamp(2.4rem, 5.5vw, 4.5rem);
+    margin: 0;
+    max-width: 22ch;
+  }
+
+  .hero-divider {
+    width: 64px;
+    height: 2px;
+    background: #4ade80;
+    margin: 1.7rem 0;
+  }
+
+  .ev-hero-copy p {
+    font-size: 1.2rem;
+    line-height: 1.5;
+    color: #ffffff;
+    margin: 0;
+    max-width: 44ch;
+  }
+
+  /* Tabs y bloque */
+  .ev-main { padding-top: 4.6rem; }
+
+  .ev-tabs {
+    display: flex;
+    gap: 0.7rem;
+    flex-wrap: wrap;
+    margin-bottom: 2.9rem;
+  }
+
+  .ev-tab {
+    font-size: 0.88rem;
+    font-weight: 600;
+    padding: 0.7rem 1.4rem;
+    border-radius: 999px;
+    border: 1px solid rgba(27, 42, 31, 0.25);
+    color: var(--ink);
+  }
+
+  .ev-tab:hover { text-decoration: none; color: var(--ink); }
+
+  .ev-tab.on {
+    background: var(--green-deep);
+    border-color: var(--green-deep);
+    color: #ffffff;
+  }
+
+  .ev-block {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 3.4rem;
+    align-items: center;
+    margin-bottom: 4.6rem;
+  }
+
+  .ev-block h2 {
+    font-weight: 400;
+    font-size: clamp(1.9rem, 3.5vw, 2.75rem);
+    line-height: 1.1;
+    margin: 0 0 1.15rem;
+  }
+
+  .ev-body {
+    font-size: 1.05rem;
+    line-height: 1.65;
+    color: var(--ink-soft);
+    margin: 0 0 1.4rem;
+    max-width: 34rem;
+  }
+
+  .ev-features {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 1.7rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+    font-size: 0.95rem;
+  }
+
+  .ev-features li { display: flex; align-items: flex-start; gap: 0.7rem; }
+
+  li :global(.check-icon) { color: var(--green-deep); flex: none; margin-top: 3px; }
+
+  .ev-photo {
+    position: relative;
+    border-radius: 20px;
+    overflow: hidden;
+    outline: 1px solid rgba(27, 42, 31, 0.1);
+    background: var(--surface-2);
+    min-height: 500px;
+  }
+
+  /* Galeria */
+  .ev-gallery-band { background: var(--surface-2); }
+
+  .ev-gallery-band .container {
+    padding-top: 4.6rem;
+    padding-bottom: 4.6rem;
+  }
+
+  .gallery-title {
+    font-weight: 400;
+    font-size: clamp(1.8rem, 3vw, 2.5rem);
+    margin: 0 0 2.3rem;
+  }
+
+  .ev-gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1.15rem;
+  }
+
+  .gallery-photo {
+    position: relative;
+    height: 300px;
+    border-radius: 16px;
+    overflow: hidden;
+    outline: 1px solid rgba(27, 42, 31, 0.1);
+    background: #ffffff;
+  }
+
+  /* Tarjetas informativas */
+  .ev-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1.7rem;
+    padding-top: 4.6rem;
+    padding-bottom: 4.6rem;
+  }
+
+  .ev-card {
+    background: #ffffff;
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+  }
+
+  .ev-icon { color: var(--green-deep); display: inline-flex; }
+
+  .ev-card-title { font-size: 1.2rem; font-weight: 600; margin: 0; }
+
+  .ev-card-body {
+    margin: 0;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: var(--ink-soft);
+  }
+</style>
