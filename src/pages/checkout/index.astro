@@ -1,156 +1,382 @@
 ---
+// Checkout segun el diseno "Checkout" (claude.ai/design): formulario a la
+// izquierda y resumen en columna arena a la derecha. Compra como invitado.
+// El backend de pagos (order-api / Wompi) aun no esta desplegado: al
+// confirmar, el pedido completo se envia por WhatsApp con los datos y el
+// metodo elegido. El carrito sigue siendo src/lib/cart.ts.
 import Base from '../../layouts/Base.astro';
+
+const SHIPPING = [
+  { id: 'std', name: 'Entrega estándar', detail: '24–48 h · ciudad de Panamá', price: 0 },
+  { id: 'exp', name: 'Entrega express', detail: '24 horas · ciudad de Panamá', price: 9 },
+  { id: 'pickup', name: 'Retiro en el vivero', detail: 'Calle 11, Juan Díaz · Lun–Vie 9–5', price: 0 },
+];
+
+const PAYMENTS = [
+  { id: 'yappy', name: 'Yappy', detail: 'Pago desde tu banco' },
+  { id: 'transfer', name: 'Transferencia bancaria', detail: 'Enviamos los datos por WhatsApp' },
+  { id: 'cash', name: 'Efectivo contra entrega', detail: 'Solo ciudad de Panamá' },
+  { id: 'card', name: 'Tarjeta de crédito o débito', detail: 'Pago online muy pronto (Wompi)' },
+];
+
+const PROVINCES = [
+  'Panamá',
+  'Panamá Oeste',
+  'Colón',
+  'Coclé',
+  'Chiriquí',
+  'Herrera',
+  'Los Santos',
+  'Veraguas',
+];
 ---
 
-<Base title="Checkout" description="Finaliza tu compra como invitado. Sin crear cuenta.">
-  <section class="section">
-    <div class="container checkout-container">
-      <h1>Checkout</h1>
-      <p class="lead">Compra como invitado. No necesitas crear una cuenta.</p>
-
-      <div class="checkout-grid">
-        <form class="checkout-form" novalidate>
-          <h3>Datos de entrega</h3>
-
-          <div class="field">
-            <label for="name">Nombre completo *</label>
-            <input type="text" id="name" name="name" required autocomplete="name" />
-          </div>
-
-          <div class="field">
-            <label for="email">Correo electronico *</label>
-            <input type="email" id="email" name="email" required autocomplete="email" />
-            <p class="help">Aqui te enviaremos la confirmacion y el enlace de seguimiento.</p>
-          </div>
-
-          <div class="field">
-            <label for="phone">Telefono / WhatsApp</label>
-            <input type="tel" id="phone" name="phone" autocomplete="tel" placeholder="+507 6000-0000" />
-            <p class="help">Muy recomendado: coordinamos la entrega por WhatsApp.</p>
-          </div>
-
-          <div class="field">
-            <label for="address">Direccion de entrega *</label>
-            <textarea id="address" name="address" rows="3" required autocomplete="street-address"></textarea>
-          </div>
-
-          <div class="field">
-            <label for="notes">Notas para la entrega</label>
-            <textarea id="notes" name="notes" rows="2" placeholder="Referencias, horario preferido, etc."></textarea>
-          </div>
-
-          <button type="submit" class="btn btn--green" style="width: 100%; justify-content: center;">
-            Continuar al pago
-          </button>
-
-          <p class="form-error" hidden></p>
-          <p class="help" style="margin-top: 0.75rem;">
-            El pago se procesa de forma segura con Wompi. Antes de cobrar,
-            verificamos la disponibilidad real de cada planta.
-          </p>
-        </form>
-
-        <aside class="order-summary card">
-          <h3>Tu pedido</h3>
-          <div data-summary-items></div>
-          <div class="summary-total">
-            <span>Subtotal</span>
-            <strong data-summary-total>$0.00</strong>
-          </div>
-          <p class="help">Entrega se cotiza segun tu zona. <a href="/entrega">Ver tarifas</a>.</p>
-        </aside>
+<Base
+  title="Checkout"
+  description="Finaliza tu compra como invitado. Sin crear cuenta."
+  chrome="minimal"
+  minimalLinkHref="/carrito"
+  minimalLinkLabel="Volver al carrito"
+>
+  <div class="checkout-grid">
+    <main class="checkout-main">
+      <div class="trust-row">
+        <span>📦 Empaque seguro</span>
+        <span>💬 Asesoría por WhatsApp</span>
+        <span>🚚 Entrega 24–48 h</span>
       </div>
-    </div>
-  </section>
+
+      <form class="checkout-form" novalidate>
+        <h2>Contacto</h2>
+        <div class="fields">
+          <div class="field">
+            <label for="email">Correo electrónico *</label>
+            <input type="email" id="email" name="email" required autocomplete="email" />
+            <p class="help">Aquí te enviaremos la confirmación y el enlace de seguimiento.</p>
+          </div>
+          <div class="field">
+            <label for="phone">WhatsApp (+507) *</label>
+            <input type="tel" id="phone" name="phone" required autocomplete="tel" placeholder="+507 6000-0000" />
+            <p class="help">Coordinamos la entrega por WhatsApp.</p>
+          </div>
+        </div>
+
+        <h2>Entrega</h2>
+        <div class="fields">
+          <div class="two-col">
+            <div class="field">
+              <label for="name">Nombre *</label>
+              <input type="text" id="name" name="name" required autocomplete="given-name" />
+            </div>
+            <div class="field">
+              <label for="lastname">Apellido *</label>
+              <input type="text" id="lastname" name="lastname" required autocomplete="family-name" />
+            </div>
+          </div>
+          <div class="field">
+            <label for="province">Provincia *</label>
+            <select id="province" name="province" required>
+              {PROVINCES.map((p) => <option value={p}>{p}</option>)}
+            </select>
+          </div>
+          <div class="field">
+            <label for="district">Corregimiento o barriada *</label>
+            <input type="text" id="district" name="district" required />
+          </div>
+          <div class="field">
+            <label for="address">Dirección: calle, casa o edificio *</label>
+            <input type="text" id="address" name="address" required autocomplete="street-address" />
+          </div>
+          <div class="field">
+            <label for="reference">Apartamento, piso, referencia (opcional)</label>
+            <input type="text" id="reference" name="reference" />
+          </div>
+        </div>
+
+        <h2>Método de entrega</h2>
+        <div class="option-list">
+          {SHIPPING.map((s, i) => (
+            <label class="option">
+              <span class="option-main">
+                <input
+                  type="radio"
+                  name="envio"
+                  value={s.id}
+                  checked={i === 0}
+                  data-ship-price={s.price}
+                  data-ship-name={s.name}
+                />
+                <span>
+                  <span class="option-name">{s.name}</span>
+                  <span class="option-detail">{s.detail}</span>
+                </span>
+              </span>
+              <span class="option-price">{s.price === 0 ? 'Gratis' : `$${s.price.toFixed(2)}`}</span>
+            </label>
+          ))}
+        </div>
+
+        <h2>Pago</h2>
+        <p class="pay-note">Elige cómo prefieres pagar. Antes de cobrar verificamos la disponibilidad real de cada planta.</p>
+        <div class="option-list">
+          {PAYMENTS.map((p, i) => (
+            <label class="option">
+              <span class="option-main">
+                <input type="radio" name="pago" value={p.id} checked={i === 0} data-pay-name={p.name} />
+                <span>
+                  <span class="option-name">{p.name}</span>
+                  <span class="option-detail">{p.detail}</span>
+                </span>
+              </span>
+            </label>
+          ))}
+        </div>
+
+        <button type="submit" class="btn btn--green submit-btn">Confirmar pedido por WhatsApp</button>
+        <p class="form-error" hidden></p>
+        <p class="help center">
+          El pago online con Wompi estará disponible muy pronto. Al confirmar se abre
+          WhatsApp con el resumen de tu pedido para cerrar la compra al instante.
+        </p>
+      </form>
+    </main>
+
+    <aside class="checkout-aside">
+      <div class="aside-inner">
+        <div data-summary-items></div>
+        <div class="aside-rows">
+          <div class="aside-row"><span>Subtotal</span><span data-summary-subtotal>$0.00</span></div>
+          <div class="aside-row"><span>Envío</span><span data-summary-shipping>Gratis</span></div>
+        </div>
+        <div class="aside-total">
+          <span>Total</span>
+          <strong data-summary-total>$0.00</strong>
+        </div>
+
+        <figure class="review-card">
+          <div class="stars" aria-label="5 estrellas">★★★★★</div>
+          <blockquote>
+            Llegó todo bien empacado y la planta se ve sana. Entregaron el mismo
+            día que dijeron.
+          </blockquote>
+          <figcaption>— Marisol A. · Compra verificada</figcaption>
+        </figure>
+
+        <p class="secure-note">🔒 Pedido seguro · Vivero Rose, Juan Díaz</p>
+      </div>
+    </aside>
+  </div>
 </Base>
 
 <script>
   import { getCart, cartTotal } from '../../lib/cart';
+  import { whatsappLink } from '../../lib/site';
+
+  const money = (n: number) => `$${n.toFixed(2)}`;
 
   const items = getCart();
   const list = document.querySelector<HTMLElement>('[data-summary-items]');
-  const total = document.querySelector<HTMLElement>('[data-summary-total]');
+  const subtotalEl = document.querySelector<HTMLElement>('[data-summary-subtotal]');
+  const shippingEl = document.querySelector<HTMLElement>('[data-summary-shipping]');
+  const totalEl = document.querySelector<HTMLElement>('[data-summary-total]');
 
   if (list) {
     if (!items.length) {
-      list.innerHTML = '<p>Tu carrito esta vacio. <a href="/plantas">Ver plantas</a></p>';
+      list.innerHTML = '<p class="aside-empty">Tu carrito está vacío. <a href="/plantas">Ver plantas</a></p>';
     } else {
       list.innerHTML = items
         .map(
           (i) => `
-            <div class="summary-item">
-              <span>${i.emoji} ${i.name} × ${i.qty}</span>
-              <span>$${(i.price * i.qty).toFixed(2)}</span>
+            <div class="aside-item">
+              <span class="aside-thumb" aria-hidden="true">${i.emoji}<i class="aside-qty">${i.qty}</i></span>
+              <span class="aside-name">${i.name}</span>
+              <span class="aside-line">$${(i.price * i.qty).toFixed(2)}</span>
             </div>`,
         )
         .join('');
     }
   }
-  if (total) total.textContent = `$${cartTotal().toFixed(2)}`;
 
-  // v1: aqui se llama a POST /api/checkout/create-intent, que valida stock
-  // contra el proxy y crea la referencia de pago Wompi. Ese backend aun no
-  // esta desplegado, asi que por ahora informamos al usuario.
+  function selectedShipping() {
+    const radio = document.querySelector<HTMLInputElement>('input[name="envio"]:checked');
+    return {
+      price: Number(radio?.dataset.shipPrice ?? 0),
+      name: radio?.dataset.shipName ?? 'Entrega estándar',
+    };
+  }
+
+  function selectedPayment() {
+    const radio = document.querySelector<HTMLInputElement>('input[name="pago"]:checked');
+    return radio?.dataset.payName ?? 'Yappy';
+  }
+
+  function refreshTotals() {
+    const subtotal = cartTotal();
+    const ship = selectedShipping();
+    if (subtotalEl) subtotalEl.textContent = money(subtotal);
+    if (shippingEl) shippingEl.textContent = ship.price === 0 ? 'Gratis' : money(ship.price);
+    if (totalEl) totalEl.textContent = money(subtotal + (subtotal > 0 ? ship.price : 0));
+  }
+
+  document
+    .querySelectorAll<HTMLInputElement>('input[name="envio"]')
+    .forEach((r) => r.addEventListener('change', refreshTotals));
+  refreshTotals();
+
   const form = document.querySelector<HTMLFormElement>('.checkout-form');
   const error = document.querySelector<HTMLElement>('.form-error');
 
   form?.addEventListener('submit', (e) => {
     e.preventDefault();
     if (!form.reportValidity()) return;
-    if (!getCart().length) {
+
+    const cart = getCart();
+    if (!cart.length) {
       if (error) {
-        error.textContent = 'Tu carrito esta vacio.';
+        error.textContent = 'Tu carrito está vacío.';
         error.removeAttribute('hidden');
       }
       return;
     }
-    if (error) {
-      error.textContent =
-        'El pago online estara disponible muy pronto. Por ahora, completa tu pedido por WhatsApp: te atenderemos al instante.';
-      error.removeAttribute('hidden');
+
+    const data = new FormData(form);
+    const ship = selectedShipping();
+    const subtotal = cartTotal();
+    const total = subtotal + ship.price;
+
+    let gift = '';
+    try {
+      const saved = JSON.parse(localStorage.getItem('pp-gift-v1') ?? 'null');
+      if (saved?.on && saved.note) gift = `\nEs un regalo. Mensaje de la tarjeta: ${saved.note}`;
+    } catch {
+      // sin nota de regalo
     }
+
+    const lines = cart
+      .map((i) => `- ${i.name} × ${i.qty} = $${(i.price * i.qty).toFixed(2)} (${i.sku})`)
+      .join('\n');
+    const message =
+      `Hola, quiero confirmar este pedido de plantaspanama.com:\n\n${lines}\n\n` +
+      `Subtotal: ${money(subtotal)}\nEnvío (${ship.name}): ${ship.price === 0 ? 'Gratis' : money(ship.price)}\n` +
+      `Total: ${money(total)}\n\n` +
+      `Nombre: ${data.get('name')} ${data.get('lastname')}\n` +
+      `Correo: ${data.get('email')}\nWhatsApp: ${data.get('phone')}\n` +
+      `Dirección: ${data.get('address')}, ${data.get('district')}, ${data.get('province')}` +
+      `${data.get('reference') ? ` (${data.get('reference')})` : ''}\n` +
+      `Método de pago: ${selectedPayment()}${gift}`;
+
+    window.open(whatsappLink(message), '_blank', 'noopener');
   });
 </script>
 
 <style is:global>
-  .checkout-container { max-width: 60rem; }
-
   .checkout-grid {
     display: grid;
-    grid-template-columns: 3fr 2fr;
-    gap: 2rem;
+    grid-template-columns: minmax(0, 1.15fr) minmax(340px, 0.85fr);
     align-items: start;
-    margin-top: 1.5rem;
   }
 
-  @media (max-width: 800px) {
+  @media (max-width: 900px) {
     .checkout-grid { grid-template-columns: 1fr; }
-    .order-summary { order: -1; }
+    .checkout-aside { order: -1; min-height: 0 !important; }
   }
 
-  .checkout-form {
-    background: var(--surface);
-    border: 1px solid var(--line);
-    border-radius: var(--radius-lg);
-    padding: 1.75rem;
+  .checkout-main {
+    padding: 2.9rem 2.3rem 5.8rem;
+    max-width: 660px;
+    margin-left: auto;
+    width: 100%;
+    box-sizing: border-box;
   }
 
-  .order-summary { padding: 1.5rem; }
+  @media (max-width: 900px) {
+    .checkout-main { margin: 0 auto; }
+  }
 
-  .summary-item {
+  .trust-row {
     display: flex;
-    justify-content: space-between;
-    gap: 1rem;
-    font-size: 0.95rem;
-    padding: 0.4rem 0;
-    border-bottom: 1px solid var(--line);
+    gap: 2.3rem;
+    justify-content: center;
+    margin-bottom: 2.3rem;
+    flex-wrap: wrap;
+    font-size: 0.88rem;
+    font-weight: 600;
   }
 
-  .summary-total {
+  .checkout-form h2 {
+    font-size: 1.25rem;
+    margin: 1.7rem 0 0.85rem;
+  }
+
+  .checkout-form h2:first-child { margin-top: 0; }
+
+  .fields { display: flex; flex-direction: column; }
+
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0 0.85rem;
+  }
+
+  @media (max-width: 560px) {
+    .two-col { grid-template-columns: 1fr; }
+  }
+
+  .pay-note {
+    font-size: 0.88rem;
+    color: var(--ink-soft);
+    margin: -0.3rem 0 0.85rem;
+  }
+
+  .option-list {
     display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+    margin-bottom: 0.85rem;
+  }
+
+  .option {
+    display: flex;
+    align-items: center;
     justify-content: space-between;
-    font-size: 1.1rem;
-    margin-top: 0.75rem;
+    gap: 0.85rem;
+    border: 1px solid rgba(27, 42, 31, 0.22);
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 0.95rem 1.15rem;
+    cursor: pointer;
+    font-weight: 400;
+    margin: 0;
+  }
+
+  .option:has(input:checked) {
+    border-color: var(--green-deep);
+    background: var(--green-tint);
+  }
+
+  .option-main {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+  }
+
+  .option input[type='radio'] {
+    width: 17px;
+    height: 17px;
+    accent-color: var(--green-deep);
+    padding: 0;
+  }
+
+  .option-name { display: block; font-size: 0.95rem; font-weight: 600; }
+  .option-detail { display: block; font-size: 0.82rem; color: var(--ink-soft); }
+  .option-price { font-size: 0.95rem; font-weight: 600; }
+
+  .submit-btn {
+    width: 100%;
+    justify-content: center;
+    margin-top: 1.15rem;
+    font-size: 1.05rem;
+    padding: 1rem 1.6rem;
   }
 
   .form-error {
@@ -160,5 +386,120 @@ import Base from '../../layouts/Base.astro';
     color: var(--amber);
     border-radius: var(--radius);
     font-weight: 600;
+  }
+
+  .help.center { text-align: center; margin-top: 0.85rem; }
+
+  /* Columna de resumen */
+  .checkout-aside {
+    background: var(--surface);
+    border-left: 1px solid var(--line);
+    min-height: calc(100vh - 64px);
+    padding: 2.9rem 2.3rem 5.8rem;
+    box-sizing: border-box;
+  }
+
+  .aside-inner {
+    max-width: 420px;
+    display: flex;
+    flex-direction: column;
+    gap: 1.4rem;
+  }
+
+  .aside-item {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 0.85rem;
+    align-items: center;
+    padding: 0.45rem 0;
+  }
+
+  .aside-thumb {
+    position: relative;
+    width: 56px;
+    height: 56px;
+    border-radius: 10px;
+    background: var(--green-tint);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+  }
+
+  .aside-qty {
+    position: absolute;
+    top: -6px;
+    left: -6px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--ink);
+    color: #ffffff;
+    font-size: 0.75rem;
+    font-style: normal;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .aside-name { font-size: 0.95rem; font-weight: 600; }
+  .aside-line { font-size: 0.95rem; font-weight: 600; }
+
+  .aside-empty { color: var(--ink-soft); }
+
+  .aside-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+    font-size: 0.95rem;
+    border-top: 1px solid var(--line);
+    padding-top: 1.15rem;
+  }
+
+  .aside-row { display: flex; justify-content: space-between; }
+
+  .aside-total {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    border-top: 1px solid var(--line);
+    padding-top: 1.15rem;
+    font-size: 1.15rem;
+  }
+
+  .aside-total strong { font-size: 1.6rem; }
+
+  .review-card {
+    margin: 0;
+    background: #ffffff;
+    border-radius: 14px;
+    padding: 1.4rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+  }
+
+  .review-card .stars {
+    color: var(--green-deep);
+    letter-spacing: 0.2em;
+    font-size: 0.82rem;
+  }
+
+  .review-card blockquote {
+    margin: 0;
+    font-size: 0.95rem;
+    line-height: 1.6;
+  }
+
+  .review-card figcaption {
+    font-size: 0.82rem;
+    color: var(--ink-soft);
+  }
+
+  .secure-note {
+    font-size: 0.82rem;
+    color: var(--ink-soft);
+    margin: 0;
   }
 </style>

@@ -11,6 +11,7 @@ import { categories } from '../data/products';
       <p class="footer-title">Tienda</p>
       <ul>
         <li><a href="/plantas">Todo el catalogo</a></li>
+        <li><a href="/colecciones">Colecciones</a></li>
         {categories.map((cat) => (
           <li><a href={`/plantas/${cat.slug}`}>{cat.name}</a></li>
         ))}
@@ -23,7 +24,8 @@ import { categories } from '../data/products';
       <ul>
         <li><a href="/guia">Guias de cuidado</a></li>
         <li><a href="/vivero">Nuestro vivero</a></li>
-        <li><a href="/paisajismo">Paisajismo</a></li>
+        <li><a href="/servicios">Servicios de paisajismo</a></li>
+        <li><a href="/eventos">Plantas para eventos</a></li>
         <li><a href="/mayorista">Mayorista</a></li>
       </ul>
     </nav>
@@ -43,7 +45,7 @@ import { categories } from '../data/products';
         <p class="footer-brand">PLANTAS PANAMÁ</p>
         <p class="footer-byline">{SITE.byline}</p>
       </div>
-      <p class="footer-note">{SITE.domain}<br />Ciudad de Panamá</p>
+      <p class="footer-note">{SITE.domain}<br />{SITE.address}</p>
       <a class="footer-wa" href={whatsappLink('Hola, tengo una consulta sobre sus plantas.')} target="_blank" rel="noopener">
         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z" />

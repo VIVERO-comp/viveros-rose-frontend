@@ -1,6 +1,10 @@
 ---
+// Pagina de categoria con el mismo hero oscuro del catalogo ("Shop Plantas").
+// Las rutas estaticas por categoria se conservan; el enlace "ver con filtros"
+// abre el catalogo completo con la coleccion activa.
 import Base from '../../../layouts/Base.astro';
 import ProductCard from '../../../components/ProductCard.astro';
+import NewsletterBand from '../../../components/NewsletterBand.astro';
 import { categories, getProductsByCategory } from '../../../data/products';
 
 export function getStaticPaths() {
@@ -15,29 +19,114 @@ const items = getProductsByCategory(category.slug);
 ---
 
 <Base title={category.name} description={category.description}>
+  <section class="cat-hero">
+    <!-- FOTO PENDIENTE: banda de la categoria — a lo ancho, minimo 1920×300 px -->
+    <div class="cat-hero-photo" data-medidas="Foto banda · 1920×300" aria-hidden="true"></div>
+    <div class="cat-hero-scrim" aria-hidden="true"></div>
+    <div class="container cat-hero-inner">
+      <p class="cat-crumb"><a href="/">Inicio</a> / <a href="/plantas">Plantas</a> / {category.name}</p>
+      <h1>{category.name}</h1>
+      <p class="cat-sub">{category.description}</p>
+    </div>
+  </section>
+
   <section class="section">
     <div class="container">
-      <nav class="breadcrumb" aria-label="Miga de pan">
-        <a href="/plantas">Plantas</a> / <span>{category.name}</span>
-      </nav>
-      <h1>{category.emoji} {category.name}</h1>
-      <p class="lead">{category.description}</p>
+      <div class="cat-toolbar">
+        <p class="result-count">{items.length} {items.length === 1 ? 'planta' : 'plantas'}</p>
+        <a href={`/plantas?c=${category.slug}`} class="see-filters">Ver con filtros y orden →</a>
+      </div>
 
-      <div class="grid grid--4" style="margin-top: 2rem;">
+      <div class="grid grid--4">
         {items.map((product) => <ProductCard product={product} />)}
       </div>
 
       {items.length === 0 && (
-        <p>No hay productos en esta categoria por el momento.</p>
+        <p>No hay productos en esta categoría por el momento.</p>
       )}
     </div>
   </section>
+
+  <NewsletterBand />
 </Base>
 
 <style>
-  .breadcrumb {
-    font-size: 0.9rem;
-    color: var(--ink-soft);
-    margin-bottom: 1rem;
+  .cat-hero {
+    position: relative;
+    height: 300px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    background: var(--card-dark);
+    border-bottom: 1px solid var(--line);
   }
+
+  .cat-hero-photo {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(150deg, #2a4432, var(--card-dark) 70%);
+  }
+
+  .cat-hero-photo::after {
+    content: attr(data-medidas);
+    position: absolute;
+    right: 14px;
+    top: 14px;
+    font-size: 0.62rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(238, 245, 240, 0.65);
+    background: rgba(27, 42, 31, 0.55);
+    padding: 2px 8px;
+    border-radius: 999px;
+  }
+
+  .cat-hero-scrim {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to right, rgba(27, 42, 31, 0.72), rgba(27, 42, 31, 0.25));
+  }
+
+  .cat-hero-inner { position: relative; width: 100%; }
+
+  .cat-crumb {
+    font-size: 0.72rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: #8ce6a8;
+    margin: 0 0 0.55rem;
+  }
+
+  .cat-crumb a { color: #8ce6a8; }
+
+  .cat-hero h1 {
+    color: #eef5f0;
+    font-weight: 600;
+    font-size: clamp(2rem, 4vw, 2.9rem);
+    margin: 0;
+  }
+
+  .cat-sub {
+    font-size: 1.05rem;
+    color: rgba(255, 255, 255, 0.85);
+    margin: 0.55rem 0 0;
+    max-width: 38rem;
+  }
+
+  .cat-toolbar {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1.15rem;
+    margin-bottom: 1.4rem;
+    flex-wrap: wrap;
+  }
+
+  .result-count {
+    font-size: 0.88rem;
+    color: var(--ink-soft);
+    margin: 0;
+  }
+
+  .see-filters { font-size: 0.88rem; }
 </style>

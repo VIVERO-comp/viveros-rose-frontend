@@ -1,0 +1,74 @@
+---
+// Banda de newsletter del diseno (se repite al pie de Shop y Colecciones).
+// Sin backend de correo todavia: la suscripcion llega por WhatsApp, igual
+// que en el home.
+---
+
+<section class="news-band">
+  <div class="container news-inner">
+    <p class="news-copy">Recibe lo que sale del vivero, avisos de temporada y ofertas.</p>
+    <form class="news-form" data-news-form>
+      <input type="email" name="email" placeholder="Tu correo" required aria-label="Tu correo" />
+      <button type="submit" class="btn btn--green">Suscribirme</button>
+    </form>
+  </div>
+</section>
+
+<script>
+  import { whatsappLink } from '../lib/site';
+
+  document.querySelectorAll<HTMLFormElement>('[data-news-form]').forEach((form) => {
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const email = (form.elements.namedItem('email') as HTMLInputElement).value;
+      window.open(
+        whatsappLink(`Hola, quiero recibir novedades del vivero. Mi correo: ${email}`),
+        '_blank',
+        'noopener'
+      );
+    });
+  });
+</script>
+
+<style>
+  .news-band {
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .news-inner {
+    padding-top: 2.3rem;
+    padding-bottom: 2.3rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1.7rem;
+    flex-wrap: wrap;
+  }
+
+  .news-copy {
+    font-size: 1.35rem;
+    margin: 0;
+  }
+
+  .news-form {
+    display: flex;
+    gap: 0.55rem;
+    align-items: center;
+  }
+
+  .news-form input {
+    min-width: 260px;
+    min-height: 40px;
+    padding: 6px 14px;
+    font-size: 0.9rem;
+    background: #ffffff;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+  }
+
+  @media (max-width: 560px) {
+    .news-form { flex-wrap: wrap; }
+    .news-form input { min-width: 0; flex: 1; }
+  }
+</style>

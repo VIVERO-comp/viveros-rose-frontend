@@ -1,142 +1,536 @@
 ---
+// Carrito segun el diseno "Carrito" (claude.ai/design): cabecera minima,
+// lineas en tarjetas blancas con control de cantidad en pastilla, opcion de
+// regalo, sugerencias del catalogo y resumen pegajoso. La logica del carrito
+// (localStorage) sigue siendo src/lib/cart.ts, sin cambios.
 import Base from '../layouts/Base.astro';
+import { formatPrice, products } from '../data/products';
+
+const FREE_SHIPPING_FROM = 50;
+
+// Sugerencias "Va bien con": productos disponibles del catalogo real.
+const suggestions = products.filter((p) => p.available > 0).slice(0, 3);
 ---
 
-<Base title="Carrito" description="Tu carrito de compras.">
+<Base
+  title="Carrito"
+  description="Tu carrito de compras."
+  chrome="minimal"
+  minimalLinkHref="/plantas"
+  minimalLinkLabel="Seguir comprando"
+>
+  <div class="ship-band">Envío gratis en la ciudad de Panamá en compras mayores a ${FREE_SHIPPING_FROM}</div>
+
   <section class="section">
     <div class="container cart-container">
       <h1>Tu carrito</h1>
+      <p class="count-label" data-count-label>Sin artículos</p>
 
-      <div data-cart-empty hidden>
-        <p class="lead">Tu carrito esta vacio.</p>
-        <a href="/plantas" class="btn btn--green">Ver plantas</a>
-      </div>
-
-      <div data-cart-full hidden>
-        <div class="cart-items" data-cart-items></div>
-
-        <div class="cart-summary card">
-          <div class="summary-row">
-            <span>Subtotal</span>
-            <strong data-cart-total>$0.00</strong>
+      <div class="cart-grid">
+        <div class="cart-col">
+          <div class="empty-card" data-cart-empty hidden>
+            <p class="empty-title">Tu carrito está vacío</p>
+            <p class="empty-text">Agrega plantas del catálogo y aparecerán aquí.</p>
+            <a href="/plantas" class="btn btn--green">Ver plantas</a>
           </div>
-          <p class="help">El costo de entrega se calcula en el checkout segun tu zona.</p>
-          <a href="/checkout" class="btn btn--green" style="width: 100%; justify-content: center;">
-            Continuar al checkout
-          </a>
+
+          <div class="cart-items" data-cart-items></div>
+
+          <div class="gift-card" data-gift-card hidden>
+            <label class="gift-check">
+              <input type="checkbox" data-gift-toggle />
+              🎁 Es un regalo: agregar tarjeta con mensaje
+            </label>
+            <textarea
+              data-gift-note
+              placeholder="Escribe el mensaje para la tarjeta"
+              hidden
+            ></textarea>
+          </div>
+
+          <div class="addons" data-addons hidden>
+            <p class="addons-title">Va bien con</p>
+            <div class="addons-grid">
+              {suggestions.map((p) => (
+                <div class="addon-card">
+                  <!-- FOTO PENDIENTE: producto {p.sku} — bloque de minimo 360×260 px -->
+                  <div class="addon-photo" data-medidas="Foto · 360×260" aria-hidden="true">{p.emoji}</div>
+                  <div class="addon-info">
+                    <p class="addon-name">{p.name}</p>
+                    <p class="addon-price">{formatPrice(p.price)}</p>
+                    <button
+                      type="button"
+                      class="addon-add"
+                      data-addon-add
+                      data-sku={p.sku}
+                      data-name={p.name}
+                      data-price={p.price}
+                      data-slug={p.slug}
+                      data-category={p.category}
+                      data-emoji={p.emoji}
+                    >Agregar</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
+
+        <aside class="summary" data-summary hidden>
+          <p class="summary-title">Resumen</p>
+          <div class="summary-rows">
+            <div class="summary-row"><span>Subtotal</span><span data-cart-total>$0.00</span></div>
+            <div class="summary-row"><span>Envío</span><span class="muted" data-shipping-label>Se calcula al pagar</span></div>
+          </div>
+          <div class="summary-total">
+            <span>Total</span>
+            <strong data-cart-grand-total>$0.00</strong>
+          </div>
+          <a href="/checkout" class="btn btn--green summary-cta">Ir a pagar</a>
+          <p class="summary-note">Impuestos y envío se calculan al pagar.</p>
+          <div class="summary-trust">
+            <span>📦 Empaque seguro para plantas</span>
+            <span>💬 Coordinamos la entrega por WhatsApp</span>
+            <span>🚚 Entrega en 24–48 h en la ciudad</span>
+          </div>
+        </aside>
       </div>
     </div>
   </section>
 </Base>
 
+<script define:vars={{ FREE_SHIPPING_FROM }}>
+  window.FREE_SHIPPING_FROM = FREE_SHIPPING_FROM;
+</script>
+
 <script>
-  import { getCart, setQty, removeFromCart, cartTotal } from '../lib/cart';
+  import { addToCart, cartCount, cartTotal, getCart, removeFromCart, setQty } from '../lib/cart';
+
+  const GIFT_KEY = 'pp-gift-v1';
+  const freeFrom = (window as any).FREE_SHIPPING_FROM ?? 50;
+
+  const money = (n: number) => `$${n.toFixed(2)}`;
 
   function render() {
     const items = getCart();
     const empty = document.querySelector<HTMLElement>('[data-cart-empty]');
-    const full = document.querySelector<HTMLElement>('[data-cart-full]');
     const list = document.querySelector<HTMLElement>('[data-cart-items]');
-    const total = document.querySelector<HTMLElement>('[data-cart-total]');
+    const summary = document.querySelector<HTMLElement>('[data-summary]');
+    const giftCard = document.querySelector<HTMLElement>('[data-gift-card]');
+    const addons = document.querySelector<HTMLElement>('[data-addons]');
+    const countLabel = document.querySelector<HTMLElement>('[data-count-label]');
 
-    if (!items.length) {
-      empty?.removeAttribute('hidden');
-      full?.setAttribute('hidden', '');
-      return;
+    const count = cartCount();
+    if (countLabel) {
+      countLabel.textContent =
+        count === 0 ? 'Sin artículos' : count === 1 ? '1 artículo' : `${count} artículos`;
     }
 
-    empty?.setAttribute('hidden', '');
-    full?.removeAttribute('hidden');
+    const hasItems = items.length > 0;
+    empty?.toggleAttribute('hidden', hasItems);
+    summary?.toggleAttribute('hidden', !hasItems);
+    giftCard?.toggleAttribute('hidden', !hasItems);
+    addons?.toggleAttribute('hidden', !hasItems);
 
     if (list) {
       list.innerHTML = '';
       for (const item of items) {
         const row = document.createElement('div');
-        row.className = 'cart-row';
+        row.className = 'cart-line';
         row.innerHTML = `
-          <span class="cart-emoji">${item.emoji}</span>
-          <div class="cart-info">
+          <span class="line-emoji" aria-hidden="true">${item.emoji}</span>
+          <div class="line-info">
             <a href="/plantas/${item.category}/${item.slug}">${item.name}</a>
-            <span class="cart-price">$${item.price.toFixed(2)} c/u</span>
+            <span class="line-price">${money(item.price)} c/u</span>
+            <div class="line-controls">
+              <div class="qty-pill">
+                <button type="button" data-dec="${item.sku}" aria-label="Quitar uno">–</button>
+                <span>${item.qty}</span>
+                <button type="button" data-inc="${item.sku}" aria-label="Agregar uno">+</button>
+              </div>
+              <button type="button" class="line-remove" data-remove="${item.sku}">Eliminar</button>
+            </div>
           </div>
-          <input type="number" min="0" value="${item.qty}" data-qty="${item.sku}" aria-label="Cantidad de ${item.name}" />
-          <strong class="cart-line-total">$${(item.price * item.qty).toFixed(2)}</strong>
-          <button data-remove="${item.sku}" aria-label="Quitar ${item.name}">✕</button>
+          <strong class="line-total">${money(item.price * item.qty)}</strong>
         `;
         list.appendChild(row);
       }
 
-      list.querySelectorAll<HTMLInputElement>('[data-qty]').forEach((input) => {
-        input.addEventListener('change', () => {
-          setQty(input.dataset.qty!, Number(input.value));
+      list.querySelectorAll<HTMLButtonElement>('[data-dec]').forEach((btn) =>
+        btn.addEventListener('click', () => {
+          const item = getCart().find((i) => i.sku === btn.dataset.dec);
+          if (item) setQty(item.sku, item.qty - 1);
           render();
-        });
-      });
-
-      list.querySelectorAll<HTMLButtonElement>('[data-remove]').forEach((btn) => {
+        })
+      );
+      list.querySelectorAll<HTMLButtonElement>('[data-inc]').forEach((btn) =>
+        btn.addEventListener('click', () => {
+          const item = getCart().find((i) => i.sku === btn.dataset.inc);
+          if (item) setQty(item.sku, item.qty + 1);
+          render();
+        })
+      );
+      list.querySelectorAll<HTMLButtonElement>('[data-remove]').forEach((btn) =>
         btn.addEventListener('click', () => {
           removeFromCart(btn.dataset.remove!);
           render();
-        });
-      });
+        })
+      );
     }
 
-    if (total) total.textContent = `$${cartTotal().toFixed(2)}`;
+    const subtotal = cartTotal();
+    const totalEl = document.querySelector<HTMLElement>('[data-cart-total]');
+    const grandEl = document.querySelector<HTMLElement>('[data-cart-grand-total]');
+    const shipEl = document.querySelector<HTMLElement>('[data-shipping-label]');
+    if (totalEl) totalEl.textContent = money(subtotal);
+    if (grandEl) grandEl.textContent = money(subtotal);
+    if (shipEl) {
+      shipEl.textContent =
+        subtotal === 0 ? '—' : subtotal >= freeFrom ? 'Gratis' : 'Se calcula al pagar';
+    }
+
+    // Estado de las sugerencias segun el carrito.
+    document.querySelectorAll<HTMLButtonElement>('[data-addon-add]').forEach((btn) => {
+      const inCart = getCart().some((i) => i.sku === btn.dataset.sku);
+      btn.textContent = inCart ? 'Agregado' : 'Agregar';
+      btn.disabled = inCart;
+    });
   }
+
+  document.querySelectorAll<HTMLButtonElement>('[data-addon-add]').forEach((btn) =>
+    btn.addEventListener('click', () => {
+      const d = btn.dataset;
+      addToCart({
+        sku: d.sku!,
+        name: d.name!,
+        price: Number(d.price),
+        slug: d.slug!,
+        category: d.category!,
+        emoji: d.emoji!,
+      });
+      render();
+    })
+  );
+
+  // Nota de regalo: se guarda en localStorage para usarla en el checkout.
+  const giftToggle = document.querySelector<HTMLInputElement>('[data-gift-toggle]');
+  const giftNote = document.querySelector<HTMLTextAreaElement>('[data-gift-note]');
+  try {
+    const saved = JSON.parse(localStorage.getItem(GIFT_KEY) ?? 'null');
+    if (saved && giftToggle && giftNote) {
+      giftToggle.checked = !!saved.on;
+      giftNote.value = saved.note ?? '';
+      giftNote.hidden = !saved.on;
+    }
+  } catch {
+    // sin nota guardada
+  }
+  function saveGift() {
+    if (!giftToggle || !giftNote) return;
+    giftNote.hidden = !giftToggle.checked;
+    localStorage.setItem(GIFT_KEY, JSON.stringify({ on: giftToggle.checked, note: giftNote.value }));
+  }
+  giftToggle?.addEventListener('change', saveGift);
+  giftNote?.addEventListener('input', saveGift);
 
   render();
 </script>
 
 <style is:global>
-  .cart-container { max-width: 46rem; }
-
-  .cart-row {
-    display: grid;
-    grid-template-columns: auto 1fr 5rem auto auto;
-    align-items: center;
-    gap: 1rem;
-    padding: 1rem 0;
-    border-bottom: 1px solid var(--line);
+  .ship-band {
+    background: var(--card-dark);
+    color: #ffffff;
+    text-align: center;
+    padding: 0.55rem 1.15rem;
+    font-size: 0.82rem;
+    letter-spacing: 0.02em;
   }
 
-  .cart-emoji { font-size: 1.8rem; }
+  .cart-container { max-width: 74rem; }
 
-  .cart-info {
+  .cart-container h1 { font-weight: 400; margin-bottom: 0.2rem; }
+
+  .count-label {
+    color: var(--ink-soft);
+    margin: 0 0 2.3rem;
+  }
+
+  .cart-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.6fr) minmax(300px, 1fr);
+    gap: 2.9rem;
+    align-items: start;
+  }
+
+  @media (max-width: 860px) {
+    .cart-grid { grid-template-columns: 1fr; }
+  }
+
+  .cart-col {
+    display: flex;
+    flex-direction: column;
+    gap: 1.15rem;
+    min-width: 0;
+  }
+
+  .empty-card {
+    background: #ffffff;
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 2.9rem;
+    text-align: center;
+  }
+
+  .empty-title { font-size: 1.25rem; font-weight: 600; margin: 0 0 0.55rem; }
+  .empty-text { color: var(--ink-soft); margin: 0 0 1.4rem; }
+
+  .cart-items {
+    display: flex;
+    flex-direction: column;
+    gap: 1.15rem;
+  }
+
+  .cart-line {
+    background: #ffffff;
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 1.15rem;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 1.15rem;
+    align-items: start;
+  }
+
+  .line-emoji {
+    width: 84px;
+    height: 84px;
+    border-radius: 12px;
+    background: var(--green-tint);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+  }
+
+  .line-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    min-width: 0;
+  }
+
+  .line-info a { color: var(--ink); font-weight: 600; font-size: 1.05rem; }
+
+  .line-price { font-size: 0.82rem; color: var(--ink-soft); }
+
+  .line-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    margin-top: 0.55rem;
+  }
+
+  .qty-pill {
+    display: flex;
+    align-items: center;
+    border: 1px solid rgba(27, 42, 31, 0.2);
+    border-radius: 999px;
+    overflow: hidden;
+    background: #ffffff;
+  }
+
+  .qty-pill button {
+    width: 36px;
+    height: 36px;
+    border: 0;
+    background: transparent;
+    color: var(--ink);
+    font-size: 1.05rem;
+    cursor: pointer;
+  }
+
+  .qty-pill button:hover { background: var(--bg); }
+
+  .qty-pill span {
+    min-width: 28px;
+    text-align: center;
+    font-size: 0.95rem;
+    font-weight: 600;
+  }
+
+  .line-remove {
+    border: 0;
+    background: transparent;
+    font-size: 0.82rem;
+    color: var(--ink-soft);
+    text-decoration: underline;
+    cursor: pointer;
+    padding: 0;
+  }
+
+  .line-remove:hover { color: var(--red); }
+
+  .line-total { font-size: 1.05rem; }
+
+  .gift-card {
+    background: #ffffff;
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 1.4rem;
+  }
+
+  .gift-check {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    font-size: 0.95rem;
+    font-weight: 400;
+    margin: 0;
+    cursor: pointer;
+  }
+
+  .gift-check input {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--green-deep);
+    padding: 0;
+  }
+
+  .gift-card textarea {
+    margin-top: 0.85rem;
+    min-height: 86px;
+    resize: vertical;
+  }
+
+  .addons-title {
+    font-size: 0.72rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    margin: 0.55rem 0 0.85rem;
+  }
+
+  .addons-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 0.85rem;
+  }
+
+  .addon-card {
+    background: #ffffff;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    overflow: hidden;
     display: flex;
     flex-direction: column;
   }
 
-  .cart-info a {
-    color: var(--ink);
+  .addon-photo {
+    position: relative;
+    height: 130px;
+    background: linear-gradient(160deg, var(--green-tint), var(--surface-2));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+  }
+
+  .addon-photo::after {
+    content: attr(data-medidas);
+    position: absolute;
+    right: 8px;
+    bottom: 8px;
+    font-size: 0.58rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: rgba(27, 42, 31, 0.5);
+    background: rgba(238, 245, 240, 0.85);
+    padding: 2px 7px;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+
+  .addon-info {
+    padding: 0.85rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+
+  .addon-name { font-size: 0.88rem; font-weight: 600; line-height: 1.35; margin: 0; }
+  .addon-price { font-size: 0.88rem; margin: 0; }
+
+  .addon-add {
+    margin-top: 0.3rem;
+    font-family: var(--font-ui);
     font-weight: 600;
-  }
-
-  .cart-price {
-    font-size: 0.85rem;
-    color: var(--ink-soft);
-  }
-
-  .cart-row button {
-    background: none;
-    border: none;
-    color: var(--ink-soft);
+    font-size: 0.82rem;
+    padding: 0.55rem 0.9rem;
+    border-radius: 999px;
+    border: 1px solid rgba(27, 42, 31, 0.25);
+    background: transparent;
+    color: var(--ink);
     cursor: pointer;
-    font-size: 1rem;
-    padding: 0.3rem;
   }
 
-  .cart-row button:hover { color: var(--red); }
+  .addon-add:hover { background: var(--bg); }
+  .addon-add:disabled { opacity: 0.55; cursor: default; }
 
-  .cart-summary {
-    margin-top: 1.5rem;
-    padding: 1.5rem;
+  /* Resumen */
+  .summary {
+    background: #ffffff;
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 1.7rem;
+    position: sticky;
+    top: 1.7rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.15rem;
   }
 
-  .summary-row {
+  .summary-title { font-size: 1.25rem; font-weight: 600; margin: 0; }
+
+  .summary-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+    border-top: 1px solid var(--line);
+    padding-top: 1.15rem;
+    font-size: 0.95rem;
+  }
+
+  .summary-row { display: flex; justify-content: space-between; }
+
+  .summary-row .muted { color: var(--ink-soft); }
+
+  .summary-total {
     display: flex;
     justify-content: space-between;
+    align-items: baseline;
+    border-top: 1px solid var(--line);
+    padding-top: 1.15rem;
     font-size: 1.15rem;
-    margin-bottom: 0.5rem;
+  }
+
+  .summary-total strong { font-size: 1.6rem; }
+
+  .summary-cta { justify-content: center; }
+
+  .summary-note {
+    font-size: 0.75rem;
+    color: var(--ink-soft);
+    text-align: center;
+    margin: 0;
+  }
+
+  .summary-trust {
+    border-top: 1px solid var(--line);
+    padding-top: 1.15rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+    font-size: 0.82rem;
+    color: var(--ink-soft);
   }
 </style>

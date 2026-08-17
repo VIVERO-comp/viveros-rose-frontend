@@ -1,61 +1,511 @@
 ---
+// Catalogo segun el diseno "Shop Plantas" (claude.ai/design): hero oscuro con
+// miga de pan, sidebar de colecciones + filtros, orden y grilla de tarjetas.
+// El filtrado corre en el cliente sobre los data-atributos de cada tarjeta
+// (?c= coleccion, ?q= busqueda del navbar). El catalogo y los badges de stock
+// no cambian: ProductCard/StockBadge siguen conectados por SKU al stock proxy.
 import Base from '../../layouts/Base.astro';
 import ProductCard from '../../components/ProductCard.astro';
-import { categories, products } from '../../data/products';
+import NewsletterBand from '../../components/NewsletterBand.astro';
+import { products } from '../../data/products';
+import { collections, factsOf } from '../../data/collections';
+
+const sidebarSlugs = [
+  'all',
+  'mas-vendidas',
+  'recien',
+  'interior',
+  'exterior',
+  'florales',
+  'frutales',
+  'faciles',
+  'ultimas',
+];
+const sidebar = sidebarSlugs.map((slug) => collections.find((c) => c.slug === slug)!);
+
+const popularSlugs = ['faciles', 'recien', 'frutales', 'jardin', 'interior'];
+const popular = popularSlugs.map((slug) => collections.find((c) => c.slug === slug)!);
 ---
 
 <Base
-  title="Catalogo de plantas"
+  title="Catálogo de plantas"
   description="Todas nuestras plantas disponibles: interior, exterior, florales y frutales, con disponibilidad real del vivero."
 >
-  <section class="section">
-    <div class="container">
-      <span class="eyebrow">Catalogo</span>
-      <h1>Plantas</h1>
-      <p class="lead">
-        Disponibilidad real de nuestro vivero. Si dice “En stock”, esta en el vivero.
+  <section class="shop-hero">
+    <!-- FOTO PENDIENTE: banda del catalogo — a lo ancho, minimo 1920×300 px -->
+    <div class="shop-hero-photo" data-medidas="Foto banda · 1920×300" aria-hidden="true"></div>
+    <div class="shop-hero-scrim" aria-hidden="true"></div>
+    <div class="container shop-hero-inner">
+      <p class="shop-crumb"><a href="/">Inicio</a> / Plantas</p>
+      <h1 data-shop-title>Todas las plantas</h1>
+      <p class="shop-sub" data-shop-sub>
+        Cultivadas en nuestro vivero. Entrega a domicilio en la ciudad de Panamá.
       </p>
-
-      <div class="filters" role="navigation" aria-label="Filtrar por categoria">
-        <a href="/plantas" class="filter active">Todas</a>
-        {categories.map((cat) => (
-          <a href={`/plantas/${cat.slug}`} class="filter">{cat.name}</a>
-        ))}
-      </div>
-
-      <div class="grid grid--4">
-        {products.map((product) => <ProductCard product={product} />)}
-      </div>
     </div>
   </section>
+
+  <div class="container shop-layout">
+    <aside class="shop-aside">
+      <div>
+        <p class="aside-title">Comprar por colección</p>
+        <div class="aside-links">
+          {sidebar.map((c) => (
+            <a href={`/plantas?c=${c.slug}`} data-collection-link={c.slug}>{c.name}</a>
+          ))}
+          <a href="/colecciones" class="aside-all">Ver todas las colecciones</a>
+        </div>
+      </div>
+
+      <hr class="aside-rule" />
+
+      <div>
+        <p class="aside-title">Filtrar por</p>
+        <div class="filter-groups" data-filters>
+          <div class="filter-group">
+            <p class="filter-name">Nivel de cuidado</p>
+            <label><input type="checkbox" data-filter="care" value="Facil" /> Fácil</label>
+            <label><input type="checkbox" data-filter="care" value="Media" /> Media</label>
+            <label><input type="checkbox" data-filter="care" value="Exigente" /> Exigente</label>
+          </div>
+          <div class="filter-group">
+            <p class="filter-name">Luz</p>
+            <label><input type="checkbox" data-filter="light" value="sol" /> Sol pleno</label>
+            <label><input type="checkbox" data-filter="light" value="indirecta" /> Luz indirecta</label>
+            <label><input type="checkbox" data-filter="light" value="baja" /> Poca luz</label>
+          </div>
+          <div class="filter-group">
+            <p class="filter-name">Disponibilidad</p>
+            <label><input type="checkbox" data-filter="stock" value="in" /> Solo en stock</label>
+          </div>
+        </div>
+        <button type="button" class="clear-filters" data-clear-filters hidden>Limpiar filtros</button>
+      </div>
+    </aside>
+
+    <div class="shop-main">
+      <div class="shop-toolbar">
+        <p class="result-count" data-result-count>{products.length} plantas</p>
+        <div class="sort-row">
+          <label for="sort" class="sort-label">Ordenar por</label>
+          <select id="sort" data-sort>
+            <option value="featured">Destacadas</option>
+            <option value="price-asc">Precio: menor a mayor</option>
+            <option value="price-desc">Precio: mayor a menor</option>
+            <option value="name">Nombre A–Z</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="grid grid--4 shop-grid" data-product-grid>
+        {products.map((product, i) => {
+          const f = factsOf(product);
+          return (
+            <div
+              data-card
+              data-index={i}
+              data-name={f.name}
+              data-category={f.category}
+              data-care={f.care}
+              data-light={f.light}
+              data-available={f.available}
+              data-price={f.price}
+            >
+              <ProductCard product={product} />
+            </div>
+          );
+        })}
+      </div>
+
+      <div class="no-results" data-no-results hidden>
+        <p>No hay plantas con esos filtros.</p>
+        <button type="button" class="clear-filters" data-clear-filters>Quitar filtros</button>
+      </div>
+    </div>
+  </div>
+
+  <section class="container popular">
+    <hr class="popular-rule" />
+    <h2>Colecciones populares</h2>
+    <div class="popular-grid">
+      {popular.map((c) => (
+        <a href={`/plantas?c=${c.slug}`} class="popular-tile">
+          <!-- FOTO PENDIENTE: coleccion — cuadrada, minimo 400×400 px -->
+          <div class="popular-photo" data-medidas="Foto 1:1 · 400×400" aria-hidden="true"></div>
+          <span>{c.name}</span>
+        </a>
+      ))}
+    </div>
+  </section>
+
+  <NewsletterBand />
 </Base>
 
+<script>
+  import { getCollection } from '../../data/collections';
+
+  const params = new URLSearchParams(window.location.search);
+  const activeSlug = params.get('c') ?? 'all';
+  const query = (params.get('q') ?? '').trim().toLowerCase();
+  const collection = getCollection(activeSlug);
+
+  // Titulo, subtitulo y enlace activo del sidebar segun la coleccion.
+  const titleEl = document.querySelector('[data-shop-title]');
+  const subEl = document.querySelector('[data-shop-sub]');
+  if (collection.slug !== 'all' && titleEl && subEl) {
+    titleEl.textContent = collection.name;
+    subEl.textContent = collection.blurb;
+  }
+  if (query && titleEl) {
+    titleEl.textContent = `Resultados para “${query}”`;
+  }
+  document
+    .querySelector(`[data-collection-link="${collection.slug}"]`)
+    ?.classList.add('active');
+
+  const cards = Array.from(document.querySelectorAll<HTMLElement>('[data-card]'));
+  const grid = document.querySelector<HTMLElement>('[data-product-grid]');
+  const countEl = document.querySelector<HTMLElement>('[data-result-count]');
+  const noResults = document.querySelector<HTMLElement>('[data-no-results]');
+  const sortSelect = document.querySelector<HTMLSelectElement>('[data-sort]');
+  const checks = Array.from(
+    document.querySelectorAll<HTMLInputElement>('[data-filters] input[type="checkbox"]')
+  );
+  const clearButtons = Array.from(
+    document.querySelectorAll<HTMLButtonElement>('[data-clear-filters]')
+  );
+
+  function factsFrom(card: HTMLElement) {
+    return {
+      name: card.dataset.name ?? '',
+      category: card.dataset.category ?? '',
+      care: card.dataset.care ?? '',
+      light: card.dataset.light ?? '',
+      available: Number(card.dataset.available ?? 0),
+      price: Number(card.dataset.price ?? 0),
+    };
+  }
+
+  function checkedValues(kind: string): string[] {
+    return checks.filter((c) => c.dataset.filter === kind && c.checked).map((c) => c.value);
+  }
+
+  function apply() {
+    const care = checkedValues('care');
+    const light = checkedValues('light');
+    const inStockOnly = checkedValues('stock').length > 0;
+    const hasFilters = care.length > 0 || light.length > 0 || inStockOnly;
+
+    let visible = 0;
+    for (const card of cards) {
+      const f = factsFrom(card);
+      let show = collection.test(f);
+      if (show && query) show = f.name.toLowerCase().includes(query);
+      if (show && care.length) show = care.includes(f.care);
+      if (show && light.length) show = light.some((l) => f.light.toLowerCase().includes(l));
+      if (show && inStockOnly) show = f.available > 0;
+      card.hidden = !show;
+      if (show) visible += 1;
+    }
+
+    if (countEl) countEl.textContent = `${visible} ${visible === 1 ? 'planta' : 'plantas'}`;
+    if (noResults) noResults.hidden = visible > 0;
+    clearButtons.forEach((b) => {
+      if (b.closest('[data-no-results]')) return;
+      b.hidden = !hasFilters;
+    });
+  }
+
+  function sortCards() {
+    if (!grid || !sortSelect) return;
+    const mode = sortSelect.value;
+    const sorted = cards.slice().sort((a, b) => {
+      const fa = factsFrom(a);
+      const fb = factsFrom(b);
+      if (mode === 'price-asc') return fa.price - fb.price;
+      if (mode === 'price-desc') return fb.price - fa.price;
+      if (mode === 'name') return fa.name.localeCompare(fb.name);
+      return Number(a.dataset.index) - Number(b.dataset.index);
+    });
+    sorted.forEach((card) => grid.appendChild(card));
+  }
+
+  checks.forEach((c) => c.addEventListener('change', apply));
+  sortSelect?.addEventListener('change', sortCards);
+  clearButtons.forEach((b) =>
+    b.addEventListener('click', () => {
+      checks.forEach((c) => (c.checked = false));
+      apply();
+    })
+  );
+
+  // Estado inicial (coleccion de la URL o busqueda del navbar).
+  apply();
+</script>
+
 <style>
-  .filters {
+  /* Hero */
+  .shop-hero {
+    position: relative;
+    height: 300px;
+    overflow: hidden;
     display: flex;
-    gap: 0.5rem;
-    flex-wrap: wrap;
-    margin: 1.5rem 0 2rem;
+    align-items: center;
+    background: var(--card-dark);
+    border-bottom: 1px solid var(--line);
   }
 
-  .filter {
-    padding: 0.45rem 1rem;
-    border: 1px solid var(--line);
+  .shop-hero-photo {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(150deg, #2a4432, var(--card-dark) 70%);
+  }
+
+  .shop-hero-photo::after {
+    content: attr(data-medidas);
+    position: absolute;
+    right: 14px;
+    top: 14px;
+    font-size: 0.62rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(238, 245, 240, 0.65);
+    background: rgba(27, 42, 31, 0.55);
+    padding: 2px 8px;
     border-radius: 999px;
-    background: var(--surface);
-    color: var(--ink);
-    font-size: 0.9rem;
+  }
+
+  .shop-hero-scrim {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to right, rgba(27, 42, 31, 0.72), rgba(27, 42, 31, 0.25));
+  }
+
+  .shop-hero-inner {
+    position: relative;
+    width: 100%;
+  }
+
+  .shop-crumb {
+    font-size: 0.72rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: #8ce6a8;
+    margin: 0 0 0.55rem;
+  }
+
+  .shop-crumb a { color: #8ce6a8; }
+
+  .shop-hero h1 {
+    color: #eef5f0;
     font-weight: 600;
+    font-size: clamp(2rem, 4vw, 2.9rem);
+    margin: 0;
   }
 
-  .filter:hover {
-    text-decoration: none;
-    border-color: var(--green);
+  .shop-sub {
+    font-size: 1.05rem;
+    color: rgba(255, 255, 255, 0.85);
+    margin: 0.55rem 0 0;
+    max-width: 38rem;
   }
 
-  .filter.active {
-    background: var(--green);
-    border-color: var(--green);
-    color: #fff;
+  /* Layout */
+  .shop-layout {
+    display: grid;
+    grid-template-columns: 250px minmax(0, 1fr);
+    gap: 2.9rem;
+    padding-top: 2.3rem;
+    padding-bottom: 4.6rem;
+  }
+
+  @media (max-width: 900px) {
+    .shop-layout { grid-template-columns: 1fr; gap: 1.7rem; }
+  }
+
+  .shop-aside {
+    display: flex;
+    flex-direction: column;
+    gap: 1.7rem;
+  }
+
+  .aside-title {
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    margin: 0 0 0.85rem;
+  }
+
+  .aside-links {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+  }
+
+  .aside-links a { font-size: 0.9rem; color: var(--ink); }
+
+  .aside-links a.active {
+    color: var(--green-deep);
+    font-weight: 700;
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 4px;
+  }
+
+  .aside-all {
+    color: var(--green-deep) !important;
+    text-decoration: underline;
+    margin-top: 0.3rem;
+  }
+
+  .aside-rule {
+    height: 1px;
+    border: 0;
+    margin: 0;
+    background: var(--line);
+  }
+
+  .filter-groups {
+    display: flex;
+    flex-direction: column;
+    gap: 1.15rem;
+  }
+
+  .filter-name {
+    font-size: 0.82rem;
+    font-weight: 600;
+    margin: 0 0 0.55rem;
+  }
+
+  .filter-group label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    font-weight: 400;
+    padding: 3px 0;
+    margin: 0;
+    cursor: pointer;
+  }
+
+  .filter-group input[type='checkbox'] {
+    width: 15px;
+    height: 15px;
+    accent-color: var(--green);
+    padding: 0;
+  }
+
+  .clear-filters {
+    margin-top: 0.85rem;
+    font-family: var(--font-ui);
+    font-size: 0.82rem;
+    color: var(--green-deep);
+    background: transparent;
+    border: 0;
+    text-decoration: underline;
+    cursor: pointer;
+    padding: 0;
+  }
+
+  /* Toolbar y grilla */
+  .shop-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.15rem;
+    margin-bottom: 1.4rem;
+    flex-wrap: wrap;
+  }
+
+  .result-count {
+    font-size: 0.88rem;
+    color: var(--ink-soft);
+    margin: 0;
+  }
+
+  .sort-row {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+  }
+
+  .sort-label {
+    font-size: 0.82rem;
+    font-weight: 400;
+    color: var(--ink-soft);
+    margin: 0;
+  }
+
+  .sort-row select {
+    width: auto;
+    font-size: 0.88rem;
+    padding: 0.5rem 0.9rem;
+    border-radius: 999px;
+    cursor: pointer;
+  }
+
+  .shop-grid [data-card][hidden] { display: none; }
+
+  .no-results {
+    text-align: center;
+    padding: 4.6rem 0;
+    color: var(--ink-soft);
+  }
+
+  .no-results p { font-size: 1.2rem; margin-bottom: 0.55rem; }
+
+  /* Colecciones populares */
+  .popular { padding-bottom: 4.6rem; }
+
+  .popular-rule {
+    height: 1px;
+    border: 0;
+    margin: 0 0 2.3rem;
+    background: var(--line);
+  }
+
+  .popular h2 { margin-bottom: 1.7rem; }
+
+  .popular-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1.15rem;
+  }
+
+  .popular-tile {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+    color: var(--ink);
+    text-align: center;
+    font-size: 0.88rem;
+    font-weight: 500;
+  }
+
+  .popular-tile:hover { color: var(--ink); }
+
+  .popular-photo {
+    position: relative;
+    aspect-ratio: 1 / 1;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    outline: 1px solid rgba(27, 42, 31, 0.12);
+    background: linear-gradient(160deg, var(--green-tint), var(--surface-2));
+  }
+
+  .popular-photo::after {
+    content: attr(data-medidas);
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 0.6rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: rgba(27, 42, 31, 0.5);
+    background: rgba(238, 245, 240, 0.85);
+    padding: 2px 7px;
+    border-radius: 999px;
+    white-space: nowrap;
   }
 </style>

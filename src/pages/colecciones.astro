@@ -1,0 +1,108 @@
+---
+// Pagina "Colecciones" del diseno (claude.ai/design): grilla de teselas
+// cuadradas que abren el catalogo ya filtrado (/plantas?c=slug). Los conteos
+// se calculan en build sobre el catalogo real, no son cifras decorativas.
+import Base from '../layouts/Base.astro';
+import NewsletterBand from '../components/NewsletterBand.astro';
+import { collections, factsOf } from '../data/collections';
+import { products } from '../data/products';
+
+const tiles = collections.map((c) => {
+  const count = products.filter((p) => c.test(factsOf(p))).length;
+  return { ...c, count };
+});
+---
+
+<Base
+  title="Colecciones"
+  description="Todas las colecciones del vivero: por espacio, por cuidado, por temporada y por tipo de planta."
+>
+  <section class="section">
+    <div class="container">
+      <p class="crumb"><a href="/">Inicio</a> / Colecciones</p>
+      <h1>Catálogo</h1>
+      <p class="lead">
+        Todas las colecciones del vivero: por espacio, por cuidado, por temporada
+        y por tipo de planta. Cada colección abre el catálogo ya filtrado.
+      </p>
+
+      <div class="tiles">
+        {tiles.map((c) => (
+          <a href={`/plantas?c=${c.slug}`} class="tile">
+            <!-- FOTO PENDIENTE: coleccion {c.slug} — cuadrada, minimo 400×400 px -->
+            <div class="tile-photo" data-medidas="Foto 1:1 · 400×400" aria-hidden="true"></div>
+            <span class="tile-name">{c.name}</span>
+            <span class="tile-count">{c.count} {c.count === 1 ? 'planta' : 'plantas'}</span>
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <NewsletterBand />
+</Base>
+
+<style>
+  .crumb {
+    font-size: 0.72rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    margin: 0 0 0.55rem;
+  }
+
+  .crumb a { color: var(--ink-soft); }
+
+  h1 { font-weight: 600; }
+
+  .tiles {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1.4rem;
+    margin-top: 2.3rem;
+  }
+
+  .tile {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+    color: var(--ink);
+    text-align: center;
+  }
+
+  .tile:hover { color: var(--ink); }
+  .tile:hover .tile-name { text-decoration: underline; }
+
+  .tile-photo {
+    position: relative;
+    aspect-ratio: 1 / 1;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    outline: 1px solid rgba(27, 42, 31, 0.12);
+    background: linear-gradient(160deg, var(--green-tint), var(--surface-2));
+  }
+
+  .tile-photo::after {
+    content: attr(data-medidas);
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 0.6rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: rgba(27, 42, 31, 0.5);
+    background: rgba(238, 245, 240, 0.85);
+    padding: 2px 7px;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+
+  .tile-name { font-size: 0.88rem; font-weight: 500; }
+
+  .tile-count {
+    font-size: 0.75rem;
+    color: var(--ink-soft);
+    margin-top: -0.3rem;
+  }
+</style>

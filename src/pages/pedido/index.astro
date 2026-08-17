@@ -1,46 +1,71 @@
 ---
-// Pagina publica de rastreo. En el sitio estatico funciona como buscador:
-// el numero de pedido se consulta al backend (GET /api/orders/{orderNumber})
-// desde el cliente. No requiere login: el numero de pedido es la credencial.
+// Rastreo de pedidos con el lenguaje visual de "Pedidos" (claude.ai/design).
+// El diseno muestra un historial por cuenta; la tienda v1 no tiene cuentas,
+// asi que se conserva el buscador publico: el numero de pedido es la
+// credencial y se consulta al backend (GET /api/orders/{orderNumber}) desde
+// el cliente cuando este desplegado.
 import Base from '../../layouts/Base.astro';
 import { whatsappLink } from '../../lib/site';
+
+const steps = [
+  { key: 'confirmado', title: 'Pedido confirmado', detail: 'Recibimos tu pago y el detalle por WhatsApp.' },
+  { key: 'preparando', title: 'En preparación en el vivero', detail: 'Seleccionamos y empacamos tus plantas.' },
+  { key: 'en-camino', title: 'En ruta', detail: 'Va en camino a tu dirección.' },
+  { key: 'entregado', title: 'Entregado', detail: 'Pedido entregado.' },
+];
 ---
 
-<Base title="Rastrear pedido" description="Consulta el estado de tu pedido con tu numero de orden. Sin necesidad de cuenta.">
+<Base
+  title="Rastrear pedido"
+  description="Consulta el estado de tu pedido con tu número de orden. Sin necesidad de cuenta."
+  chrome="minimal"
+  minimalLinkHref="/"
+  minimalLinkLabel="Volver al inicio"
+>
   <section class="section">
     <div class="container tracking-container">
-      <span class="eyebrow">Seguimiento</span>
-      <h1>Rastrea tu pedido</h1>
-      <p class="lead">
-        Ingresa el numero de pedido que recibiste por correo
-        (por ejemplo, <code>VR-20260812-A7K3</code>).
-      </p>
+      <h1>Tus pedidos</h1>
+      <p class="page-sub">Sigue el estado de cada entrega del vivero.</p>
 
-      <form class="tracking-form card">
+      <form class="tracking-form">
         <div class="field">
-          <label for="order-number">Numero de pedido</label>
-          <input type="text" id="order-number" name="order-number" placeholder="VR-20260812-A7K3" required />
+          <label for="order-number">Número de pedido</label>
+          <input
+            type="text"
+            id="order-number"
+            name="order-number"
+            placeholder="VR-20260812-A7K3"
+            required
+          />
+          <p class="help">Lo recibiste por correo al confirmar tu compra.</p>
         </div>
         <button type="submit" class="btn btn--green">Consultar estado</button>
       </form>
 
-      <div class="tracking-result card" hidden>
-        <h3>Pedido <span data-result-number></span></h3>
+      <div class="tracking-result" hidden>
+        <div class="result-head">
+          <p class="result-title">Pedido <span data-result-number></span></p>
+        </div>
         <ol class="status-steps">
-          <li data-step="recibido">Recibido</li>
-          <li data-step="preparando">Preparando</li>
-          <li data-step="en-camino">En camino</li>
-          <li data-step="entregado">Entregado</li>
+          {steps.map((s) => (
+            <li data-step={s.key}>
+              <span class="step-dot" aria-hidden="true"></span>
+              <span class="step-copy">
+                <span class="step-title">{s.title}</span>
+                <span class="step-detail">{s.detail}</span>
+              </span>
+            </li>
+          ))}
         </ol>
         <p class="tracking-message" data-result-message></p>
         <a class="btn btn--whatsapp" data-result-whatsapp target="_blank" rel="noopener">
-          Consultar por WhatsApp
+          Preguntar por mi pedido
         </a>
       </div>
 
       <p class="lost-link">
-        ¿Perdiste tu numero de pedido? Escribenos por
-        <a href={whatsappLink('Hola, perdi mi numero de pedido y quiero recuperarlo.')} target="_blank" rel="noopener">WhatsApp</a>
+        ¿Perdiste tu número de pedido? Escríbenos por
+        <a href={whatsappLink('Hola, perdí mi número de pedido y quiero recuperarlo.')} target="_blank" rel="noopener">WhatsApp</a>
         con el correo que usaste al comprar.
       </p>
     </div>
@@ -48,6 +73,8 @@ import { whatsappLink } from '../../lib/site';
 </Base>
 
 <script>
+  import { whatsappLink } from '../../lib/site';
+
   const form = document.querySelector<HTMLFormElement>('.tracking-form');
   const input = document.querySelector<HTMLInputElement>('#order-number');
   const result = document.querySelector<HTMLElement>('.tracking-result');
@@ -58,7 +85,7 @@ import { whatsappLink } from '../../lib/site';
   async function lookup(orderNumber: string) {
     if (numberEl) numberEl.textContent = orderNumber;
     if (waLink) {
-      waLink.href = `https://wa.me/50760000000?text=${encodeURIComponent(`Hola, quiero informacion de mi pedido ${orderNumber}.`)}`;
+      waLink.href = whatsappLink(`Hola, quiero información de mi pedido ${orderNumber}.`);
     }
 
     // v1: GET /api/orders/{orderNumber} devolvera el estado real desde Odoo.
@@ -68,6 +95,8 @@ import { whatsappLink } from '../../lib/site';
       if (res.ok) {
         const data = await res.json();
         if (messageEl) messageEl.textContent = `Estado actual: ${data.status}`;
+        const active = document.querySelector(`[data-step="${data.status}"]`);
+        active?.classList.add('active');
         result?.removeAttribute('hidden');
         return;
       }
@@ -77,7 +106,7 @@ import { whatsappLink } from '../../lib/site';
 
     if (messageEl) {
       messageEl.textContent =
-        'El rastreo automatico estara disponible muy pronto. Mientras tanto, consulta el estado de tu pedido por WhatsApp con un solo clic:';
+        'El rastreo automático estará disponible muy pronto. Mientras tanto, consulta el estado de tu pedido por WhatsApp con un solo clic:';
     }
     result?.removeAttribute('hidden');
   }
@@ -97,41 +126,79 @@ import { whatsappLink } from '../../lib/site';
 </script>
 
 <style>
-  .tracking-container { max-width: 40rem; }
+  .tracking-container { max-width: 44rem; }
+
+  h1 { font-weight: 400; margin-bottom: 0.2rem; }
+
+  .page-sub {
+    color: var(--ink-soft);
+    margin: 0 0 2.3rem;
+  }
 
   .tracking-form {
-    padding: 1.75rem;
-    margin: 1.5rem 0;
+    background: #ffffff;
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 1.7rem;
+    margin-bottom: 1.4rem;
   }
 
   .tracking-result {
-    padding: 1.75rem;
-    margin-bottom: 1.5rem;
+    background: #ffffff;
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 1.7rem;
+    margin-bottom: 1.4rem;
   }
 
+  .result-title { font-size: 1.25rem; font-weight: 600; margin: 0 0 1.15rem; }
+
   .status-steps {
-    display: flex;
-    gap: 0.5rem;
     list-style: none;
-    padding: 0;
-    margin: 1rem 0;
-    flex-wrap: wrap;
+    padding: 1.15rem;
+    margin: 0 0 1.15rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    background: var(--green-tint);
+    border: 1px solid rgba(21, 102, 47, 0.25);
+    border-radius: 14px;
   }
 
   .status-steps li {
-    padding: 0.35rem 0.9rem;
-    border-radius: 999px;
-    background: var(--bg);
-    border: 1px solid var(--line);
-    font-size: 0.85rem;
+    display: grid;
+    grid-template-columns: 22px minmax(0, 1fr);
+    gap: 0.85rem;
+    align-items: start;
+  }
+
+  .step-dot {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #ffffff;
+    border: 2px solid rgba(27, 42, 31, 0.25);
+    margin-top: 2px;
+  }
+
+  .status-steps li.active .step-dot {
+    background: var(--green-deep);
+    border-color: var(--green-deep);
+  }
+
+  .step-title {
+    display: block;
+    font-size: 0.95rem;
     font-weight: 600;
     color: var(--ink-soft);
   }
 
-  .status-steps li.active {
-    background: var(--green);
-    border-color: var(--green);
-    color: #fff;
+  .status-steps li.active .step-title { color: var(--ink); }
+
+  .step-detail {
+    display: block;
+    font-size: 0.82rem;
+    color: var(--ink-soft);
   }
 
   .tracking-message { color: var(--ink-soft); }
@@ -139,13 +206,5 @@ import { whatsappLink } from '../../lib/site';
   .lost-link {
     font-size: 0.95rem;
     color: var(--ink-soft);
-  }
-
-  code {
-    background: var(--surface);
-    border: 1px solid var(--line);
-    border-radius: 4px;
-    padding: 0.1rem 0.4rem;
-    font-size: 0.9em;
   }
 </style>

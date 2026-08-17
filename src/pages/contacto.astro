@@ -1,59 +1,376 @@
 ---
+// Contacto segun el diseno "Contacto" (claude.ai/design): mitad izquierda con
+// foto oscura y tarjetas de contacto directo, mitad derecha con formulario
+// oscuro cuyos "chips" de tema cambian la ayuda del mensaje. Sin backend de
+// formularios: al enviar se abre WhatsApp con el mensaje armado.
 import Base from '../layouts/Base.astro';
-import { whatsappLink } from '../lib/site';
+import { SITE, whatsappLink } from '../lib/site';
+
+const topics = [
+  { id: 'plantas', label: 'Comprar plantas', hint: '¿Qué especies buscas y para qué espacio?' },
+  { id: 'paisajismo', label: 'Diseño de jardines', hint: '¿Cuánto mide el área y qué te gustaría lograr?' },
+  { id: 'mantenimiento', label: 'Mantenimiento', hint: '¿Con qué frecuencia necesitas las visitas?' },
+  { id: 'mayoreo', label: 'Compras al mayor', hint: 'Dinos especies y cantidades aproximadas.' },
+  { id: 'pedido', label: 'Mi pedido', hint: 'Indícanos el número de pedido (ej. VR-20260812-A7K3).' },
+  { id: 'otro', label: 'Otro', hint: '¿En qué te podemos ayudar?' },
+];
 ---
 
 <Base
   title="Contacto"
-  description="Escribenos por WhatsApp o visitanos en el vivero. Estamos en Panama."
+  description="Escríbenos por WhatsApp, correo o visítanos en el vivero. Estamos en Panamá."
 >
-  <section class="section">
-    <div class="container">
-      <span class="eyebrow">Contacto</span>
-      <h1>Hablemos</h1>
-      <p class="lead">
-        WhatsApp es la via mas rapida: respondemos en horario de vivero,
-        de lunes a sabado.
-      </p>
+  <div class="contact-grid">
+    <section class="contact-left">
+      <!-- FOTO PENDIENTE: lateral de contacto — vertical, minimo 960×1080 px -->
+      <div class="left-photo" data-medidas="Foto · 960×1080" aria-hidden="true"></div>
+      <div class="left-scrim" aria-hidden="true"></div>
+      <div class="left-copy">
+        <div>
+          <span class="left-eyebrow">Escríbenos</span>
+          <h1>Hablemos</h1>
+          <p class="left-lead">Cuéntanos qué necesitas: plantas, un jardín nuevo o mantenimiento.</p>
+        </div>
 
-      <div class="grid grid--2" style="margin-top: 2rem;">
-        <div class="card contact-card">
-          <h3>💬 WhatsApp</h3>
-          <p>Consultas de plantas, pedidos, entregas y cotizaciones.</p>
-          <a href={whatsappLink('Hola, tengo una consulta.')} class="btn btn--whatsapp" target="_blank" rel="noopener">
-            Abrir WhatsApp
+        <div class="contact-cards">
+          <a href={whatsappLink('Hola, tengo una consulta.')} class="c-card c-card--dark" target="_blank" rel="noopener">
+            <span class="c-kicker">💬 WhatsApp</span>
+            <span class="c-main">Escríbenos ahora</span>
+            <span class="c-note">El canal más rápido: respondemos en minutos.</span>
           </a>
-        </div>
-
-        <div class="card contact-card">
-          <h3>📍 Visitanos</h3>
-          <p>
-            Vivero Rose, Panama.<br />
-            Lunes a sabado, 8:00 a.m. – 4:00 p.m.
-          </p>
-          <p class="help">La direccion exacta y el mapa se publicaran aqui.</p>
-        </div>
-
-        <div class="card contact-card">
-          <h3>📦 ¿Ya compraste?</h3>
-          <p>Rastrea tu pedido con el numero que recibiste por correo.</p>
-          <a href="/pedido" class="btn btn--ghost">Rastrear pedido</a>
-        </div>
-
-        <div class="card contact-card">
-          <h3>🏢 Mayorista y paisajismo</h3>
-          <p>Para supermercados, distribuidores y proyectos de paisajismo.</p>
-          <div style="display: flex; gap: 0.6rem; flex-wrap: wrap;">
-            <a href="/mayorista" class="btn btn--ghost">Mayorista</a>
-            <a href="/paisajismo" class="btn btn--ghost">Paisajismo</a>
+          <a href="mailto:hola@viverorose.com" class="c-card c-card--glass">
+            <span class="c-kicker">✉️ Correo</span>
+            <span class="c-main">hola@viverorose.com</span>
+            <span class="c-note">Cotizaciones y pedidos al mayor.</span>
+          </a>
+          <div class="c-card c-card--light c-card--wide">
+            <span class="c-kicker c-kicker--green">📍 Visítanos</span>
+            <span class="c-main">{SITE.address}</span>
+            <span class="c-note">
+              {SITE.hours} ·
+              <a href="https://maps.google.com/?q=Vivero+Rose+Juan+Diaz+Panama" target="_blank" rel="noopener">Cómo llegar</a>
+            </span>
           </div>
         </div>
       </div>
-    </div>
-  </section>
+    </section>
+
+    <section class="contact-right">
+      <form class="dark-form" data-contact-form>
+        <h2>¿De qué se trata?</h2>
+
+        <div class="chips">
+          {topics.map((t, i) => (
+            <button
+              type="button"
+              class:list={['chip', { on: i === 0 }]}
+              data-topic={t.id}
+              data-hint={t.hint}
+              data-label={t.label}
+            >{t.label}</button>
+          ))}
+        </div>
+
+        <div class="dark-fields">
+          <label>Nombre
+            <input type="text" name="nombre" placeholder="Tu nombre" required />
+          </label>
+          <label>Apellido
+            <input type="text" name="apellido" placeholder="Tu apellido" />
+          </label>
+          <label>Correo
+            <input type="email" name="correo" placeholder="tu@correo.com" />
+          </label>
+          <label>WhatsApp
+            <input type="tel" name="whatsapp" placeholder="+507 …" />
+          </label>
+        </div>
+
+        <label class="full">Cuéntanos brevemente
+          <textarea name="mensaje" data-message placeholder={topics[0].hint} required></textarea>
+        </label>
+
+        <div class="form-foot">
+          <button type="submit" class="btn btn--green">Enviar mensaje →</button>
+          <span>Te respondemos en menos de un día hábil.</span>
+        </div>
+      </form>
+    </section>
+  </div>
 </Base>
 
+<script>
+  import { whatsappLink } from '../lib/site';
+
+  let activeTopic = 'Comprar plantas';
+  const chips = Array.from(document.querySelectorAll<HTMLButtonElement>('.chip'));
+  const message = document.querySelector<HTMLTextAreaElement>('[data-message]');
+
+  chips.forEach((chip) =>
+    chip.addEventListener('click', () => {
+      chips.forEach((c) => c.classList.toggle('on', c === chip));
+      activeTopic = chip.dataset.label ?? activeTopic;
+      if (message) message.placeholder = chip.dataset.hint ?? '';
+    })
+  );
+
+  const form = document.querySelector<HTMLFormElement>('[data-contact-form]');
+  form?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    if (!form.reportValidity()) return;
+    const d = new FormData(form);
+    const text =
+      `Hola, escribo desde plantaspanama.com.\n\n` +
+      `Tema: ${activeTopic}\n` +
+      `Nombre: ${d.get('nombre')} ${d.get('apellido') || ''}\n` +
+      `${d.get('correo') ? `Correo: ${d.get('correo')}\n` : ''}` +
+      `${d.get('whatsapp') ? `WhatsApp: ${d.get('whatsapp')}\n` : ''}` +
+      `Mensaje: ${d.get('mensaje')}`;
+    window.open(whatsappLink(text), '_blank', 'noopener');
+  });
+</script>
+
 <style>
-  .contact-card { padding: 1.75rem; }
-  .contact-card p { color: var(--ink-soft); }
+  .contact-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.02fr) minmax(0, 0.98fr);
+  }
+
+  @media (max-width: 900px) {
+    .contact-grid { grid-template-columns: 1fr; }
+  }
+
+  /* Columna izquierda */
+  .contact-left {
+    position: relative;
+    overflow: hidden;
+    background: var(--card-dark);
+    min-height: 640px;
+  }
+
+  .left-photo {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(150deg, #2a4432, var(--card-dark) 70%);
+  }
+
+  .left-photo::after {
+    content: attr(data-medidas);
+    position: absolute;
+    right: 12px;
+    top: 12px;
+    font-size: 0.6rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: rgba(238, 245, 240, 0.7);
+    background: rgba(27, 42, 31, 0.55);
+    padding: 2px 8px;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+
+  .left-scrim {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom, rgba(27, 42, 31, 0.58), rgba(27, 42, 31, 0.8));
+  }
+
+  .left-copy {
+    position: relative;
+    height: 100%;
+    box-sizing: border-box;
+    padding: clamp(2.5rem, 6vh, 5rem) clamp(1.5rem, 3vw, 2.9rem);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 1.7rem;
+    color: #ffffff;
+  }
+
+  .left-eyebrow {
+    display: block;
+    font-size: 0.68rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.72);
+    margin-bottom: 0.85rem;
+  }
+
+  .contact-left h1 {
+    color: #ffffff;
+    font-weight: 400;
+    margin: 0;
+  }
+
+  .left-lead {
+    font-size: 1.15rem;
+    line-height: 1.5;
+    color: #ffffff;
+    margin: 0.7rem 0 0;
+    max-width: 36ch;
+  }
+
+  .contact-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: 0.7rem;
+    max-width: 620px;
+  }
+
+  .c-card {
+    border-radius: 14px;
+    padding: 0.95rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    color: #ffffff;
+    transition: transform 0.25s ease, background 0.25s ease;
+  }
+
+  a.c-card:hover {
+    transform: translateY(-4px);
+    text-decoration: none;
+    color: #ffffff;
+  }
+
+  .c-card--dark { background: var(--card-dark); outline: 1px solid rgba(255, 255, 255, 0.14); }
+  .c-card--dark:hover { background: #16241a; }
+
+  .c-card--glass { background: rgba(255, 255, 255, 0.14); }
+  .c-card--glass:hover { background: rgba(255, 255, 255, 0.22); }
+
+  .c-card--light {
+    background: var(--bg);
+    color: var(--ink);
+  }
+
+  .c-card--wide { grid-column: 1 / -1; }
+
+  .c-kicker {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.68rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: #8ce6a8;
+  }
+
+  .c-kicker--green { color: var(--green-deep); }
+
+  .c-main { font-size: 1.1rem; font-weight: 600; }
+
+  .c-note { font-size: 0.78rem; color: rgba(255, 255, 255, 0.72); }
+
+  .c-card--light .c-note { color: var(--ink-soft); }
+
+  /* Columna derecha: formulario oscuro */
+  .contact-right {
+    background: var(--surface);
+    padding: clamp(1.5rem, 3vh, 2.9rem) clamp(1.5rem, 2.6vw, 2.9rem);
+    display: flex;
+    align-items: center;
+  }
+
+  .dark-form {
+    background: #16241a;
+    border-radius: 18px;
+    padding: clamp(1.5rem, 2.6vw, 2.3rem);
+    width: 100%;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: 1.15rem;
+  }
+
+  .dark-form h2 {
+    font-weight: 400;
+    font-size: clamp(1.45rem, 2.3vw, 1.9rem);
+    margin: 0;
+    color: #ffffff;
+  }
+
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.55rem;
+  }
+
+  .chip {
+    font-family: var(--font-ui);
+    font-size: 0.82rem;
+    padding: 0.55rem 1rem;
+    border-radius: 999px;
+    cursor: pointer;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    background: transparent;
+    color: #ffffff;
+  }
+
+  .chip.on {
+    background: var(--green);
+    border-color: var(--green);
+  }
+
+  .dark-fields {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 1.15rem;
+  }
+
+  .dark-form label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    font-size: 0.68rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.6);
+    font-weight: 400;
+    margin: 0;
+  }
+
+  .dark-form input,
+  .dark-form textarea {
+    min-height: 40px;
+    padding: 8px 0;
+    font-family: var(--font-ui);
+    font-size: 0.95rem;
+    color: #ffffff;
+    background: transparent;
+    border: 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.28);
+    border-radius: 0;
+    outline: none;
+  }
+
+  .dark-form input::placeholder,
+  .dark-form textarea::placeholder {
+    color: rgba(255, 255, 255, 0.45);
+  }
+
+  .dark-form input:focus,
+  .dark-form textarea:focus {
+    outline: none;
+    border-color: var(--green);
+    border-bottom-width: 1px;
+  }
+
+  .dark-form textarea {
+    min-height: 92px;
+    resize: none;
+  }
+
+  .form-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.15rem;
+    flex-wrap: wrap;
+  }
+
+  .form-foot span {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.6);
+  }
 </style>

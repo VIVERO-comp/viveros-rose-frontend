@@ -1,39 +1,185 @@
 ---
-import { NAV, SITE } from '../lib/site';
+// Cabecera segun el diseno "Navbar" (claude.ai/design): barra de anuncio,
+// marca grande con buscador centrado, y una segunda fila de navegacion con
+// mega menu de Plantas y desplegables de Servicios y Eventos.
+// El contador del carrito conserva data-cart-count (lo refresca src/lib/cart).
+// El "drawer" de cuenta del diseno se omite: la tienda v1 no tiene cuentas.
+import { SITE, whatsappLink } from '../lib/site';
+import { collections } from '../data/collections';
 
 const currentPath = Astro.url.pathname;
+
+const isActive = (href: string) =>
+  currentPath === href || (href !== '/' && currentPath.startsWith(href));
+
+// Columnas del mega menu de Plantas (solo colecciones con datos reales).
+const megaColumns = [
+  {
+    title: 'Colecciones populares',
+    links: ['mas-vendidas', 'recien', 'interior', 'exterior', 'faciles'].map((slug) => {
+      const c = collections.find((x) => x.slug === slug)!;
+      return { href: `/plantas?c=${c.slug}`, label: c.name };
+    }),
+  },
+  {
+    title: 'Por condición',
+    links: ['poca-luz', 'jardin', 'ultimas'].map((slug) => {
+      const c = collections.find((x) => x.slug === slug)!;
+      return { href: `/plantas?c=${c.slug}`, label: c.name };
+    }),
+  },
+  {
+    title: 'Tipo de planta',
+    links: [
+      { href: '/plantas/florales', label: 'Florales' },
+      { href: '/plantas/frutales', label: 'Frutales injertados' },
+      { href: '/plantas/interior', label: 'Plantas de interior' },
+      { href: '/plantas/exterior', label: 'Plantas de exterior' },
+    ],
+  },
+  {
+    title: 'Más',
+    links: [
+      { href: '/colecciones', label: 'Todas las colecciones' },
+      { href: '/plantas', label: 'Todas las plantas' },
+      { href: '/guia', label: 'Guías de cuidado' },
+    ],
+  },
+];
+
+const serviciosLinks = [
+  { href: '/servicios#diseno', label: 'Diseño de jardines' },
+  { href: '/servicios#mantenimiento', label: 'Mantenimiento' },
+  { href: '/servicios#proyectos', label: 'Proyectos comerciales' },
+];
+
+const eventosLinks = [
+  { href: '/eventos?e=bodas', label: 'Bodas y eventos sociales' },
+  { href: '/eventos?e=ferias', label: 'Ferias y activaciones' },
+  { href: '/eventos?e=alquiler', label: 'Alquiler de plantas' },
+];
+
+const mobileLinks = [
+  { href: '/plantas', label: 'Plantas' },
+  { href: '/colecciones', label: 'Colecciones' },
+  { href: '/eventos', label: 'Eventos' },
+  { href: '/pedido', label: 'Pedidos' },
+  { href: '/vivero', label: 'Nuestro Vivero' },
+  { href: '/servicios', label: 'Servicios' },
+  { href: '/mayorista', label: 'Mayorista' },
+  { href: '/contacto', label: 'Contacto' },
+];
 ---
 
+<div class="announce">
+  <a href="/plantas?c=exterior">Temporada de lluvias: 15% de descuento en plantas de exterior</a>
+</div>
+
 <header class="site-header">
-  <div class="container header-inner">
+  <div class="container top-row">
     <a href="/" class="brand">
-      <span class="brand-mark">🌿</span>
-      <span class="brand-name">{SITE.name}</span>
+      <span class="brand-name">PLANTAS PANAMÁ</span>
+      <span class="brand-byline">{SITE.byline}</span>
     </a>
 
-    <nav class="main-nav" aria-label="Navegacion principal">
-      {NAV.map((item) => (
-        <a
-          href={item.href}
-          class:list={['nav-link', { active: currentPath === item.href || (item.href !== '/' && currentPath.startsWith(item.href)) }]}
-        >
-          {item.label}
-        </a>
-      ))}
-    </nav>
+    <form class="search" action="/plantas" method="get" role="search">
+      <input
+        type="search"
+        name="q"
+        placeholder="Buscar plantas, frutales, florales…"
+        aria-label="Buscar plantas"
+      />
+      <button type="submit" aria-label="Buscar">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" /></svg>
+      </button>
+    </form>
 
-    <div class="header-actions">
-      <a href="/carrito" class="cart-link" aria-label="Carrito de compras">
-        🛒 <span class="cart-count" data-cart-count>0</span>
+    <div class="top-actions">
+      <a href="/carrito" class="cart-link">
+        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z" /><path d="M3 6h18" /><path d="M16 10a4 4 0 0 1-8 0" /></svg>
+        Carrito (<span data-cart-count>0</span>)
       </a>
-      <button class="menu-toggle" aria-label="Abrir menu" aria-expanded="false">☰</button>
+      <a href="/plantas" class="btn btn--green btn--nav">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z" /><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12" /></svg>
+        Ir a plantas
+      </a>
+      <button class="menu-toggle" aria-label="Abrir menú" aria-expanded="false">☰</button>
     </div>
   </div>
 
-  <nav class="mobile-nav" aria-label="Navegacion movil" hidden>
-    {NAV.map((item) => (
-      <a href={item.href} class="mobile-link">{item.label}</a>
+  <nav class="nav-row" aria-label="Navegación principal">
+    <div class="container nav-inner">
+      <a href="/" class:list={['nav-link', { active: currentPath === '/' }]}>Inicio</a>
+
+      <div class="has-menu has-menu--wide">
+        <a href="/plantas" class:list={['nav-link', { active: isActive('/plantas') }]}>Plantas <span class="caret">▾</span></a>
+        <div class="mega" role="menu">
+          <div class="container mega-grid">
+            {megaColumns.map((col) => (
+              <div class="mega-col">
+                <p class="mega-title">{col.title}</p>
+                {col.links.map((l) => (
+                  <a href={l.href}>{l.label}</a>
+                ))}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <a href="/colecciones" class:list={['nav-link', { active: isActive('/colecciones') }]}>Colecciones</a>
+      <a href="/pedido" class:list={['nav-link', { active: isActive('/pedido') }]}>Pedidos</a>
+      <a href="/vivero" class:list={['nav-link', { active: isActive('/vivero') }]}>Nuestro Vivero</a>
+
+      <div class="has-menu">
+        <a href="/servicios" class:list={['nav-link', { active: isActive('/servicios') }]}>Servicios <span class="caret">▾</span></a>
+        <div class="drop" role="menu">
+          <p class="drop-title">Jardines, mantenimiento y obra</p>
+          <p class="drop-text">Diseñamos, sembramos y mantenemos áreas verdes en toda la ciudad de Panamá, con material de nuestro vivero.</p>
+          <div class="drop-links">
+            {serviciosLinks.map((l) => <a href={l.href}>{l.label}</a>)}
+          </div>
+          <div class="drop-foot">
+            <span>Visita y cotización sin costo</span>
+            <a href={whatsappLink('Hola, quiero cotizar un servicio de paisajismo o mantenimiento.')} target="_blank" rel="noopener">Cotizar por WhatsApp →</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="has-menu">
+        <a href="/eventos" class:list={['nav-link', { active: isActive('/eventos') }]}>Eventos <span class="caret">▾</span></a>
+        <div class="drop" role="menu">
+          <p class="drop-title">Decoración con plantas para eventos</p>
+          <p class="drop-text">Alquilamos y montamos plantas para bodas, ferias y activaciones. Entrega, montaje y retiro incluidos.</p>
+          <div class="drop-links">
+            {eventosLinks.map((l) => <a href={l.href}>{l.label}</a>)}
+          </div>
+          <div class="drop-foot">
+            <span>Reserva con 2 semanas de anticipación</span>
+            <a href={whatsappLink('Hola, quiero cotizar plantas para un evento.')} target="_blank" rel="noopener">Cotizar por WhatsApp →</a>
+          </div>
+        </div>
+      </div>
+
+      <a href="/mayorista" class:list={['nav-link', { active: isActive('/mayorista') }]}>Mayorista</a>
+      <a href="/contacto" class:list={['nav-link', { active: isActive('/contacto') }]}>Contacto</a>
+    </div>
+  </nav>
+
+  <nav class="mobile-nav" aria-label="Navegación móvil" hidden>
+    <form class="search search--mobile" action="/plantas" method="get" role="search">
+      <input type="search" name="q" placeholder="Buscar plantas…" aria-label="Buscar plantas" />
+      <button type="submit" aria-label="Buscar">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" /></svg>
+      </button>
+    </form>
+    {mobileLinks.map((item) => (
+      <a href={item.href} class="mobile-link">{item.label} <span aria-hidden="true">›</span></a>
     ))}
+    <div class="mobile-ctas">
+      <a href="/plantas" class="btn btn--green">Ir a plantas</a>
+      <a href={whatsappLink('Hola, vengo de plantaspanama.com y tengo una consulta.')} class="btn btn--ghost" target="_blank" rel="noopener">WhatsApp</a>
+    </div>
   </nav>
 </header>
 
@@ -63,70 +209,116 @@ const currentPath = Astro.url.pathname;
 </script>
 
 <style>
+  .announce {
+    background: var(--ink);
+    text-align: center;
+    padding: 0.55rem 1.15rem;
+    font-size: 0.82rem;
+    letter-spacing: 0.02em;
+  }
+
+  .announce a { color: #eef5f0; text-decoration: underline; }
+
   .site-header {
     position: sticky;
     top: 0;
     z-index: 50;
-    background: rgba(238, 245, 240, 0.95);
+    background: rgba(238, 245, 240, 0.97);
     backdrop-filter: blur(8px);
     border-bottom: 1px solid var(--line);
   }
 
-  .header-inner {
-    display: flex;
+  .top-row {
+    display: grid;
+    grid-template-columns: 1fr minmax(0, auto) 1fr;
     align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-    height: 64px;
+    gap: 1.4rem;
+    padding-top: 1.15rem;
+    padding-bottom: 1.15rem;
   }
 
-  .brand {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-family: var(--font-heading);
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: var(--ink);
+  .brand { display: block; color: var(--ink); }
+  .brand:hover { text-decoration: none; color: var(--ink); }
+
+  .brand-name {
+    display: block;
+    font-size: 1.6rem;
+    letter-spacing: 0.14em;
+    line-height: 1;
   }
 
-  .brand:hover { text-decoration: none; }
-
-  .main-nav {
-    display: flex;
-    gap: 1.25rem;
-  }
-
-  .nav-link {
+  .brand-byline {
+    display: block;
+    font-size: 0.68rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
     color: var(--ink-soft);
-    font-size: 0.95rem;
-    font-weight: 500;
+    margin-top: 0.3rem;
   }
 
-  .nav-link:hover { color: var(--ink); text-decoration: none; }
-  .nav-link.active { color: var(--green); font-weight: 700; }
-
-  .header-actions {
+  .search {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
+    gap: 0.35rem;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: #ffffff;
+    width: 100%;
+    max-width: 420px;
+    margin: 0 auto;
+  }
+
+  .search input {
+    flex: 1;
+    min-width: 0;
+    min-height: 42px;
+    padding: 6px 8px 6px 18px;
+    font-size: 0.88rem;
+    background: transparent;
+    border: 0;
+    outline: none;
+    border-radius: 999px;
+  }
+
+  .search input:focus { outline: none; }
+
+  .search button {
+    width: 38px;
+    height: 38px;
+    flex: none;
+    margin-right: 4px;
+    border-radius: 999px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: 0;
+    color: var(--green);
+    cursor: pointer;
+  }
+
+  .search button:hover { background: rgba(22, 163, 74, 0.12); }
+
+  .top-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 1.15rem;
   }
 
   .cart-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
     color: var(--ink);
-    font-weight: 600;
+    font-size: 0.88rem;
+    white-space: nowrap;
   }
 
-  .cart-count {
-    display: inline-block;
-    min-width: 1.3rem;
-    text-align: center;
-    background: var(--green);
-    color: #fff;
-    border-radius: 999px;
-    font-size: 0.75rem;
-    padding: 0.1rem 0.3rem;
-    vertical-align: top;
+  .btn--nav {
+    padding: 0.65rem 1.25rem;
+    font-size: 0.82rem;
+    white-space: nowrap;
   }
 
   .menu-toggle {
@@ -139,23 +331,194 @@ const currentPath = Astro.url.pathname;
     cursor: pointer;
   }
 
+  /* Fila de navegacion */
+  .nav-row {
+    position: relative;
+    border-top: 1px solid var(--line);
+  }
+
+  .nav-inner {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.3rem 1.7rem;
+    font-size: 0.75rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .nav-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.85rem 0;
+    color: var(--ink);
+  }
+
+  .nav-link:hover { color: var(--ink); }
+
+  .nav-link.active {
+    color: var(--green-deep);
+    font-weight: 700;
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 6px;
+  }
+
+  .caret { font-size: 0.6rem; }
+
+  .has-menu { position: relative; display: flex; align-items: center; }
+
+  /* El mega menu se ancla a la fila completa, no al item */
+  .has-menu--wide { position: static; }
+
+  /* Mega menu de Plantas (ancho completo) */
+  .mega {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 40;
+    background: var(--bg);
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+    box-shadow: 0 12px 32px rgba(27, 42, 31, 0.14);
+  }
+
+  .has-menu:hover .mega,
+  .has-menu:focus-within .mega { display: block; }
+
+  .mega-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2.3rem;
+    padding-top: 2.3rem;
+    padding-bottom: 2.3rem;
+    text-transform: none;
+    letter-spacing: 0;
+    white-space: normal;
+  }
+
+  .mega-col {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+  }
+
+  .mega-title {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0 0 0.35rem;
+    padding-bottom: 0.55rem;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .mega-col a { font-size: 0.88rem; color: var(--ink); }
+
+  /* Desplegables de Servicios y Eventos */
+  .drop {
+    display: none;
+    position: absolute;
+    left: 0;
+    top: 100%;
+    z-index: 45;
+    width: 300px;
+    box-sizing: border-box;
+    background: #ffffff;
+    border: 1px solid var(--line);
+    box-shadow: 0 12px 28px rgba(27, 42, 31, 0.16);
+    padding: 0.95rem;
+    flex-direction: column;
+    gap: 0.7rem;
+    text-transform: none;
+    letter-spacing: 0;
+    white-space: normal;
+  }
+
+  .has-menu:hover .drop,
+  .has-menu:focus-within .drop { display: flex; }
+
+  .drop-title { font-size: 0.95rem; font-weight: 600; margin: 0; }
+
+  .drop-text {
+    margin: 0;
+    font-size: 0.82rem;
+    line-height: 1.6;
+    color: var(--ink-soft);
+  }
+
+  .drop-links {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    border-top: 1px solid var(--line);
+    padding-top: 0.55rem;
+  }
+
+  .drop-links a {
+    font-size: 0.88rem;
+    color: var(--ink);
+    padding: 0.5rem 0.55rem;
+  }
+
+  .drop-links a:hover { background: var(--bg); text-decoration: none; }
+
+  .drop-foot {
+    border-top: 1px solid var(--line);
+    padding-top: 0.7rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    font-size: 0.75rem;
+    color: var(--ink-soft);
+  }
+
+  .drop-foot a { font-size: 0.82rem; font-weight: 600; }
+
+  /* Movil */
   .mobile-nav {
     display: none;
     flex-direction: column;
     border-top: 1px solid var(--line);
     background: var(--bg);
+    padding: 0.95rem;
+    gap: 0;
   }
 
+  .search--mobile { max-width: none; margin-bottom: 0.95rem; }
+
   .mobile-link {
-    padding: 0.85rem 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.85rem 0.35rem;
     color: var(--ink);
     font-weight: 600;
+    font-size: 1.05rem;
     border-bottom: 1px solid var(--line);
   }
 
-  @media (max-width: 860px) {
-    .main-nav { display: none; }
+  .mobile-ctas {
+    display: grid;
+    gap: 0.7rem;
+    margin-top: 0.95rem;
+  }
+
+  .mobile-ctas .btn { justify-content: center; }
+
+  @media (max-width: 1080px) {
+    .nav-inner { gap: 0.3rem 1.15rem; }
+  }
+
+  @media (max-width: 960px) {
+    .top-row { grid-template-columns: 1fr auto; }
+    .search:not(.search--mobile) { display: none; }
+    .nav-row { display: none; }
+    .btn--nav { display: none; }
     .menu-toggle { display: block; }
     .mobile-nav:not([hidden]) { display: flex; }
+    .brand-name { font-size: 1.15rem; letter-spacing: 0.08em; }
   }
 </style>

@@ -9,12 +9,20 @@ interface Props {
   title: string;
   description?: string;
   whatsappMessage?: string;
+  // 'minimal': cabecera reducida sin nav ni footer, como Carrito/Checkout/
+  // Pedidos en el diseno. El enlace de la derecha se configura por pagina.
+  chrome?: 'full' | 'minimal';
+  minimalLinkHref?: string;
+  minimalLinkLabel?: string;
 }
 
 const {
   title,
   description = 'Vivero real en Panama. Compra plantas online con entrega a domicilio.',
   whatsappMessage,
+  chrome = 'full',
+  minimalLinkHref = '/plantas',
+  minimalLinkLabel = 'Seguir comprando',
 } = Astro.props;
 ---
 
@@ -46,11 +54,48 @@ const {
     })} />
   </head>
   <body>
-    <Header />
+    {chrome === 'full' ? (
+      <Header />
+    ) : (
+      <header class="minimal-header">
+        <div class="container minimal-inner">
+          <a href="/" class="minimal-brand">PLANTAS PANAMÁ</a>
+          <a href={minimalLinkHref} class="minimal-link">← {minimalLinkLabel}</a>
+        </div>
+      </header>
+    )}
     <main>
       <slot />
     </main>
-    <Footer />
+    {chrome === 'full' && <Footer />}
     <WhatsAppButton message={whatsappMessage} />
   </body>
 </html>
+
+<style>
+  .minimal-header {
+    background: var(--bg);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .minimal-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.4rem;
+    min-height: 64px;
+  }
+
+  .minimal-brand {
+    font-size: 1.35rem;
+    letter-spacing: 0.1em;
+    color: var(--ink);
+  }
+
+  .minimal-brand:hover { text-decoration: none; color: var(--ink); }
+
+  .minimal-link {
+    font-size: 0.9rem;
+    color: var(--ink);
+  }
+</style>

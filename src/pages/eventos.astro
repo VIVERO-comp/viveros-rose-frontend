@@ -1,0 +1,519 @@
+---
+// Eventos segun el diseno "Eventos" (claude.ai/design). Las tres variantes
+// (?e=bodas|ferias|alquiler) se renderizan completas en el HTML estatico y
+// un script muestra la activa segun la URL, para que la pagina siga siendo
+// 100% estatica.
+import Base from '../layouts/Base.astro';
+import { SITE, whatsappLink } from '../lib/site';
+
+const variants = [
+  {
+    slug: 'bodas',
+    label: 'Bodas y sociales',
+    heroKicker: 'Bodas · Cumpleaños · Bautizos',
+    heroTitle: 'Plantas que decoran tu evento',
+    heroSub: 'Montamos el verde de la ceremonia y la recepción, y lo retiramos al día siguiente.',
+    kicker: 'Bodas y eventos sociales',
+    title: 'Verde en vez de flores cortadas',
+    body: 'Palmas, follaje y florales en maceta para entradas, altar, mesas y áreas de fotos. Las plantas duran todo el evento sin marchitarse y, si quieres, se quedan contigo después.',
+    features: [
+      'Diseño del montaje según el salón',
+      'Entrega, colocación y retiro incluidos',
+      'Opción de llevarte las plantas al final',
+    ],
+  },
+  {
+    slug: 'ferias',
+    label: 'Ferias y activaciones',
+    heroKicker: 'Ferias · Activaciones · Stands',
+    heroTitle: 'Ambientación verde para marcas',
+    heroSub: 'Stands, lanzamientos y activaciones con plantas de nuestro vivero.',
+    kicker: 'Ferias y activaciones',
+    title: 'Un stand que se ve vivo',
+    body: 'Trabajamos con agencias y equipos de mercadeo en la ambientación de stands, ferias y lanzamientos: material uniforme, montaje a la hora que indique la producción y retiro al cierre.',
+    features: [
+      'Coordinación con el cronograma de producción',
+      'Material uniforme del mismo lote',
+      'Factura a nombre de la empresa',
+    ],
+  },
+  {
+    slug: 'alquiler',
+    label: 'Alquiler de plantas',
+    heroKicker: 'Por día · Por fin de semana · Por temporada',
+    heroTitle: 'Alquila el verde que necesitas',
+    heroSub: 'Desde una entrada hasta el salón completo, por el tiempo que dure el evento.',
+    kicker: 'Alquiler de plantas',
+    title: 'Sin comprar, sin guardar, sin cuidar',
+    body: 'Te llevamos las plantas al lugar, las colocamos y las recogemos cuando termina. Ideal para eventos de un día, sesiones de fotos y espacios que solo necesitan verde por una temporada.',
+    features: [
+      'Tarifas por día, fin de semana o mes',
+      'Cambio de material si el alquiler es largo',
+      'Macetas decorativas incluidas',
+    ],
+  },
+];
+
+const infoCards = [
+  {
+    icon: '📅',
+    title: 'Reserva con 2 semanas',
+    body: 'Confirmamos disponibilidad del material y agendamos el montaje según tu fecha.',
+  },
+  {
+    icon: '🚚',
+    title: 'Montaje y retiro',
+    body: 'Llevamos, colocamos y retiramos todo el día siguiente al evento. Tú no mueves nada.',
+  },
+  {
+    icon: '🔁',
+    title: 'Alquiler o compra',
+    body: 'Puedes alquilar el montaje o quedarte con las plantas al precio del vivero.',
+  },
+];
+
+const eventTypes = ['Boda', 'Cumpleaños o social', 'Feria o activación', 'Evento corporativo'];
+---
+
+<Base
+  title="Plantas para eventos"
+  description="Alquiler y montaje de plantas para bodas, ferias y activaciones en Panamá. Entrega, montaje y retiro incluidos."
+  whatsappMessage="Hola, quiero cotizar plantas para un evento."
+>
+  {variants.map((v, i) => (
+    <section class="ev-hero" data-variant={v.slug} hidden={i !== 0}>
+      <!-- FOTO PENDIENTE: hero de eventos ({v.slug}) — banda a lo ancho, minimo 1920×600 px -->
+      <div class="ev-hero-photo" data-medidas="Foto hero · 1920×600" aria-hidden="true"></div>
+      <div class="ev-hero-scrim" aria-hidden="true"></div>
+      <div class="ev-hero-copy">
+        <span class="hero-pill">{v.heroKicker}</span>
+        <h1>{v.heroTitle}</h1>
+        <span class="hero-divider" aria-hidden="true"></span>
+        <p>{v.heroSub}</p>
+      </div>
+    </section>
+  ))}
+
+  <section class="container ev-main">
+    <div class="ev-tabs" role="tablist" aria-label="Tipo de evento">
+      {variants.map((v) => (
+        <a href={`/eventos?e=${v.slug}`} class="ev-tab" data-tab={v.slug}>{v.label}</a>
+      ))}
+    </div>
+
+    {variants.map((v, i) => (
+      <div class="ev-block" data-variant={v.slug} hidden={i !== 0}>
+        <div>
+          <span class="eyebrow">{v.kicker}</span>
+          <h2>{v.title}</h2>
+          <p class="ev-body">{v.body}</p>
+          <ul class="ev-features">
+            {v.features.map((f) => <li>✓ {f}</li>)}
+          </ul>
+          <a href={whatsappLink(`Hola, quiero cotizar plantas para un evento (${v.label}).`)} class="btn btn--ghost" target="_blank" rel="noopener">Cotizar por WhatsApp</a>
+        </div>
+        <!-- FOTO PENDIENTE: foto del bloque ({v.slug}) — vertical, minimo 640×760 px -->
+        <div class="ev-photo" data-medidas="Foto · 640×760" aria-hidden="true"></div>
+      </div>
+    ))}
+  </section>
+
+  <section class="ev-gallery-band">
+    <div class="container">
+      <span class="eyebrow">Montajes recientes</span>
+      <h2 class="gallery-title">Cómo se ve en el lugar</h2>
+      <!-- FOTOS PENDIENTES: 4 montajes — bloques de minimo 480×300 px c/u -->
+      <div class="ev-gallery">
+        {[1, 2, 3, 4].map(() => (
+          <div class="gallery-photo" data-medidas="Foto · 480×300" aria-hidden="true"></div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="container ev-cards">
+    {infoCards.map((c) => (
+      <div class="ev-card">
+        <span class="ev-icon" aria-hidden="true">{c.icon}</span>
+        <p class="ev-card-title">{c.title}</p>
+        <p class="ev-card-body">{c.body}</p>
+      </div>
+    ))}
+  </section>
+
+  <section class="container contact-split-wrap">
+    <div class="contact-split">
+      <div class="contact-photo-col">
+        <!-- FOTO PENDIENTE: lateral del formulario — vertical, minimo 640×760 px -->
+        <div class="contact-photo" data-medidas="Foto · 640×760" aria-hidden="true"></div>
+        <div class="contact-scrim" aria-hidden="true"></div>
+        <div class="contact-copy">
+          <h2>Cuéntanos de tu evento</h2>
+          <p>Fecha, lugar y cantidad de invitados. Con eso te armamos la propuesta y el presupuesto.</p>
+          <a href={whatsappLink('Hola, quiero cotizar plantas para un evento.')} class="btn btn--green" target="_blank" rel="noopener">Escríbenos por WhatsApp</a>
+          <div class="contact-facts">
+            <span>🕐 <strong>Horario:</strong> {SITE.hours}</span>
+            <span>📍 {SITE.address}</span>
+          </div>
+        </div>
+      </div>
+      <form class="contact-form" data-evento-form>
+        <div class="field">
+          <label for="e-nombre">Nombre</label>
+          <input type="text" id="e-nombre" name="nombre" required />
+        </div>
+        <div class="field">
+          <label for="e-contacto">WhatsApp o correo</label>
+          <input type="text" id="e-contacto" name="contacto" placeholder="+507 …" required />
+        </div>
+        <div class="two-col">
+          <div class="field">
+            <label for="e-fecha">Fecha del evento</label>
+            <input type="date" id="e-fecha" name="fecha" />
+          </div>
+          <div class="field">
+            <label for="e-tipo">Tipo de evento</label>
+            <select id="e-tipo" name="tipo">
+              {eventTypes.map((t) => <option value={t}>{t}</option>)}
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <label for="e-detalle">Lugar e invitados</label>
+          <textarea
+            id="e-detalle"
+            name="detalle"
+            rows="4"
+            placeholder="Ej. salón en Costa del Este, 120 invitados"
+          ></textarea>
+        </div>
+        <button type="submit" class="btn btn--green form-submit">Solicitar propuesta</button>
+      </form>
+    </div>
+  </section>
+</Base>
+
+<script>
+  import { whatsappLink } from '../lib/site';
+
+  // Variante activa segun ?e= (por defecto, bodas).
+  const valid = ['bodas', 'ferias', 'alquiler'];
+  const param = new URLSearchParams(window.location.search).get('e');
+  const active = valid.includes(param ?? '') ? param! : 'bodas';
+
+  document.querySelectorAll<HTMLElement>('[data-variant]').forEach((el) => {
+    el.hidden = el.dataset.variant !== active;
+  });
+  document.querySelectorAll<HTMLElement>('[data-tab]').forEach((el) => {
+    el.classList.toggle('on', el.dataset.tab === active);
+  });
+
+  const form = document.querySelector<HTMLFormElement>('[data-evento-form]');
+  form?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    if (!form.reportValidity()) return;
+    const d = new FormData(form);
+    const message =
+      `Hola, quiero cotizar plantas para un evento.\n\n` +
+      `Nombre: ${d.get('nombre')}\nContacto: ${d.get('contacto')}\n` +
+      `Fecha: ${d.get('fecha') || 'Por definir'}\nTipo: ${d.get('tipo')}\n` +
+      `Lugar e invitados: ${d.get('detalle') || '—'}`;
+    window.open(whatsappLink(message), '_blank', 'noopener');
+  });
+</script>
+
+<style>
+  /* Hero */
+  .ev-hero {
+    position: relative;
+    height: 600px;
+    overflow: hidden;
+    background: var(--card-dark);
+  }
+
+  .ev-hero-photo {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(150deg, #2a4432, var(--card-dark) 70%);
+  }
+
+  .ev-hero-photo::after,
+  .ev-photo::after,
+  .gallery-photo::after,
+  .contact-photo::after {
+    content: attr(data-medidas);
+    position: absolute;
+    right: 12px;
+    top: 12px;
+    z-index: 1;
+    font-size: 0.6rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: rgba(238, 245, 240, 0.7);
+    background: rgba(27, 42, 31, 0.55);
+    padding: 2px 8px;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+
+  .gallery-photo::after {
+    color: rgba(27, 42, 31, 0.5);
+    background: rgba(238, 245, 240, 0.85);
+  }
+
+  .ev-hero-scrim {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom, rgba(27, 42, 31, 0.55), rgba(27, 42, 31, 0.74));
+  }
+
+  .ev-hero-copy {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 0 2.3rem;
+    color: #ffffff;
+  }
+
+  .hero-pill {
+    display: inline-block;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    border-radius: 999px;
+    padding: 0.5rem 1.4rem;
+    font-size: 0.75rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    margin-bottom: 1.7rem;
+  }
+
+  .ev-hero-copy h1 {
+    color: #ffffff;
+    font-weight: 400;
+    font-size: clamp(2.4rem, 5.5vw, 4.5rem);
+    margin: 0;
+    max-width: 22ch;
+  }
+
+  .hero-divider {
+    width: 64px;
+    height: 2px;
+    background: #4ade80;
+    margin: 1.7rem 0;
+  }
+
+  .ev-hero-copy p {
+    font-size: 1.2rem;
+    line-height: 1.5;
+    color: #ffffff;
+    margin: 0;
+    max-width: 44ch;
+  }
+
+  /* Tabs y bloque */
+  .ev-main { padding-top: 4.6rem; }
+
+  .ev-tabs {
+    display: flex;
+    gap: 0.7rem;
+    flex-wrap: wrap;
+    margin-bottom: 2.9rem;
+  }
+
+  .ev-tab {
+    font-size: 0.88rem;
+    font-weight: 600;
+    padding: 0.7rem 1.4rem;
+    border-radius: 999px;
+    border: 1px solid rgba(27, 42, 31, 0.25);
+    color: var(--ink);
+  }
+
+  .ev-tab:hover { text-decoration: none; color: var(--ink); }
+
+  .ev-tab.on {
+    background: var(--green-deep);
+    border-color: var(--green-deep);
+    color: #ffffff;
+  }
+
+  .ev-block {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 3.4rem;
+    align-items: center;
+    margin-bottom: 4.6rem;
+  }
+
+  .ev-block h2 {
+    font-weight: 400;
+    font-size: clamp(1.9rem, 3.5vw, 2.75rem);
+    line-height: 1.1;
+    margin: 0 0 1.15rem;
+  }
+
+  .ev-body {
+    font-size: 1.05rem;
+    line-height: 1.65;
+    color: var(--ink-soft);
+    margin: 0 0 1.4rem;
+    max-width: 34rem;
+  }
+
+  .ev-features {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 1.7rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+    font-size: 0.95rem;
+  }
+
+  .ev-photo {
+    position: relative;
+    border-radius: 20px;
+    overflow: hidden;
+    outline: 1px solid rgba(27, 42, 31, 0.1);
+    background: linear-gradient(160deg, var(--green-tint), var(--surface-2));
+    min-height: 500px;
+  }
+
+  /* Galeria */
+  .ev-gallery-band { background: var(--surface-2); }
+
+  .ev-gallery-band .container {
+    padding-top: 4.6rem;
+    padding-bottom: 4.6rem;
+  }
+
+  .gallery-title {
+    font-weight: 400;
+    font-size: clamp(1.8rem, 3vw, 2.5rem);
+    margin: 0 0 2.3rem;
+  }
+
+  .ev-gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1.15rem;
+  }
+
+  .gallery-photo {
+    position: relative;
+    height: 300px;
+    border-radius: 16px;
+    overflow: hidden;
+    outline: 1px solid rgba(27, 42, 31, 0.1);
+    background: linear-gradient(160deg, var(--green-tint), #ffffff);
+  }
+
+  /* Tarjetas informativas */
+  .ev-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1.7rem;
+    padding-top: 4.6rem;
+    padding-bottom: 4.6rem;
+  }
+
+  .ev-card {
+    background: #ffffff;
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+  }
+
+  .ev-icon { font-size: 1.4rem; }
+  .ev-card-title { font-size: 1.2rem; font-weight: 600; margin: 0; }
+
+  .ev-card-body {
+    margin: 0;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: var(--ink-soft);
+  }
+
+  /* Contacto (mismo patron que servicios/mayorista) */
+  .contact-split-wrap { padding: 0 1.5rem 4.6rem; }
+
+  .contact-split {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 4px 24px rgba(27, 42, 31, 0.08);
+  }
+
+  .contact-photo-col {
+    position: relative;
+    min-height: 540px;
+    background: var(--card-dark);
+  }
+
+  .contact-photo {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(150deg, #2a4432, var(--card-dark) 70%);
+  }
+
+  .contact-scrim {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom, rgba(27, 42, 31, 0.55), rgba(27, 42, 31, 0.78));
+  }
+
+  .contact-copy {
+    position: relative;
+    padding: 2.9rem;
+    color: #ffffff;
+  }
+
+  .contact-copy h2 {
+    color: #ffffff;
+    font-weight: 400;
+    font-size: clamp(1.7rem, 3vw, 2.5rem);
+    margin: 0 0 1.15rem;
+  }
+
+  .contact-copy p {
+    color: rgba(255, 255, 255, 0.85);
+    margin: 0 0 1.7rem;
+    max-width: 32rem;
+  }
+
+  .contact-facts {
+    border-top: 1px solid rgba(255, 255, 255, 0.25);
+    margin-top: 2.3rem;
+    padding-top: 1.4rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    font-size: 0.95rem;
+  }
+
+  .contact-form {
+    background: #ffffff;
+    padding: 2.9rem;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0 0.85rem;
+  }
+
+  @media (max-width: 560px) {
+    .two-col { grid-template-columns: 1fr; }
+  }
+
+  .form-submit { justify-content: center; }
+</style>

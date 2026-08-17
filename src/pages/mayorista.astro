@@ -1,69 +1,375 @@
 ---
+// Venta al mayor segun el diseno "Mayoristas" (claude.ai/design): hero con
+// pastilla, tres tarjetas de propuesta de valor, banda CTA oscura y bloque de
+// contacto con formulario que arma la cotizacion por WhatsApp.
 import Base from '../layouts/Base.astro';
-import { whatsappLink } from '../lib/site';
+import { SITE, whatsappLink } from '../lib/site';
+
+const cards = [
+  {
+    icon: '🌱',
+    title: 'Desde 50 unidades',
+    body: 'Material uniforme del mismo lote, en la altura y el tamaño de maceta que necesites.',
+  },
+  {
+    icon: '🏷️',
+    title: 'Precio por volumen',
+    body: 'Lista de precios mayorista según cantidad, con condiciones para clientes recurrentes.',
+  },
+  {
+    icon: '🚚',
+    title: 'Entrega a obra',
+    body: 'Coordinamos la fecha con tu cronograma y entregamos en la ciudad de Panamá e interior.',
+  },
+];
+
+const clientTypes = [
+  'Constructora o desarrolladora',
+  'Empresa o PH',
+  'Revendedor o vivero',
+  'Paisajista independiente',
+];
 ---
 
 <Base
-  title="Ventas al por mayor"
-  description="Suplimos plantas al por mayor a supermercados, ferreterias y distribuidores en Panama. Vivero Rose."
-  whatsappMessage="Hola, me interesa informacion de ventas al por mayor."
+  title="Venta al mayor"
+  description="Suplimos plantas al por mayor a constructoras, empresas y revendedores en Panamá. Producción por lote y entrega programada."
+  whatsappMessage="Hola, me interesa información de ventas al por mayor."
 >
-  <section class="section">
-    <div class="container">
-      <span class="eyebrow">Mayorista</span>
-      <h1>Suplimos plantas a supermercados y distribuidores</h1>
-      <p class="lead">
-        Vivero Rose es proveedor establecido de cadenas de supermercados en Panama.
-        Produccion constante, calidad uniforme y logistica propia.
-      </p>
+  <section class="may-hero">
+    <!-- FOTO PENDIENTE: hero mayorista — banda a lo ancho, minimo 1920×560 px -->
+    <div class="may-hero-photo" data-medidas="Foto hero · 1920×560" aria-hidden="true"></div>
+    <div class="may-hero-scrim" aria-hidden="true"></div>
+    <div class="may-hero-copy">
+      <span class="hero-pill">Constructoras · Empresas · Revendedores</span>
+      <h1>Venta al mayor</h1>
+      <span class="hero-divider" aria-hidden="true"></span>
+      <p>Producción por lote, precio por volumen y entrega programada a tu obra.</p>
+    </div>
+  </section>
 
-      <div class="grid grid--2" style="margin: 2.5rem 0;">
-        <div class="card b2b-card">
-          <h3>Lo que ofrecemos</h3>
-          <ul>
-            <li>Produccion continua de ornamentales, florales y frutales</li>
-            <li>Presentaciones estandarizadas por tamano y maceta</li>
-            <li>Entregas programadas con flota propia</li>
-            <li>Reposicion y rotacion en punto de venta</li>
-          </ul>
-        </div>
-        <div class="card b2b-card">
-          <h3>Como trabajar con nosotros</h3>
-          <ol>
-            <li>Contactanos con el tipo de punto de venta y volumen estimado.</li>
-            <li>Coordinamos una visita al vivero o enviamos catalogo mayorista.</li>
-            <li>Definimos calendario de entregas y condiciones comerciales.</li>
-          </ol>
+  <section class="container may-cards">
+    {cards.map((c) => (
+      <div class="may-card">
+        <span class="may-icon" aria-hidden="true">{c.icon}</span>
+        <p class="may-title">{c.title}</p>
+        <p class="may-body">{c.body}</p>
+      </div>
+    ))}
+  </section>
+
+  <section class="container may-cta-wrap">
+    <div class="may-cta">
+      <div>
+        <h2>¿Ya sabes qué necesitas?</h2>
+        <p>Mándanos la lista de especies y cantidades y te confirmamos disponibilidad y precio.</p>
+      </div>
+      <div class="may-cta-btns">
+        <a href="/plantas" class="btn btn--outline-light">Ver el catálogo</a>
+        <a href={whatsappLink('Hola, quiero una cotización mayorista. Les paso mi lista de especies y cantidades.')} class="btn btn--light" target="_blank" rel="noopener">Cotizar por WhatsApp</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="container contact-split-wrap">
+    <div class="contact-split">
+      <div class="contact-photo-col">
+        <!-- FOTO PENDIENTE: lateral del formulario — vertical, minimo 640×760 px -->
+        <div class="contact-photo" data-medidas="Foto · 640×760" aria-hidden="true"></div>
+        <div class="contact-scrim" aria-hidden="true"></div>
+        <div class="contact-copy">
+          <h2>Contáctanos</h2>
+          <p>Atendemos pedidos mayoristas de lunes a viernes. Te respondemos en menos de un día hábil.</p>
+          <a href={whatsappLink('Hola, me interesa información de ventas al por mayor.')} class="btn btn--green" target="_blank" rel="noopener">Escríbenos por WhatsApp</a>
+          <div class="contact-facts">
+            <span>✉️ <a href="mailto:mayorista@viverorose.com" class="light-link">mayorista@viverorose.com</a></span>
+            <span>🕐 <strong>Horario:</strong> {SITE.hours}</span>
+            <span>📍 {SITE.address}</span>
+          </div>
         </div>
       </div>
-
-      <div class="contact-row">
-        <a href={whatsappLink('Hola, me interesa informacion de ventas al por mayor.')} class="btn btn--primary" target="_blank" rel="noopener">
-          Contactar al equipo mayorista
-        </a>
-        <span class="alt">o escribe a <a href="mailto:mayorista@viverorose.com">mayorista@viverorose.com</a></span>
-      </div>
+      <form class="contact-form" data-mayorista-form>
+        <div class="field">
+          <label for="m-nombre">Nombre y empresa</label>
+          <input type="text" id="m-nombre" name="nombre" required />
+        </div>
+        <div class="field">
+          <label for="m-contacto">WhatsApp o correo</label>
+          <input type="text" id="m-contacto" name="contacto" placeholder="+507 …" required />
+        </div>
+        <div class="field">
+          <label for="m-tipo">Tipo de cliente</label>
+          <select id="m-tipo" name="tipo">
+            {clientTypes.map((t) => <option value={t}>{t}</option>)}
+          </select>
+        </div>
+        <div class="field">
+          <label for="m-detalle">Especies y cantidades</label>
+          <textarea
+            id="m-detalle"
+            name="detalle"
+            rows="5"
+            placeholder="Ej. 120 crotos en maceta 5 gal, 40 palmas areca de 1.5 m"
+            required
+          ></textarea>
+        </div>
+        <button type="submit" class="btn btn--green form-submit">Solicitar cotización mayorista</button>
+      </form>
     </div>
   </section>
 </Base>
 
-<style>
-  .b2b-card { padding: 1.75rem; }
+<script>
+  import { whatsappLink } from '../lib/site';
 
-  .b2b-card ul, .b2b-card ol {
+  const form = document.querySelector<HTMLFormElement>('[data-mayorista-form]');
+  form?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    if (!form.reportValidity()) return;
+    const d = new FormData(form);
+    const message =
+      `Hola, quiero una cotización mayorista.\n\n` +
+      `Nombre y empresa: ${d.get('nombre')}\nContacto: ${d.get('contacto')}\n` +
+      `Tipo de cliente: ${d.get('tipo')}\nEspecies y cantidades: ${d.get('detalle')}`;
+    window.open(whatsappLink(message), '_blank', 'noopener');
+  });
+</script>
+
+<style>
+  .may-hero {
+    position: relative;
+    height: 560px;
+    overflow: hidden;
+    background: var(--card-dark);
+  }
+
+  .may-hero-photo {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(150deg, #2a4432, var(--card-dark) 70%);
+  }
+
+  .may-hero-photo::after,
+  .contact-photo::after {
+    content: attr(data-medidas);
+    position: absolute;
+    right: 12px;
+    top: 12px;
+    z-index: 1;
+    font-size: 0.6rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: rgba(238, 245, 240, 0.7);
+    background: rgba(27, 42, 31, 0.55);
+    padding: 2px 8px;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+
+  .may-hero-scrim {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom, rgba(27, 42, 31, 0.55), rgba(27, 42, 31, 0.74));
+  }
+
+  .may-hero-copy {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 0 2.3rem;
+    color: #ffffff;
+  }
+
+  .hero-pill {
+    display: inline-block;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    border-radius: 999px;
+    padding: 0.5rem 1.4rem;
+    font-size: 0.75rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    margin-bottom: 1.7rem;
+  }
+
+  .may-hero-copy h1 {
+    color: #ffffff;
+    font-weight: 400;
+    font-size: clamp(2.6rem, 6vw, 4.5rem);
     margin: 0;
-    padding-left: 1.2rem;
+  }
+
+  .hero-divider {
+    width: 64px;
+    height: 2px;
+    background: #4ade80;
+    margin: 1.7rem 0;
+  }
+
+  .may-hero-copy p {
+    font-style: italic;
+    font-size: 1.35rem;
+    line-height: 1.5;
+    color: rgba(255, 255, 255, 0.9);
+    margin: 0;
+    max-width: 42ch;
+  }
+
+  /* Tarjetas */
+  .may-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1.7rem;
+    padding-top: 4.6rem;
+  }
+
+  .may-card {
+    background: #ffffff;
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+  }
+
+  .may-icon { font-size: 1.4rem; }
+  .may-title { font-size: 1.25rem; font-weight: 600; margin: 0; }
+
+  .may-body {
+    margin: 0;
+    font-size: 0.95rem;
+    line-height: 1.6;
     color: var(--ink-soft);
   }
 
-  .b2b-card li { margin-bottom: 0.5rem; }
+  /* CTA */
+  .may-cta-wrap { padding-top: 4rem; }
 
-  .contact-row {
-    display: flex;
+  .may-cta {
+    background: var(--card-dark);
+    border-radius: 20px;
+    padding: 2.9rem 3.4rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2.3rem;
     align-items: center;
-    gap: 1rem;
+    color: #ffffff;
+  }
+
+  .may-cta h2 {
+    color: #ffffff;
+    font-weight: 400;
+    font-size: clamp(1.6rem, 2.8vw, 2.25rem);
+    margin: 0 0 0.85rem;
+  }
+
+  .may-cta p {
+    color: rgba(255, 255, 255, 0.82);
+    margin: 0;
+    max-width: 32rem;
+  }
+
+  .may-cta-btns {
+    display: flex;
+    gap: 0.85rem;
+    justify-content: flex-end;
     flex-wrap: wrap;
   }
 
-  .alt { color: var(--ink-soft); font-size: 0.95rem; }
+  @media (max-width: 720px) {
+    .may-cta-btns { justify-content: flex-start; }
+  }
+
+  .btn--light {
+    background: #ffffff;
+    border-color: #ffffff;
+    color: var(--ink);
+  }
+
+  .btn--light:hover { background: var(--bg); color: var(--ink); }
+
+  .btn--outline-light {
+    background: transparent;
+    border-color: rgba(255, 255, 255, 0.5);
+    color: #ffffff;
+  }
+
+  .btn--outline-light:hover {
+    background: rgba(255, 255, 255, 0.12);
+    color: #ffffff;
+  }
+
+  /* Contacto (mismo patron que servicios) */
+  .contact-split-wrap { padding: 4.6rem 1.5rem; }
+
+  .contact-split {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 4px 24px rgba(27, 42, 31, 0.08);
+  }
+
+  .contact-photo-col {
+    position: relative;
+    min-height: 560px;
+    background: var(--card-dark);
+  }
+
+  .contact-photo {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(150deg, #2a4432, var(--card-dark) 70%);
+  }
+
+  .contact-scrim {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom, rgba(27, 42, 31, 0.55), rgba(27, 42, 31, 0.78));
+  }
+
+  .contact-copy {
+    position: relative;
+    padding: 2.9rem;
+    color: #ffffff;
+  }
+
+  .contact-copy h2 {
+    color: #ffffff;
+    font-weight: 400;
+    font-size: clamp(1.7rem, 3vw, 2.6rem);
+    margin: 0 0 1.15rem;
+  }
+
+  .contact-copy p {
+    color: rgba(255, 255, 255, 0.85);
+    margin: 0 0 1.7rem;
+    max-width: 32rem;
+  }
+
+  .contact-facts {
+    border-top: 1px solid rgba(255, 255, 255, 0.25);
+    margin-top: 2.3rem;
+    padding-top: 1.4rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    font-size: 0.95rem;
+  }
+
+  .light-link { color: #8ce6a8; }
+  .light-link:hover { color: #8ce6a8; }
+
+  .contact-form {
+    background: #ffffff;
+    padding: 2.9rem;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .form-submit { justify-content: center; }
 </style>
