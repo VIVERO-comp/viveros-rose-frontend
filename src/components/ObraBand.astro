@@ -1,0 +1,145 @@
+---
+// Banda "Mayoristas y proyectos" del handoff (Servicios.dc.html): bloque
+// oscuro con la imagen de obra recortada en diagonal a la derecha. El CTA
+// lleva a la pagina de venta al mayor; el enlace secundario, al catalogo.
+import Icon from './Icon.astro';
+---
+
+<section class="container obra-wrap">
+  <div class="obra-band">
+    <!-- FOTO PENDIENTE: proyecto comercial en obra — vertical/apaisada, minimo 900×700 px -->
+    <div class="obra-photo" data-medidas="Foto · 900×700" aria-hidden="true"></div>
+    <div class="obra-copy">
+      <p class="obra-kicker">Mayoristas y proyectos</p>
+      <h2>¿Compras por volumen o planeas un proyecto comercial?</h2>
+      <p class="obra-text">
+        Cultivamos y distribuimos plantas a escala para constructoras, empresas y revendedores en
+        todo Panamá.
+      </p>
+      <a href="/plantas" class="obra-link">Ver el catálogo completo de plantas →</a>
+    </div>
+    <div class="obra-cta">
+      <a href="/mayorista" class="obra-btn">
+        Ver venta al mayor <Icon name="chevron-right" size={18} />
+      </a>
+    </div>
+  </div>
+</section>
+
+<style>
+  .obra-wrap { padding: 0 1.5rem 74px; }
+
+  .obra-band {
+    position: relative;
+    overflow: hidden;
+    background: var(--card-dark);
+    border-radius: var(--radius-lg);
+    padding: 55px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 36.8px;
+    align-items: center;
+  }
+
+  /* Imagen en diagonal a la derecha, como el handoff. */
+  .obra-photo {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 52%;
+    background: #2a4432;
+    clip-path: polygon(26% 0, 100% 0, 100% 100%, 4% 100%);
+    transition: width 0.5s cubic-bezier(0.22, 0.61, 0.36, 1);
+  }
+
+  .obra-band:hover .obra-photo { width: 58%; }
+
+  .obra-photo::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      to right,
+      rgba(30, 51, 36, 0.92) 0%,
+      rgba(30, 51, 36, 0.4) 45%,
+      rgba(30, 51, 36, 0.12) 100%
+    );
+  }
+
+  .obra-photo::after {
+    content: attr(data-medidas);
+    position: absolute;
+    right: 14px;
+    top: 14px;
+    font-size: 0.62rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(238, 245, 240, 0.65);
+    background: rgba(27, 42, 31, 0.55);
+    padding: 2px 8px;
+    border-radius: 999px;
+  }
+
+  .obra-copy { position: relative; }
+
+  .obra-kicker {
+    font-size: 12px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--green-light);
+    margin: 0 0 18.4px;
+  }
+
+  .obra-band h2 {
+    font-weight: 400;
+    font-size: clamp(30px, 3.4vw, 42px);
+    line-height: 1.1;
+    margin: 0 0 18.4px;
+    color: #ffffff;
+  }
+
+  .obra-text {
+    font-size: 16px;
+    line-height: 1.65;
+    color: rgba(255, 255, 255, 0.82);
+    margin: 0 0 18.4px;
+    max-width: 34rem;
+  }
+
+  .obra-link {
+    font-size: 15px;
+    color: var(--green-light);
+    text-decoration: underline;
+  }
+
+  .obra-link:hover { color: #ffffff; }
+
+  .obra-cta {
+    position: relative;
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .obra-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    font-weight: 600;
+    font-size: 16px;
+    padding: 15px 28px;
+    border-radius: 999px;
+    background: #ffffff;
+    color: var(--ink);
+    border: 1px solid #ffffff;
+    white-space: nowrap;
+  }
+
+  .obra-btn:hover { background: var(--bg); color: var(--ink); text-decoration: none; }
+
+  @media (max-width: 768px) {
+    .obra-band { padding: 27.6px; }
+    .obra-photo { display: none; }
+    .obra-cta { justify-content: flex-start; }
+  }
+</style>

@@ -1,0 +1,167 @@
+---
+// Bloque de contacto de servicios (mismo patron que Eventos): foto oscura a
+// la izquierda y formulario a la derecha, con el servicio preseleccionado en
+// "Me interesa" cuando se llega desde una mini pagina.
+import Icon from './Icon.astro';
+import { SITE, whatsappLink } from '../lib/site';
+import { services } from '../data/services';
+
+interface Props {
+  selectedSlug?: string;
+  whatsappMessage?: string;
+}
+
+const { selectedSlug, whatsappMessage = 'Hola, quiero una cotización de servicios.' } = Astro.props;
+---
+
+<section class="container contact-split-wrap">
+  <div class="contact-split">
+    <div class="contact-photo-col">
+      <!-- FOTO PENDIENTE: lateral del formulario — vertical, minimo 640×760 px -->
+      <div class="contact-photo" data-medidas="Foto · 640×760" aria-hidden="true"></div>
+      <div class="contact-scrim" aria-hidden="true"></div>
+      <div class="contact-copy">
+        <h2>Cuéntanos sobre tu proyecto</h2>
+        <p>Cuéntanos qué necesitas y te respondemos en menos de un día hábil.</p>
+        <a href={whatsappLink(whatsappMessage)} class="btn btn--green" target="_blank" rel="noopener">
+          Escríbenos por WhatsApp
+        </a>
+        <div class="contact-facts">
+          <span><Icon name="clock" size={17} class="fact-icon" /> <strong>Horario:</strong> {SITE.hours}</span>
+          <span><Icon name="map-pin" size={17} class="fact-icon" /> {SITE.address}</span>
+        </div>
+      </div>
+    </div>
+    <form class="contact-form" data-quote-form>
+      <div class="field">
+        <label for="s-nombre">Nombre</label>
+        <input type="text" id="s-nombre" name="nombre" required />
+      </div>
+      <div class="field">
+        <label for="s-contacto">WhatsApp o correo</label>
+        <input type="text" id="s-contacto" name="contacto" placeholder="+507 …" required />
+      </div>
+      <div class="field">
+        <label for="s-interes">Me interesa</label>
+        <select id="s-interes" name="interes">
+          {
+            services.map((s) => (
+              <option value={s.name} selected={s.slug === selectedSlug}>{s.name}</option>
+            ))
+          }
+          <option value="Compra de plantas">Compra de plantas</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="s-detalle">Cuéntanos sobre tu proyecto</label>
+        <textarea id="s-detalle" name="detalle" rows="5"></textarea>
+      </div>
+      <button type="submit" class="btn btn--green form-submit">Solicitar cotización</button>
+    </form>
+  </div>
+</section>
+
+<script>
+  import { whatsappLink } from '../lib/site';
+
+  // Formulario de cotizacion → WhatsApp (sin backend de formularios).
+  const form = document.querySelector<HTMLFormElement>('[data-quote-form]');
+  form?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    if (!form.reportValidity()) return;
+    const d = new FormData(form);
+    const message =
+      `Hola, quiero una cotización de servicios.\n\n` +
+      `Nombre: ${d.get('nombre')}\nContacto: ${d.get('contacto')}\n` +
+      `Me interesa: ${d.get('interes')}\nDetalle: ${d.get('detalle') || '—'}`;
+    window.open(whatsappLink(message), '_blank', 'noopener');
+  });
+</script>
+
+<style>
+  .contact-split-wrap { padding: 0 1.5rem 4.6rem; }
+
+  .contact-split {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+    border-radius: 20px;
+    overflow: hidden;
+    outline: 1px solid var(--line);
+  }
+
+  .contact-photo-col {
+    position: relative;
+    min-height: 540px;
+    background: var(--card-dark);
+  }
+
+  .contact-photo {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(150deg, #2a4432, var(--card-dark) 70%);
+  }
+
+  .contact-photo::after {
+    content: attr(data-medidas);
+    position: absolute;
+    right: 12px;
+    top: 12px;
+    z-index: 1;
+    font-size: 0.6rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: rgba(238, 245, 240, 0.7);
+    background: rgba(27, 42, 31, 0.55);
+    padding: 2px 8px;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+
+  .contact-scrim {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom, rgba(27, 42, 31, 0.55), rgba(27, 42, 31, 0.78));
+  }
+
+  .contact-copy {
+    position: relative;
+    padding: 2.9rem;
+    color: #ffffff;
+  }
+
+  .contact-copy h2 {
+    color: #ffffff;
+    font-weight: 400;
+    font-size: clamp(1.7rem, 3vw, 2.5rem);
+    margin: 0 0 1.15rem;
+  }
+
+  .contact-copy > p {
+    color: rgba(255, 255, 255, 0.85);
+    margin: 0 0 1.7rem;
+    max-width: 32rem;
+  }
+
+  .contact-facts {
+    border-top: 1px solid rgba(255, 255, 255, 0.25);
+    margin-top: 2.3rem;
+    padding-top: 1.4rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    font-size: 0.95rem;
+  }
+
+  .contact-facts span { display: flex; align-items: center; gap: 10px; }
+
+  :global(.fact-icon) { color: var(--green-light); flex: none; }
+
+  .contact-form {
+    background: #ffffff;
+    padding: 2.9rem;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .form-submit { justify-content: center; }
+</style>

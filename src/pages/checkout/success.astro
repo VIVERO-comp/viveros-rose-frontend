@@ -1,16 +1,20 @@
 ---
+// Pagina de confirmacion. Hoy el checkout cierra por WhatsApp; esta pagina
+// queda lista para el flujo completo con el orders-api (ver PENDIENTES.md),
+// que llegara con ?order=<numero>.
 import Base from '../../layouts/Base.astro';
+import Icon from '../../components/Icon.astro';
 import { whatsappLink } from '../../lib/site';
 ---
 
 <Base title="¡Gracias por tu compra!" description="Tu pedido fue recibido.">
   <section class="section">
     <div class="container success-container">
-      <div class="success-icon">✅</div>
+      <div class="success-icon"><Icon name="badge-check" size={52} /></div>
       <h1>¡Gracias por tu compra!</h1>
       <p class="lead">
-        Recibimos tu pedido. Te enviamos un correo con el numero de pedido
-        y el enlace para darle seguimiento.
+        Recibimos tu pedido y lo confirmamos contigo por WhatsApp, junto con el
+        número de pedido para darle seguimiento.
       </p>
 
       <div class="card success-card">
@@ -50,7 +54,12 @@ import { whatsappLink } from '../../lib/site';
     text-align: center;
   }
 
-  .success-icon { font-size: 3.5rem; margin-bottom: 1rem; }
+  .success-icon {
+    display: flex;
+    justify-content: center;
+    color: var(--green);
+    margin-bottom: 1rem;
+  }
 
   .success-card {
     margin-top: 2rem;

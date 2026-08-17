@@ -1,60 +1,65 @@
 ---
+// Pagina de entrega: PLACEHOLDER a proposito. Las zonas y tarifas por area
+// aun no estan definidas (ver PENDIENTES.md); aqui solo se muestra lo que ya
+// es real en el checkout (estandar $3, express $9, retiro gratis) sin
+// inventar una tabla de zonas.
 import Base from '../layouts/Base.astro';
-
-const zones = [
-  { zone: 'Ciudad de Panama (centro)', price: '$5.00', time: '24-48 horas' },
-  { zone: 'Panama Este (hasta Tocumen)', price: '$7.00', time: '48 horas' },
-  { zone: 'Panama Oeste (Arraijan, La Chorrera)', price: '$10.00', time: '48-72 horas' },
-  { zone: 'Colon', price: '$15.00', time: '72 horas' },
-  { zone: 'Interior del pais', price: 'Cotizar por WhatsApp', time: 'Segun ruta' },
-];
+import Icon from '../components/Icon.astro';
+import { whatsappLink } from '../lib/site';
 ---
 
 <Base
   title="Entrega a domicilio"
-  description="Zonas de entrega, tarifas y tiempos. Llevamos tus plantas hasta tu puerta en la ciudad de Panama y alrededores."
+  description="Entrega de plantas a domicilio en la ciudad de Panamá. Coordinamos contigo por WhatsApp."
 >
   <section class="section">
     <div class="container">
       <span class="eyebrow">Entrega</span>
       <h1>Llevamos tus plantas hasta tu puerta</h1>
       <p class="lead">
-        Nuestro propio equipo transporta las plantas con cuidado. Tarifas claras,
-        sin sorpresas al momento de pagar.
+        Nuestro propio equipo transporta las plantas con cuidado. Estas son las opciones
+        disponibles hoy al pagar:
       </p>
 
-      <div style="margin: 2rem 0; overflow-x: auto;">
-        <table>
-          <thead>
-            <tr>
-              <th>Zona</th>
-              <th>Tarifa</th>
-              <th>Tiempo estimado</th>
-            </tr>
-          </thead>
-          <tbody>
-            {zones.map((z) => (
-              <tr>
-                <td>{z.zone}</td>
-                <td>{z.price}</td>
-                <td>{z.time}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <div class="ship-options">
+        <div class="ship-option">
+          <p class="ship-name">Entrega estándar</p>
+          <p class="ship-detail">2–4 días hábiles · ciudad de Panamá</p>
+          <p class="ship-price">$3.00</p>
+        </div>
+        <div class="ship-option">
+          <p class="ship-name">Entrega express</p>
+          <p class="ship-detail">24 horas · ciudad de Panamá</p>
+          <p class="ship-price">$9.00</p>
+        </div>
+        <div class="ship-option">
+          <p class="ship-name">Retiro en el vivero</p>
+          <p class="ship-detail">Calle 11, Juan Díaz · Lun–Vie 9–5</p>
+          <p class="ship-price">Gratis</p>
+        </div>
+      </div>
+
+      <div class="pending-note">
+        <Icon name="truck" size={18} class="note-icon" />
+        <p>
+          Estamos definiendo las zonas y tarifas para fuera de la ciudad de Panamá.
+          Mientras tanto, si estás en otra área,
+          <a href={whatsappLink('Hola, quiero saber si entregan en mi zona.')} target="_blank" rel="noopener">
+            escríbenos por WhatsApp</a> y lo coordinamos por ruta.
+        </p>
       </div>
 
       <div class="grid grid--3">
         <div class="card info-card">
-          <h3>📦 Empaque seguro</h3>
-          <p>Cada planta viaja protegida para llegar en las mismas condiciones en que salio del vivero.</p>
+          <h3><Icon name="package" size={18} class="card-icon" /> Empaque seguro</h3>
+          <p>Cada planta viaja protegida para llegar en las mismas condiciones en que salió del vivero.</p>
         </div>
         <div class="card info-card">
-          <h3>📅 Coordinacion por WhatsApp</h3>
-          <p>Al confirmar tu pedido coordinamos contigo el dia y la franja de entrega.</p>
+          <h3><Icon name="message-circle" size={18} class="card-icon" /> Coordinación por WhatsApp</h3>
+          <p>Al confirmar tu pedido coordinamos contigo el día y la franja de entrega.</p>
         </div>
         <div class="card info-card">
-          <h3>🏪 Retiro en vivero</h3>
+          <h3><Icon name="home" size={18} class="card-icon" /> Retiro en vivero</h3>
           <p>¿Prefieres recoger? Puedes retirar tu pedido directamente en nuestro vivero sin costo.</p>
         </div>
       </div>
@@ -63,6 +68,45 @@ const zones = [
 </Base>
 
 <style>
+  .ship-options {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 13.8px;
+    margin: 2rem 0;
+  }
+
+  @media (max-width: 768px) {
+    .ship-options { grid-template-columns: 1fr; }
+  }
+
+  .ship-option {
+    background: #ffffff;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 18.4px;
+  }
+
+  .ship-name { font-size: 15px; font-weight: 600; margin: 0; }
+  .ship-detail { font-size: 13px; color: var(--ink-soft); margin: 4px 0 9px; }
+  .ship-price { font-size: 17px; font-weight: 600; font-variant-numeric: tabular-nums; margin: 0; }
+
+  .pending-note {
+    display: flex;
+    align-items: flex-start;
+    gap: 11px;
+    background: var(--surface-tint);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 15px 18px;
+    margin-bottom: 2rem;
+    max-width: 44rem;
+  }
+
+  .pending-note p { margin: 0; font-size: 14px; color: rgba(27, 42, 31, 0.8); }
+  .pending-note :global(.note-icon) { color: var(--green-deep); flex: none; margin-top: 2px; }
+
   .info-card { padding: 1.5rem; }
+  .info-card h3 { display: flex; align-items: center; gap: 9px; }
+  .info-card :global(.card-icon) { color: var(--green-deep); flex: none; }
   .info-card p { margin: 0; color: var(--ink-soft); font-size: 0.95rem; }
 </style>

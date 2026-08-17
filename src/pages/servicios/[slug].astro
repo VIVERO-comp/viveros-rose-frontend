@@ -1,0 +1,347 @@
+---
+// Mini pagina de un servicio: mismo diseno que la pagina de Eventos
+// (hero con pildora, pestañas, bloque con checks y foto, banda de galeria,
+// tres tarjetas informativas y contacto), con el contenido de
+// src/data/services.ts. La flecha vuelve a /servicios.
+import Base from '../../layouts/Base.astro';
+import BackArrow from '../../components/BackArrow.astro';
+import Icon from '../../components/Icon.astro';
+import MiniFooter from '../../components/MiniFooter.astro';
+import ObraBand from '../../components/ObraBand.astro';
+import ServiceContact from '../../components/ServiceContact.astro';
+import { whatsappLink } from '../../lib/site';
+import { services } from '../../data/services';
+
+export function getStaticPaths() {
+  return services.map((service) => ({
+    params: { slug: service.slug },
+    props: { service },
+  }));
+}
+
+const { service } = Astro.props;
+---
+
+<Base
+  title={service.metaTitle}
+  description={service.metaDescription}
+  chrome="bare"
+  whatsappMessage={service.whatsappMessage}
+>
+  <BackArrow href="/servicios" />
+
+  <section class="ev-hero">
+    <!-- FOTO PENDIENTE: hero de {service.slug} — banda a lo ancho, minimo 1920×600 px -->
+    <div class="ev-hero-photo" data-medidas="Foto hero · 1920×600" aria-hidden="true"></div>
+    <div class="ev-hero-scrim" aria-hidden="true"></div>
+    <div class="ev-hero-copy">
+      <span class="hero-pill">{service.heroKicker}</span>
+      <h1>{service.heroTitle}</h1>
+      <span class="hero-divider" aria-hidden="true"></span>
+      <p>{service.heroSub}</p>
+    </div>
+  </section>
+
+  <section class="container ev-main">
+    <div class="ev-tabs" aria-label="Servicio">
+      {
+        services.map((s) => (
+          <a
+            href={`/servicios/${s.slug}`}
+            class:list={['ev-tab', { on: s.slug === service.slug }]}
+          >
+            {s.name}
+          </a>
+        ))
+      }
+    </div>
+
+    <div class="ev-block">
+      <div>
+        <span class="eyebrow">{service.name}</span>
+        <h2>{service.heroTitle}</h2>
+        {service.description.map((p) => <p class="ev-body">{p}</p>)}
+        <ul class="ev-features">
+          {
+            service.incluye.map((f) => (
+              <li>
+                <Icon name="check" size={17} class="check-icon" /> {f}
+              </li>
+            ))
+          }
+        </ul>
+        <a href={whatsappLink(service.whatsappMessage)} class="btn btn--ghost" target="_blank" rel="noopener">
+          Cotizar por WhatsApp
+        </a>
+      </div>
+      <!-- FOTO PENDIENTE: foto del bloque ({service.slug}) — vertical, minimo 640×760 px -->
+      <div class="ev-photo" data-medidas="Foto · 640×760" aria-hidden="true"></div>
+    </div>
+  </section>
+
+  <section class="ev-gallery-band">
+    <div class="container">
+      <span class="eyebrow">Proyectos recientes</span>
+      <h2 class="gallery-title">Cómo se ve el trabajo terminado</h2>
+      <!-- FOTOS PENDIENTES: {service.galleryCount} proyectos de {service.slug} — bloques de minimo 480×300 px c/u -->
+      <div class="ev-gallery">
+        {
+          Array.from({ length: service.galleryCount }, () => (
+            <div class="gallery-photo" data-medidas="Foto · 480×300" aria-hidden="true" />
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <section class="container ev-cards">
+    {
+      service.cards.map((c) => (
+        <div class="ev-card">
+          <span class="ev-icon" aria-hidden="true">
+            <Icon name={c.icon as any} size={22} />
+          </span>
+          <p class="ev-card-title">{c.title}</p>
+          <p class="ev-card-body">{c.body}</p>
+        </div>
+      ))
+    }
+  </section>
+
+  <ObraBand />
+
+  <ServiceContact selectedSlug={service.slug} whatsappMessage={service.whatsappMessage} />
+
+  <MiniFooter
+    thirdTitle="Servicios"
+    thirdLinks={services.map((s) => ({ href: `/servicios/${s.slug}`, label: s.name }))}
+  />
+</Base>
+
+
+<style>
+  /* Hero (mismo patron que Eventos) */
+  .ev-hero {
+    position: relative;
+    height: 600px;
+    overflow: hidden;
+    background: var(--card-dark);
+  }
+
+  .ev-hero-photo {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(150deg, #2a4432, var(--card-dark) 70%);
+  }
+
+  .ev-hero-photo::after,
+  .ev-photo::after,
+  .gallery-photo::after,
+  .contact-photo::after {
+    content: attr(data-medidas);
+    position: absolute;
+    right: 12px;
+    top: 12px;
+    z-index: 1;
+    font-size: 0.6rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: rgba(238, 245, 240, 0.7);
+    background: rgba(27, 42, 31, 0.55);
+    padding: 2px 8px;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+
+  .gallery-photo::after {
+    color: rgba(27, 42, 31, 0.5);
+    background: rgba(238, 245, 240, 0.85);
+  }
+
+  .ev-hero-scrim {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom, rgba(27, 42, 31, 0.55), rgba(27, 42, 31, 0.74));
+  }
+
+  .ev-hero-copy {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 0 2.3rem;
+    color: #ffffff;
+  }
+
+  .hero-pill {
+    display: inline-block;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    border-radius: 999px;
+    padding: 0.5rem 1.4rem;
+    font-size: 0.75rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    margin-bottom: 1.7rem;
+  }
+
+  .ev-hero-copy h1 {
+    color: #ffffff;
+    font-weight: 400;
+    font-size: clamp(2.4rem, 5.5vw, 4.5rem);
+    margin: 0;
+    max-width: 22ch;
+  }
+
+  .hero-divider {
+    width: 64px;
+    height: 2px;
+    background: #4ade80;
+    margin: 1.7rem 0;
+  }
+
+  .ev-hero-copy p {
+    font-family: 'Instrument Serif', Georgia, serif;
+    font-style: italic;
+    font-size: 1.35rem;
+    line-height: 1.5;
+    color: rgba(255, 255, 255, 0.9);
+    margin: 0;
+    max-width: 44ch;
+  }
+
+  /* Tabs y bloque */
+  .ev-main { padding-top: 4.6rem; }
+
+  .ev-tabs {
+    display: flex;
+    gap: 0.7rem;
+    flex-wrap: wrap;
+    margin-bottom: 2.9rem;
+  }
+
+  .ev-tab {
+    font-size: 0.88rem;
+    font-weight: 600;
+    padding: 0.7rem 1.4rem;
+    border-radius: 999px;
+    border: 1px solid rgba(27, 42, 31, 0.25);
+    color: var(--ink);
+  }
+
+  .ev-tab:hover { text-decoration: none; color: var(--ink); }
+
+  .ev-tab.on {
+    background: var(--green-deep);
+    border-color: var(--green-deep);
+    color: #ffffff;
+  }
+
+  .ev-block {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 3.4rem;
+    align-items: center;
+    margin-bottom: 4.6rem;
+  }
+
+  .ev-block h2 {
+    font-weight: 400;
+    font-size: clamp(1.9rem, 3.5vw, 2.75rem);
+    line-height: 1.1;
+    margin: 0 0 1.15rem;
+  }
+
+  .ev-body {
+    font-size: 1.05rem;
+    line-height: 1.65;
+    color: var(--ink-soft);
+    margin: 0 0 1.4rem;
+    max-width: 34rem;
+  }
+
+  .ev-features {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 1.7rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+    font-size: 0.95rem;
+  }
+
+  .ev-features li { display: flex; align-items: flex-start; gap: 0.7rem; }
+
+  li :global(.check-icon) { color: var(--green-deep); flex: none; margin-top: 3px; }
+
+  .ev-photo {
+    position: relative;
+    border-radius: 20px;
+    overflow: hidden;
+    outline: 1px solid rgba(27, 42, 31, 0.1);
+    background: var(--surface-2);
+    min-height: 500px;
+  }
+
+  /* Galeria */
+  .ev-gallery-band { background: var(--surface-2); }
+
+  .ev-gallery-band .container {
+    padding-top: 4.6rem;
+    padding-bottom: 4.6rem;
+  }
+
+  .gallery-title {
+    font-weight: 400;
+    font-size: clamp(1.8rem, 3vw, 2.5rem);
+    margin: 0 0 2.3rem;
+  }
+
+  .ev-gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1.15rem;
+  }
+
+  .gallery-photo {
+    position: relative;
+    height: 300px;
+    border-radius: 16px;
+    overflow: hidden;
+    outline: 1px solid rgba(27, 42, 31, 0.1);
+    background: #ffffff;
+  }
+
+  /* Tarjetas informativas */
+  .ev-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1.7rem;
+    padding-top: 4.6rem;
+    padding-bottom: 4.6rem;
+  }
+
+  .ev-card {
+    background: #ffffff;
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+  }
+
+  .ev-icon { color: var(--green-deep); display: inline-flex; }
+
+  .ev-card-title { font-size: 1.2rem; font-weight: 600; margin: 0; }
+
+  .ev-card-body {
+    margin: 0;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: var(--ink-soft);
+  }
+
+</style>

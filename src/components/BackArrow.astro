@@ -1,13 +1,28 @@
 ---
 // Flecha de retorno flotante de las paginas sin navbar (Servicios,
-// Mayoristas, Eventos, Contacto). Vuelve a la pagina anterior si se llego
-// desde el propio sitio; si no, al inicio (igual que el prototipo).
+// Mayoristas, Eventos, Contacto). Con `href` va a esa ruta fija (p. ej. las
+// mini paginas de servicios vuelven a /servicios); sin `href`, vuelve a la
+// pagina anterior si se llego desde el propio sitio o al inicio si no.
 import Icon from './Icon.astro';
+
+interface Props {
+  href?: string;
+}
+
+const { href } = Astro.props;
 ---
 
-<button class="back-arrow" data-back-arrow aria-label="Volver">
-  <Icon name="arrow-left" size={20} />
-</button>
+{
+  href ? (
+    <a href={href} class="back-arrow" aria-label="Volver">
+      <Icon name="arrow-left" size={20} />
+    </a>
+  ) : (
+    <button class="back-arrow" data-back-arrow aria-label="Volver">
+      <Icon name="arrow-left" size={20} />
+    </button>
+  )
+}
 
 <script>
   document.querySelectorAll<HTMLButtonElement>('[data-back-arrow]').forEach((btn) => {
@@ -41,5 +56,5 @@ import Icon from './Icon.astro';
     box-shadow: 0 2px 10px rgba(27, 42, 31, 0.18);
   }
 
-  .back-arrow:hover { background: #ffffff; }
+  .back-arrow:hover { background: #ffffff; color: var(--ink); }
 </style>

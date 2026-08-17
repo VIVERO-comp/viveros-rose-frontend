@@ -6,7 +6,7 @@ export default defineConfig({
   site: 'https://plantaspanama.com',
   output: 'static',
   redirects: {
-    // La pagina de paisajismo ahora vive en /servicios (diseno "Servicios").
-    '/paisajismo': '/servicios',
+    // La antigua pagina de paisajismo vive ahora en su mini pagina de servicio.
+    '/paisajismo': '/servicios/paisajismo',
   },
 });
