@@ -1,4 +1,7 @@
 ---
+// Tarjeta de producto con el estilo del diseno: tesela oscura 4:5 con la
+// informacion superpuesta abajo. El StockBadge se conserva tal cual (el
+// stock proxy lo actualiza en el cliente via data-sku).
 import type { Product } from '../data/products';
 import { formatPrice } from '../data/products';
 import StockBadge from './StockBadge.astro';
@@ -11,50 +14,110 @@ const { product } = Astro.props;
 const url = `/plantas/${product.category}/${product.slug}`;
 ---
 
-<article class="card product-card">
-  <a href={url} class="photo-link" aria-hidden="true" tabindex="-1">
-    <div class="photo-placeholder">{product.emoji}</div>
+<article class="product-tile">
+  <a href={url} class="tile-link">
+    <!-- FOTO PENDIENTE: producto {product.sku} — proporcion 4:5, minimo 640×800 px -->
+    <div class="tile-photo" data-medidas="Foto 4:5 · 640×800" aria-hidden="true">
+      {product.emoji}
+    </div>
+    <div class="tile-overlay" aria-hidden="true"></div>
+    <div class="tile-info">
+      <StockBadge sku={product.sku} available={product.available} />
+      <h3>{product.name}</h3>
+      <p class="scientific">{product.scientificName}</p>
+      <p class="price">{formatPrice(product.price)}</p>
+    </div>
   </a>
-  <div class="product-body">
-    <StockBadge sku={product.sku} available={product.available} />
-    <h3><a href={url}>{product.name}</a></h3>
-    <p class="scientific">{product.scientificName}</p>
-    <p class="price">{formatPrice(product.price)}</p>
-  </div>
 </article>
 
 <style>
-  .product-card {
+  .product-tile {
+    position: relative;
+    aspect-ratio: 4 / 5;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    outline: 1px solid var(--line);
+    background: var(--card-dark);
+  }
+
+  .tile-link {
+    position: absolute;
+    inset: 0;
     display: flex;
     flex-direction: column;
-    transition: box-shadow 0.15s ease;
+    justify-content: flex-end;
+    color: #eef5f0;
+    text-decoration: none;
   }
 
-  .product-card:hover {
-    box-shadow: var(--shadow);
+  .tile-link:hover { text-decoration: none; color: #eef5f0; }
+  .tile-link:hover h3 { text-decoration: underline; }
+
+  .tile-photo {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3.5rem;
+    background: linear-gradient(160deg, #2a4432, var(--card-dark));
   }
 
-  .product-body {
-    padding: 1rem 1.1rem 1.2rem;
+  .tile-photo::after {
+    content: attr(data-medidas);
+    position: absolute;
+    left: 50%;
+    top: 12px;
+    transform: translateX(-50%);
+    font-size: 0.62rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(238, 245, 240, 0.6);
+    background: rgba(27, 42, 31, 0.55);
+    padding: 2px 8px;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+
+  .tile-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      to top,
+      rgba(27, 42, 31, 0.92) 0%,
+      rgba(27, 42, 31, 0.55) 34%,
+      rgba(27, 42, 31, 0) 60%
+    );
+    pointer-events: none;
+  }
+
+  .tile-info {
+    position: relative;
+    padding: 0.9rem;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
   }
 
   h3 {
-    font-size: 1.05rem;
-    margin: 0.5rem 0 0.1rem;
+    font-size: 1.15rem;
+    line-height: 1.15;
+    margin: 0;
+    color: #eef5f0;
   }
 
-  h3 a { color: var(--ink); }
-
   .scientific {
-    font-size: 0.85rem;
+    font-size: 0.78rem;
     font-style: italic;
-    color: var(--ink-soft);
-    margin-bottom: 0.4rem;
+    color: rgba(255, 255, 255, 0.72);
+    margin: 0;
   }
 
   .price {
-    font-weight: 700;
-    font-size: 1.1rem;
-    margin: 0;
+    font-size: 1rem;
+    font-variant-numeric: tabular-nums;
+    color: #eef5f0;
+    margin: 0.25rem 0 0;
   }
 </style>

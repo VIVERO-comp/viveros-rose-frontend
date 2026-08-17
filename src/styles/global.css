@@ -1,32 +1,37 @@
 /* Sistema visual — Plantas Panama
-   Verde usado con intencion, neutros calidos, texto oscuro, CTAs de alto contraste. */
+   Basado en el diseno "Home Plantas Panama" (claude.ai/design):
+   fondo verde palido, tinta verde oscuro, acento #16a34a, tipografia Instrument Sans,
+   botones pastilla y tarjetas redondeadas. */
 
 :root {
-  --bg: #faf8f4;
-  --surface: #ffffff;
-  --ink: #1e2321;
-  --ink-soft: #55605a;
-  --line: #e6e1d8;
+  --bg: #eef5f0;
+  --surface: #f4f7f1;
+  --surface-2: #dde9e0;
+  --ink: #1b2a1f;
+  --ink-soft: #4c5a50;
+  --line: rgba(27, 42, 31, 0.16);
 
-  --green: #2f6b3f;
-  --green-dark: #24522f;
-  --green-tint: #eaf2ec;
+  --green: #16a34a;
+  --green-dark: #12813b;
+  --green-deep: #15662f;
+  --green-tint: #e2efe5;
+  --card-dark: #1e3324;
 
   --amber: #b07d18;
   --amber-tint: #fdf3dd;
   --red: #a83232;
   --red-tint: #fbeaea;
 
-  --whatsapp: #1fa855;
+  --whatsapp: #16a34a;
 
-  --radius: 10px;
-  --radius-lg: 16px;
-  --shadow: 0 2px 12px rgba(30, 35, 33, 0.08);
+  --radius: 14px;
+  --radius-lg: 20px;
+  --shadow: 0 3px 10px rgba(27, 42, 31, 0.16);
 
-  --font-ui: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
-  --font-heading: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  --font-ui: "Instrument Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-heading: "Instrument Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 
-  --max-width: 1120px;
+  --max-width: 1280px;
 }
 
 * {
@@ -42,41 +47,64 @@ body {
   background: var(--bg);
   color: var(--ink);
   font-family: var(--font-ui);
-  font-size: 16px;
-  line-height: 1.6;
+  font-size: 15px;
+  line-height: 1.55;
   -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: rgba(22, 163, 74, 0.25);
+}
+
+:focus-visible {
+  outline: 2px solid var(--green);
+  outline-offset: 2px;
 }
 
 h1, h2, h3, h4 {
   font-family: var(--font-heading);
-  font-weight: 600;
-  line-height: 1.2;
+  line-height: 1.15;
   margin: 0 0 0.5em;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.015em;
 }
 
-h1 { font-size: clamp(2rem, 5vw, 3rem); }
-h2 { font-size: clamp(1.5rem, 3.5vw, 2.1rem); }
-h3 { font-size: 1.25rem; }
+h1 {
+  font-size: clamp(2.4rem, 5vw, 3.9rem);
+  font-weight: 400;
+  line-height: 1.06;
+}
+
+h2 {
+  font-size: clamp(1.6rem, 3vw, 2.25rem);
+  font-weight: 600;
+}
+
+h3 { font-size: 1.2rem; font-weight: 600; }
 
 p { margin: 0 0 1em; }
 
 a {
-  color: var(--green);
+  color: var(--green-deep);
   text-decoration: none;
+  text-underline-offset: 3px;
 }
 
-a:hover { text-decoration: underline; }
+a:hover {
+  color: var(--green);
+  text-decoration: underline;
+}
 
 img {
   max-width: 100%;
   display: block;
 }
 
+input::placeholder { color: rgba(27, 42, 31, 0.45); }
+
 .container {
   max-width: var(--max-width);
   margin: 0 auto;
-  padding: 0 1.25rem;
+  padding: 0 1.5rem;
 }
 
 .section {
@@ -84,32 +112,33 @@ img {
 }
 
 .section--tight {
-  padding: 2rem 0;
+  padding: 1.75rem 0;
 }
 
 .eyebrow {
   display: inline-block;
-  font-size: 0.8rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: var(--green);
-  margin-bottom: 0.75rem;
+  color: var(--green-deep);
+  margin-bottom: 0.9rem;
 }
 
 .lead {
-  font-size: 1.15rem;
+  font-size: 1.1rem;
+  line-height: 1.6;
   color: var(--ink-soft);
   max-width: 40rem;
 }
 
-/* Botones */
+/* Botones (pastilla, como en el diseno) */
 .btn {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.75rem 1.4rem;
-  border-radius: var(--radius);
+  padding: 0.8rem 1.6rem;
+  border-radius: 999px;
   border: 1px solid transparent;
   font-family: var(--font-ui);
   font-size: 1rem;
@@ -126,32 +155,35 @@ img {
   color: #fff;
 }
 
-.btn--primary:hover { background: #000; }
+.btn--primary:hover { background: #101a13; color: #fff; }
 
 .btn--green {
   background: var(--green);
+  border-color: var(--green);
   color: #fff;
 }
 
-.btn--green:hover { background: var(--green-dark); }
+.btn--green:hover { background: var(--green-dark); color: #fff; }
 
 .btn--ghost {
-  background: transparent;
+  background: var(--surface);
   color: var(--ink);
   border-color: var(--line);
 }
 
 .btn--ghost:hover {
   border-color: var(--ink-soft);
-  background: var(--surface);
+  background: #ffffff;
+  color: var(--ink);
 }
 
 .btn--whatsapp {
   background: var(--whatsapp);
+  border-color: var(--whatsapp);
   color: #fff;
 }
 
-.btn--whatsapp:hover { background: #178a45; }
+.btn--whatsapp:hover { background: var(--green-dark); color: #fff; }
 
 /* Tarjetas */
 .card {
@@ -163,7 +195,7 @@ img {
 
 .grid {
   display: grid;
-  gap: 1.25rem;
+  gap: 1.15rem;
 }
 
 .grid--2 { grid-template-columns: repeat(2, 1fr); }
@@ -179,20 +211,23 @@ img {
   .grid--4, .grid--3, .grid--2 { grid-template-columns: 1fr; }
 }
 
-/* Badges de stock */
+/* Badges de stock (colores del diseno; las clases y data-attrs no cambian
+   porque el stock proxy las actualiza en el cliente) */
 .badge {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  font-size: 0.78rem;
-  font-weight: 700;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
   padding: 0.25rem 0.6rem;
   border-radius: 999px;
 }
 
-.badge--in-stock { background: var(--green-tint); color: var(--green-dark); }
+.badge--in-stock { background: var(--green-tint); color: #14532a; }
 .badge--low { background: var(--amber-tint); color: var(--amber); }
-.badge--out { background: var(--red-tint); color: var(--red); }
+.badge--out { background: #e8ebe8; color: #5b6b60; }
 
 /* Formularios */
 label {
@@ -204,10 +239,10 @@ label {
 
 input, textarea, select {
   width: 100%;
-  padding: 0.7rem 0.85rem;
+  padding: 0.7rem 0.9rem;
   border: 1px solid var(--line);
   border-radius: var(--radius);
-  background: var(--surface);
+  background: #ffffff;
   font-family: var(--font-ui);
   font-size: 1rem;
   color: var(--ink);
@@ -244,7 +279,7 @@ th, td {
 }
 
 th {
-  background: var(--green-tint);
+  background: var(--surface-2);
   font-size: 0.85rem;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -252,14 +287,33 @@ th {
 
 tr:last-child td { border-bottom: none; }
 
-/* Placeholder de imagen de producto (hasta tener fotografia real) */
+/* Placeholder de imagen (hasta tener fotografia real).
+   Cada uso lleva un data-medidas con el tamano de la foto que va ahi. */
 .photo-placeholder {
+  position: relative;
   aspect-ratio: 4 / 3;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(160deg, var(--green-tint), #dcebe0);
-  color: var(--green-dark);
+  background: linear-gradient(160deg, var(--green-tint), var(--surface-2));
+  color: #14532a;
   font-family: var(--font-heading);
   font-size: 2.5rem;
+}
+
+.photo-placeholder::after {
+  content: attr(data-medidas);
+  position: absolute;
+  left: 50%;
+  bottom: 8px;
+  transform: translateX(-50%);
+  font-family: var(--font-ui);
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(27, 42, 31, 0.5);
+  background: rgba(238, 245, 240, 0.85);
+  padding: 2px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
 }
