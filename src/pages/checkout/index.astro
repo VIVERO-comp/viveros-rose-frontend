@@ -5,18 +5,22 @@
 // confirmar, el pedido completo se envia por WhatsApp con los datos y el
 // metodo elegido. El carrito sigue siendo src/lib/cart.ts.
 import Base from '../../layouts/Base.astro';
+import Icon from '../../components/Icon.astro';
 
+// Metodos de entrega del diseno: estandar $3 fijo (sin regla de envio
+// gratis desde $50), express $9 y retiro sin costo.
 const SHIPPING = [
-  { id: 'std', name: 'Entrega estándar', detail: '24–48 h · ciudad de Panamá', price: 0 },
+  { id: 'std', name: 'Entrega estándar', detail: '2–4 días hábiles · ciudad de Panamá', price: 3 },
   { id: 'exp', name: 'Entrega express', detail: '24 horas · ciudad de Panamá', price: 9 },
   { id: 'pickup', name: 'Retiro en el vivero', detail: 'Calle 11, Juan Díaz · Lun–Vie 9–5', price: 0 },
 ];
 
+// Metodos de pago del diseno. La tarjeta va deshabilitada ("Proximamente"):
+// la integracion con Wompi no esta lista. Yappy queda seleccionado.
 const PAYMENTS = [
   { id: 'yappy', name: 'Yappy', detail: 'Pago desde tu banco' },
   { id: 'transfer', name: 'Transferencia bancaria', detail: 'Enviamos los datos por WhatsApp' },
   { id: 'cash', name: 'Efectivo contra entrega', detail: 'Solo ciudad de Panamá' },
-  { id: 'card', name: 'Tarjeta de crédito o débito', detail: 'Pago online muy pronto (Wompi)' },
 ];
 
 const PROVINCES = [
@@ -41,9 +45,9 @@ const PROVINCES = [
   <div class="checkout-grid">
     <main class="checkout-main">
       <div class="trust-row">
-        <span>📦 Empaque seguro</span>
-        <span>💬 Asesoría por WhatsApp</span>
-        <span>🚚 Entrega 24–48 h</span>
+        <span><Icon name="package" size={22} class="trust-icon" /> Empaque seguro</span>
+        <span><Icon name="smile" size={22} class="trust-icon" /> Garantía 30 días</span>
+        <span><Icon name="truck" size={22} class="trust-icon" /> Entrega 2–4 días</span>
       </div>
 
       <form class="checkout-form" novalidate>
@@ -117,22 +121,27 @@ const PROVINCES = [
         </div>
 
         <h2>Pago</h2>
-        <p class="pay-note">Elige cómo prefieres pagar. Antes de cobrar verificamos la disponibilidad real de cada planta.</p>
-        <div class="option-list">
+        <p class="pay-note">Todas las transacciones son seguras y encriptadas.</p>
+        <div class="pay-box">
+          <label class="pay-row pay-row--disabled" title="Próximamente">
+            <span class="pay-main">
+              <input type="radio" name="pago" disabled />
+              Tarjeta de crédito o débito
+            </span>
+            <span class="pay-soon">Próximamente</span>
+          </label>
           {PAYMENTS.map((p, i) => (
-            <label class="option">
-              <span class="option-main">
+            <label class="pay-row">
+              <span class="pay-main">
                 <input type="radio" name="pago" value={p.id} checked={i === 0} data-pay-name={p.name} />
-                <span>
-                  <span class="option-name">{p.name}</span>
-                  <span class="option-detail">{p.detail}</span>
-                </span>
+                {p.name}
               </span>
+              <span class="pay-detail">{p.detail}</span>
             </label>
           ))}
         </div>
 
-        <button type="submit" class="btn btn--green submit-btn">Confirmar pedido por WhatsApp</button>
+        <button type="submit" class="submit-btn">Confirmar pedido por WhatsApp</button>
         <p class="form-error" hidden></p>
         <p class="help center">
           El pago online con Wompi estará disponible muy pronto. Al confirmar se abre
@@ -144,6 +153,11 @@ const PROVINCES = [
     <aside class="checkout-aside">
       <div class="aside-inner">
         <div data-summary-items></div>
+        <!-- Codigo de descuento: aun no hay backend de cupones. -->
+        <div class="discount-row">
+          <input type="text" placeholder="Código de descuento" disabled title="No disponible por ahora" />
+          <button type="button" disabled title="No disponible por ahora">Aplicar</button>
+        </div>
         <div class="aside-rows">
           <div class="aside-row"><span>Subtotal</span><span data-summary-subtotal>$0.00</span></div>
           <div class="aside-row"><span>Envío</span><span data-summary-shipping>Gratis</span></div>
@@ -162,7 +176,7 @@ const PROVINCES = [
           <figcaption>— Marisol A. · Compra verificada</figcaption>
         </figure>
 
-        <p class="secure-note">🔒 Pedido seguro · Vivero Rose, Juan Díaz</p>
+        <p class="secure-note"><Icon name="lock" size={15} class="lock-icon" /> Pedido seguro · Vivero Rose, Juan Díaz</p>
       </div>
     </aside>
   </div>
@@ -303,6 +317,15 @@ const PROVINCES = [
     font-weight: 600;
   }
 
+  .trust-row span {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 7px;
+  }
+
+  .trust-row .trust-icon { color: var(--green-deep); }
+
   .checkout-form h2 {
     font-size: 1.25rem;
     margin: 1.7rem 0 0.85rem;
@@ -371,13 +394,79 @@ const PROVINCES = [
   .option-detail { display: block; font-size: 0.82rem; color: var(--ink-soft); }
   .option-price { font-size: 0.95rem; font-weight: 600; }
 
+  /* Caja de pago del diseno: un contenedor con filas separadas por hairline;
+     la tarjeta va bloqueada con la pildora "Proximamente". */
+  .pay-box {
+    border: 1px solid rgba(27, 42, 31, 0.22);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 1.7rem;
+    background: #ffffff;
+  }
+
+  .pay-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.85rem;
+    padding: 0.95rem 1.15rem;
+    cursor: pointer;
+    font-weight: 400;
+    margin: 0;
+  }
+
+  .pay-row + .pay-row { border-top: 1px solid rgba(27, 42, 31, 0.14); }
+
+  .pay-row--disabled {
+    background: var(--bg);
+    cursor: not-allowed;
+    opacity: 0.55;
+    border-bottom: 1px solid rgba(27, 42, 31, 0.14);
+  }
+
+  .pay-main {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    font-size: 0.95rem;
+    font-weight: 600;
+  }
+
+  .pay-main input[type='radio'] {
+    width: 17px;
+    height: 17px;
+    accent-color: var(--green-deep);
+    padding: 0;
+  }
+
+  .pay-detail { font-size: 0.82rem; color: var(--ink-soft); }
+
+  .pay-soon {
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    border-radius: 999px;
+    padding: 4px 10px;
+    background: rgba(27, 42, 31, 0.1);
+    color: rgba(27, 42, 31, 0.7);
+  }
+
+  /* Boton de confirmar del diseno: bloque oscuro, radio 12px. */
   .submit-btn {
     width: 100%;
-    justify-content: center;
     margin-top: 1.15rem;
-    font-size: 1.05rem;
-    padding: 1rem 1.6rem;
+    font-family: var(--font-ui);
+    font-weight: 600;
+    font-size: 17px;
+    padding: 17px;
+    border-radius: 12px;
+    border: 1px solid var(--card-dark);
+    background: var(--card-dark);
+    color: #ffffff;
+    cursor: pointer;
   }
+
+  .submit-btn:hover { background: #101a13; }
 
   .form-error {
     margin-top: 1rem;
@@ -390,14 +479,41 @@ const PROVINCES = [
 
   .help.center { text-align: center; margin-top: 0.85rem; }
 
-  /* Columna de resumen */
+  /* Columna de resumen (paleta principal unificada: fondo verde palido). */
   .checkout-aside {
-    background: var(--surface);
+    background: var(--bg);
     border-left: 1px solid var(--line);
     min-height: calc(100vh - 64px);
     padding: 2.9rem 2.3rem 5.8rem;
     box-sizing: border-box;
   }
+
+  .discount-row { display: flex; gap: 9px; }
+
+  .discount-row input {
+    flex: 1;
+    min-width: 0;
+    min-height: 44px;
+    padding: 10px 14px;
+    font-size: 14px;
+    border: 1px solid rgba(27, 42, 31, 0.22);
+    border-radius: 10px;
+    background: #ffffff;
+  }
+
+  .discount-row button {
+    font-family: var(--font-ui);
+    font-weight: 600;
+    font-size: 14px;
+    padding: 10px 18px;
+    border-radius: 10px;
+    border: 1px solid rgba(27, 42, 31, 0.22);
+    background: #ffffff;
+    color: var(--ink);
+  }
+
+  .discount-row input:disabled,
+  .discount-row button:disabled { opacity: 0.55; cursor: not-allowed; }
 
   .aside-inner {
     max-width: 420px;
@@ -498,8 +614,13 @@ const PROVINCES = [
   }
 
   .secure-note {
+    display: flex;
+    align-items: center;
+    gap: 10px;
     font-size: 0.82rem;
     color: var(--ink-soft);
     margin: 0;
   }
+
+  .secure-note .lock-icon { color: var(--green-deep); flex: none; }
 </style>

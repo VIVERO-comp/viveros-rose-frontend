@@ -55,11 +55,20 @@ const tiles = collections.map((c) => {
 
   h1 { font-weight: 600; }
 
+  /* Grilla del diseno: 5 columnas en escritorio, gap 22px. */
   .tiles {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 1.4rem;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 22px;
     margin-top: 2.3rem;
+  }
+
+  @media (max-width: 1000px) {
+    .tiles { grid-template-columns: repeat(3, 1fr); }
+  }
+
+  @media (max-width: 768px) {
+    .tiles { grid-template-columns: repeat(2, 1fr); }
   }
 
   .tile {
@@ -79,7 +88,7 @@ const tiles = collections.map((c) => {
     border-radius: var(--radius-lg);
     overflow: hidden;
     outline: 1px solid rgba(27, 42, 31, 0.12);
-    background: linear-gradient(160deg, var(--green-tint), var(--surface-2));
+    background: var(--surface-2);
   }
 
   .tile-photo::after {

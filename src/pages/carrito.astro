@@ -4,10 +4,20 @@
 // regalo, sugerencias del catalogo y resumen pegajoso. La logica del carrito
 // (localStorage) sigue siendo src/lib/cart.ts, sin cambios.
 import Base from '../layouts/Base.astro';
-import { formatPrice, products } from '../data/products';
+import Icon from '../components/Icon.astro';
+import { compareAtPrice, formatPrice, products } from '../data/products';
 
 // Sugerencias "Va bien con": productos disponibles del catalogo real.
+// (El diseno muestra sustrato/abono/matera, pero esos accesorios no existen
+// en el catalogo ni en Odoo; se sugieren plantas reales en su lugar.)
 const suggestions = products.filter((p) => p.available > 0).slice(0, 3);
+
+// Precio de lista por SKU (promo 15% exterior) para mostrar el ahorro.
+const compareMap = Object.fromEntries(
+  products
+    .map((p) => [p.sku, compareAtPrice(p)] as const)
+    .filter(([, compare]) => compare !== null),
+);
 ---
 
 <Base
@@ -18,7 +28,7 @@ const suggestions = products.filter((p) => p.available > 0).slice(0, 3);
   minimalLinkLabel="Seguir comprando"
 >
   <section class="section">
-    <div class="container cart-container">
+    <div class="container cart-container" data-compare-map={JSON.stringify(compareMap)}>
       <h1>Tu carrito</h1>
       <p class="count-label" data-count-label>Sin artículos</p>
 
@@ -35,7 +45,7 @@ const suggestions = products.filter((p) => p.available > 0).slice(0, 3);
           <div class="gift-card" data-gift-card hidden>
             <label class="gift-check">
               <input type="checkbox" data-gift-toggle />
-              🎁 Es un regalo: agregar tarjeta con mensaje
+              <Icon name="gift" size={17} class="gift-icon" /> Es un regalo: agregar tarjeta con mensaje
             </label>
             <textarea
               data-gift-note
@@ -74,8 +84,16 @@ const suggestions = products.filter((p) => p.available > 0).slice(0, 3);
 
         <aside class="summary" data-summary hidden>
           <p class="summary-title">Resumen</p>
+          <!-- Codigo de descuento: aun no hay backend de cupones. -->
+          <div class="discount-row">
+            <input type="text" placeholder="Código de descuento" disabled title="No disponible por ahora" />
+            <button type="button" disabled title="No disponible por ahora">Aplicar</button>
+          </div>
           <div class="summary-rows">
             <div class="summary-row"><span>Subtotal</span><span data-cart-total>$0.00</span></div>
+            <div class="summary-row" data-savings-row hidden>
+              <span>Ahorro</span><span class="savings" data-cart-savings>$0.00</span>
+            </div>
             <div class="summary-row"><span>Envío</span><span class="muted" data-shipping-label>Se calcula al pagar</span></div>
           </div>
           <div class="summary-total">
@@ -85,9 +103,9 @@ const suggestions = products.filter((p) => p.available > 0).slice(0, 3);
           <a href="/checkout" class="btn btn--green summary-cta">Ir a pagar</a>
           <p class="summary-note">Impuestos y envío se calculan al pagar.</p>
           <div class="summary-trust">
-            <span>📦 Empaque seguro para plantas</span>
-            <span>💬 Coordinamos la entrega por WhatsApp</span>
-            <span>🚚 Entrega en 24–48 h en la ciudad</span>
+            <span><Icon name="package" size={16} class="trust-icon" /> Empaque seguro para plantas</span>
+            <span><Icon name="shield-check" size={16} class="trust-icon" /> Garantía de 30 días</span>
+            <span><Icon name="truck" size={16} class="trust-icon" /> Entrega en 24–48 h en la ciudad</span>
           </div>
         </aside>
       </div>
@@ -101,6 +119,11 @@ const suggestions = products.filter((p) => p.available > 0).slice(0, 3);
   const GIFT_KEY = 'pp-gift-v1';
 
   const money = (n: number) => `$${n.toFixed(2)}`;
+
+  // Precio de lista por SKU (promo de exterior), embebido en build.
+  const compareMap: Record<string, number> = JSON.parse(
+    document.querySelector<HTMLElement>('[data-compare-map]')?.dataset.compareMap ?? '{}',
+  );
 
   function render() {
     const items = getCart();
@@ -126,6 +149,8 @@ const suggestions = products.filter((p) => p.available > 0).slice(0, 3);
     if (list) {
       list.innerHTML = '';
       for (const item of items) {
+        const compare = compareMap[item.sku];
+        const hasDiscount = typeof compare === 'number' && compare > item.price;
         const row = document.createElement('div');
         row.className = 'cart-line';
         row.innerHTML = `
@@ -133,6 +158,11 @@ const suggestions = products.filter((p) => p.available > 0).slice(0, 3);
           <div class="line-info">
             <a href="/plantas/${item.category}/${item.slug}">${item.name}</a>
             <span class="line-price">${money(item.price)} c/u</span>
+            ${
+              hasDiscount
+                ? `<span class="line-discount">Ahorras ${money((compare - item.price) * item.qty)}</span>`
+                : ''
+            }
             <div class="line-controls">
               <div class="qty-pill">
                 <button type="button" data-dec="${item.sku}" aria-label="Quitar uno">–</button>
@@ -142,7 +172,10 @@ const suggestions = products.filter((p) => p.available > 0).slice(0, 3);
               <button type="button" class="line-remove" data-remove="${item.sku}">Eliminar</button>
             </div>
           </div>
-          <strong class="line-total">${money(item.price * item.qty)}</strong>
+          <span class="line-amounts">
+            ${hasDiscount ? `<span class="line-compare">${money(compare * item.qty)}</span>` : ''}
+            <strong class="line-total">${money(item.price * item.qty)}</strong>
+          </span>
         `;
         list.appendChild(row);
       }
@@ -170,11 +203,19 @@ const suggestions = products.filter((p) => p.available > 0).slice(0, 3);
     }
 
     const subtotal = cartTotal();
+    const savings = items.reduce((sum, i) => {
+      const compare = compareMap[i.sku];
+      return sum + (typeof compare === 'number' && compare > i.price ? (compare - i.price) * i.qty : 0);
+    }, 0);
     const totalEl = document.querySelector<HTMLElement>('[data-cart-total]');
     const grandEl = document.querySelector<HTMLElement>('[data-cart-grand-total]');
     const shipEl = document.querySelector<HTMLElement>('[data-shipping-label]');
+    const savingsRow = document.querySelector<HTMLElement>('[data-savings-row]');
+    const savingsEl = document.querySelector<HTMLElement>('[data-cart-savings]');
     if (totalEl) totalEl.textContent = money(subtotal);
     if (grandEl) grandEl.textContent = money(subtotal);
+    if (savingsRow) savingsRow.hidden = savings <= 0;
+    if (savingsEl) savingsEl.textContent = `– ${money(savings)}`;
     if (shipEl) {
       // Envio estandar fijo ($3); sin regla de "gratis desde $50" por ahora.
       shipEl.textContent = subtotal === 0 ? '—' : 'Se calcula al pagar';
@@ -283,15 +324,17 @@ const suggestions = products.filter((p) => p.available > 0).slice(0, 3);
     align-items: start;
   }
 
+  /* Hueco de foto de la linea (diseno: 104px, radio 12px).
+     FOTO PENDIENTE: miniatura de producto — cuadrada, minimo 300×300 px. */
   .line-emoji {
-    width: 84px;
-    height: 84px;
+    width: 104px;
+    height: 104px;
     border-radius: 12px;
-    background: var(--green-tint);
+    background: var(--surface-2);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 2rem;
+    font-size: 2.2rem;
   }
 
   .line-info {
@@ -352,7 +395,29 @@ const suggestions = products.filter((p) => p.available > 0).slice(0, 3);
 
   .line-remove:hover { color: var(--red); }
 
-  .line-total { font-size: 1.05rem; }
+  .line-discount {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--green-deep);
+  }
+
+  .line-amounts {
+    text-align: right;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .line-compare {
+    font-size: 13px;
+    color: rgba(27, 42, 31, 0.5);
+    text-decoration: line-through;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .line-total { font-size: 1.05rem; font-variant-numeric: tabular-nums; }
 
   .gift-card {
     background: #ffffff;
@@ -472,6 +537,45 @@ const suggestions = products.filter((p) => p.available > 0).slice(0, 3);
   }
 
   .summary-title { font-size: 1.25rem; font-weight: 600; margin: 0; }
+
+  .discount-row { display: flex; gap: 9px; }
+
+  .discount-row input {
+    flex: 1;
+    min-width: 0;
+    min-height: 44px;
+    padding: 10px 14px;
+    font-size: 14px;
+    border: 1px solid rgba(27, 42, 31, 0.2);
+    border-radius: 10px;
+    background: #ffffff;
+  }
+
+  .discount-row button {
+    font-family: var(--font-ui);
+    font-weight: 600;
+    font-size: 14px;
+    padding: 10px 18px;
+    border-radius: 10px;
+    border: 1px solid rgba(27, 42, 31, 0.2);
+    background: var(--bg);
+    color: var(--ink);
+  }
+
+  .discount-row input:disabled,
+  .discount-row button:disabled { opacity: 0.55; cursor: not-allowed; }
+
+  .summary-row .savings { color: var(--green-deep); font-variant-numeric: tabular-nums; }
+
+  .gift-check .gift-icon { color: var(--green-deep); }
+
+  .summary-trust span {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+  }
+
+  .summary-trust .trust-icon { color: var(--green-deep); flex: none; }
 
   .summary-rows {
     display: flex;
