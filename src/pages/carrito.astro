@@ -6,8 +6,6 @@
 import Base from '../layouts/Base.astro';
 import { formatPrice, products } from '../data/products';
 
-const FREE_SHIPPING_FROM = 50;
-
 // Sugerencias "Va bien con": productos disponibles del catalogo real.
 const suggestions = products.filter((p) => p.available > 0).slice(0, 3);
 ---
@@ -19,8 +17,6 @@ const suggestions = products.filter((p) => p.available > 0).slice(0, 3);
   minimalLinkHref="/plantas"
   minimalLinkLabel="Seguir comprando"
 >
-  <div class="ship-band">Envío gratis en la ciudad de Panamá en compras mayores a ${FREE_SHIPPING_FROM}</div>
-
   <section class="section">
     <div class="container cart-container">
       <h1>Tu carrito</h1>
@@ -99,15 +95,10 @@ const suggestions = products.filter((p) => p.available > 0).slice(0, 3);
   </section>
 </Base>
 
-<script define:vars={{ FREE_SHIPPING_FROM }}>
-  window.FREE_SHIPPING_FROM = FREE_SHIPPING_FROM;
-</script>
-
 <script>
   import { addToCart, cartCount, cartTotal, getCart, removeFromCart, setQty } from '../lib/cart';
 
   const GIFT_KEY = 'pp-gift-v1';
-  const freeFrom = (window as any).FREE_SHIPPING_FROM ?? 50;
 
   const money = (n: number) => `$${n.toFixed(2)}`;
 
@@ -185,8 +176,8 @@ const suggestions = products.filter((p) => p.available > 0).slice(0, 3);
     if (totalEl) totalEl.textContent = money(subtotal);
     if (grandEl) grandEl.textContent = money(subtotal);
     if (shipEl) {
-      shipEl.textContent =
-        subtotal === 0 ? '—' : subtotal >= freeFrom ? 'Gratis' : 'Se calcula al pagar';
+      // Envio estandar fijo ($3); sin regla de "gratis desde $50" por ahora.
+      shipEl.textContent = subtotal === 0 ? '—' : 'Se calcula al pagar';
     }
 
     // Estado de las sugerencias segun el carrito.
@@ -237,15 +228,6 @@ const suggestions = products.filter((p) => p.available > 0).slice(0, 3);
 </script>
 
 <style is:global>
-  .ship-band {
-    background: var(--card-dark);
-    color: #ffffff;
-    text-align: center;
-    padding: 0.55rem 1.15rem;
-    font-size: 0.82rem;
-    letter-spacing: 0.02em;
-  }
-
   .cart-container { max-width: 74rem; }
 
   .cart-container h1 { font-weight: 400; margin-bottom: 0.2rem; }

@@ -18,7 +18,8 @@ export const NAV = [
   { href: '/plantas', label: 'Plantas' },
   { href: '/colecciones', label: 'Colecciones' },
   { href: '/pedido', label: 'Pedidos' },
-  { href: '/vivero', label: 'Nuestro Vivero' },
+  // "Nuestro Vivero" apunta al sitio corporativo (externo, pestana nueva).
+  { href: 'https://viverorose.com/', label: 'Nuestro Vivero' },
   { href: '/servicios', label: 'Servicios' },
   { href: '/eventos', label: 'Eventos' },
   { href: '/mayorista', label: 'Mayorista' },

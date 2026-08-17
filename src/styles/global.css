@@ -1,37 +1,53 @@
 /* Sistema visual — Plantas Panama
-   Basado en el diseno "Home Plantas Panama" (claude.ai/design):
-   fondo verde palido, tinta verde oscuro, acento #16a34a, tipografia Instrument Sans,
-   botones pastilla y tarjetas redondeadas. */
+   Tokens del handoff diseno-referencia/design_handoff_plantas_panama/README.md:
+   fondo #eef5f0, tinta #1b2a1f, verde accion #16a34a, tipografia Instrument Sans,
+   botones pastilla (999px), tarjetas 20px, la unica sombra es la del boton de WhatsApp. */
 
 :root {
   --bg: #eef5f0;
-  --surface: #f4f7f1;
-  --surface-2: #dde9e0;
+  --surface: #ffffff; /* superficie blanca: inputs, tarjetas de carrito, chips */
+  --surface-2: #dde9e0; /* superficie hundida: huecos de imagen */
+  --surface-tint: #e4ede7; /* bloque de "producto agotado" */
   --ink: #1b2a1f;
-  --ink-soft: #4c5a50;
+  --ink-soft: rgba(27, 42, 31, 0.65); /* texto secundario */
+  --ink-faint: rgba(27, 42, 31, 0.55); /* kickers, pies, terciario */
   --line: rgba(27, 42, 31, 0.16);
+  --line-strong: rgba(27, 42, 31, 0.25);
 
   --green: #16a34a;
   --green-dark: #12813b;
   --green-deep: #15662f;
+  --green-light: #8ce6a8; /* "En stock" sobre fondo oscuro */
   --green-tint: #e2efe5;
-  --card-dark: #1e3324;
+  --card-dark: #1b2a1f;
 
-  --amber: #b07d18;
-  --amber-tint: #fdf3dd;
+  /* Estado "pocas unidades" */
+  --amber-bg: #f5d9a6;
+  --amber-text: #5c3d09;
+  --amber-note: #8a5a12;
+
+  --terracotta: #c07b62; /* estrellas y barras de resenas */
+
   --red: #a83232;
   --red-tint: #fbeaea;
 
   --whatsapp: #16a34a;
 
-  --radius: 14px;
-  --radius-lg: 20px;
-  --shadow: 0 3px 10px rgba(27, 42, 31, 0.16);
+  --radius: 14px; /* miniaturas de galeria */
+  --radius-lg: 20px; /* tarjetas de producto, bloques destacados */
+  --radius-cart: 18px; /* tarjetas de carrito y resumen */
+  --radius-photo: 24px; /* foto principal de producto */
+  --shadow-wa: 0 3px 12px rgba(27, 42, 31, 0.28);
 
   --font-ui: "Instrument Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --font-heading: "Instrument Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 
   --max-width: 1280px;
+
+  /* Alias de compatibilidad para paginas aun no reconstruidas con el handoff. */
+  --amber: var(--amber-note);
+  --amber-tint: var(--amber-bg);
+  --shadow: var(--shadow-wa);
 }
 
 * {
@@ -69,14 +85,16 @@ h1, h2, h3, h4 {
 }
 
 h1 {
-  font-size: clamp(2.4rem, 5vw, 3.9rem);
-  font-weight: 400;
+  font-size: clamp(30px, 4vw, 44px);
+  font-weight: 600;
   line-height: 1.06;
+  letter-spacing: -0.015em;
 }
 
 h2 {
-  font-size: clamp(1.6rem, 3vw, 2.25rem);
+  font-size: clamp(25px, 3vw, 32px);
   font-weight: 600;
+  letter-spacing: -0.015em;
 }
 
 h3 { font-size: 1.2rem; font-weight: 600; }
@@ -165,16 +183,17 @@ input::placeholder { color: rgba(27, 42, 31, 0.45); }
 
 .btn--green:hover { background: var(--green-dark); color: #fff; }
 
+/* Boton secundario del handoff: contorno verde sobre transparente. */
 .btn--ghost {
-  background: var(--surface);
-  color: var(--ink);
-  border-color: var(--line);
+  background: transparent;
+  color: var(--green-deep);
+  border-color: var(--green-deep);
+  font-weight: 500;
 }
 
 .btn--ghost:hover {
-  border-color: var(--ink-soft);
-  background: #ffffff;
-  color: var(--ink);
+  background: rgba(22, 163, 74, 0.08);
+  color: var(--green-deep);
 }
 
 .btn--whatsapp {
@@ -211,23 +230,25 @@ input::placeholder { color: rgba(27, 42, 31, 0.45); }
   .grid--4, .grid--3, .grid--2 { grid-template-columns: 1fr; }
 }
 
-/* Badges de stock (colores del diseno; las clases y data-attrs no cambian
-   porque el stock proxy las actualiza en el cliente) */
+/* Badges de stock (colores del handoff; las clases y data-attrs no cambian
+   porque el stock proxy las actualiza en el cliente).
+   Estilo base = pagina de producto: verde solido / ambar / gris. Sobre foto
+   oscura (tarjetas) el contexto lo cambia a texto claro (.tile-info .badge). */
 .badge {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  font-size: 0.72rem;
-  font-weight: 600;
-  letter-spacing: 0.06em;
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  padding: 0.25rem 0.6rem;
+  padding: 5px 12px;
   border-radius: 999px;
 }
 
-.badge--in-stock { background: var(--green-tint); color: #14532a; }
-.badge--low { background: var(--amber-tint); color: var(--amber); }
-.badge--out { background: #e8ebe8; color: #5b6b60; }
+.badge--in-stock { background: var(--green); color: #ffffff; }
+.badge--low { background: var(--amber-bg); color: var(--amber-text); }
+.badge--out { background: rgba(27, 42, 31, 0.12); color: rgba(27, 42, 31, 0.7); }
 
 /* Formularios */
 label {
@@ -287,7 +308,8 @@ th {
 
 tr:last-child td { border-bottom: none; }
 
-/* Placeholder de imagen (hasta tener fotografia real).
+/* Placeholder de imagen (hasta tener fotografia real). El handoff dibuja los
+   huecos de imagen planos en #dde9e0 (superficie hundida).
    Cada uso lleva un data-medidas con el tamano de la foto que va ahi. */
 .photo-placeholder {
   position: relative;
@@ -295,7 +317,7 @@ tr:last-child td { border-bottom: none; }
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(160deg, var(--green-tint), var(--surface-2));
+  background: var(--surface-2);
   color: #14532a;
   font-family: var(--font-heading);
   font-size: 2.5rem;

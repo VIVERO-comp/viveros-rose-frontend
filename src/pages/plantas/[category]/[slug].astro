@@ -1,7 +1,14 @@
 ---
+// Pagina de producto del handoff (Producto.dc.html): galeria con miniaturas,
+// panel con variantes, acordeones, guia de cuidado, "Va bien con…" y resenas.
+// La logica integrada se conserva: StockBadge con data-sku (stock proxy),
+// catalogo en src/data/products.ts y carrito en src/lib/cart.
 import Base from '../../../layouts/Base.astro';
+import Icon from '../../../components/Icon.astro';
+import ProductCard from '../../../components/ProductCard.astro';
 import StockBadge from '../../../components/StockBadge.astro';
-import { formatPrice, getCategory, products } from '../../../data/products';
+import { compareAtPrice, formatPrice, getCategory, products } from '../../../data/products';
+import { SITE } from '../../../lib/site';
 
 export function getStaticPaths() {
   return products.map((product) => ({
@@ -12,67 +19,519 @@ export function getStaticPaths() {
 
 const { product } = Astro.props;
 const category = getCategory(product.category)!;
-const outOfStock = product.available <= 0;
+const soldOut = product.available <= 0;
+const lowStock = !soldOut && product.available <= 5;
+const compareAt = soldOut ? null : compareAtPrice(product);
 const whatsappMessage = `Hola, me interesa "${product.name}" (${product.sku}) que vi en plantaspanama.com.`;
+
+// "Va bien con…": prioriza la misma categoria y excluye agotadas (diseno).
+const related = products
+  .filter((p) => p.slug !== product.slug && p.available > 0)
+  .sort((a, b) => Number(b.category === product.category) - Number(a.category === product.category))
+  .slice(0, 5);
+
+const GALLERY_SIZE = 5;
+
+const SIZES = [
+  { key: 'S', label: 'Pequeña — matera 6"' },
+  { key: 'M', label: 'Mediana — matera 8"' },
+  { key: 'L', label: 'Grande — matera 10"' },
+  { key: 'XL', label: 'Extra grande — matera 14"' },
+];
+
+const POT_COLORS = [
+  { key: 'coco', swatch: '#efe7dc' },
+  { key: 'piedra', swatch: '#b9b7b1' },
+  { key: 'terracota', swatch: '#c9765a' },
+  { key: 'arena', swatch: '#dcb98a' },
+];
+
+// Detalle de luz derivado del texto real del catalogo (sin inventar por planta).
+const light = product.care.light;
+const lightDetail = /baja/i.test(light)
+  ? 'Aguanta pasillos, baños y oficinas con luz de vidrio polarizado. Mientras menos luz, menos riego.'
+  : /indirecta/i.test(light)
+    ? 'Cerca de una ventana con luz filtrada. Evita el sol directo del mediodía sobre las hojas.'
+    : 'En Panamá funciona mejor el sol de la mañana; la tarde fuerte puede quemar el follaje.';
+
+const waterDetailByDifficulty: Record<string, string> = {
+  Facil: 'Riega cuando las primeras dos pulgadas de tierra estén secas. Perdona el olvido de una semana.',
+  Media: 'Riega al pie, no sobre las hojas, temprano en la mañana. En verano puede necesitar riego diario.',
+  Exigente: 'Mantén el sustrato húmedo sin encharcar y revísalo cada dos días. No tolera secarse por completo.',
+};
+
+const careRows = [
+  { key: 'luz', icon: 'sun', label: 'Luz', value: product.care.light, detail: lightDetail },
+  {
+    key: 'riego',
+    icon: 'droplets',
+    label: 'Riego',
+    value: product.care.water,
+    detail: waterDetailByDifficulty[product.care.difficulty],
+  },
+  {
+    key: 'humedad',
+    icon: 'waves',
+    label: 'Humedad',
+    value: 'Media–alta',
+    detail:
+      'Tolera bien la humedad del istmo si tiene circulación de aire. Evita rincones cerrados sin ventilación.',
+  },
+  {
+    key: 'temp',
+    icon: 'thermometer',
+    label: 'Temperatura',
+    value: '18–32 °C',
+    detail:
+      'Sin problemas en clima panameño todo el año. Si vive con aire acondicionado, aléjala de la salida de aire.',
+  },
+  {
+    key: 'suelo',
+    icon: 'shovel',
+    label: 'Suelo',
+    value: 'Bien drenado',
+    detail: 'Mezcla de tierra negra con arena y materia orgánica. El agua estancada pudre la raíz.',
+  },
+  {
+    key: 'abono',
+    icon: 'sprout',
+    label: 'Abono',
+    value: 'Cada 3 semanas',
+    detail: 'Abono granulado de liberación lenta durante la temporada de crecimiento.',
+  },
+  {
+    key: 'poda',
+    icon: 'scissors',
+    label: 'Poda',
+    value: 'Mensual',
+    detail: 'Corta hojas secas y ramas cruzadas para mantener la forma y estimular brotes nuevos.',
+  },
+  {
+    key: 'trasplante',
+    icon: 'flower-2',
+    label: 'Trasplante',
+    value: 'Cada 2 años',
+    detail: 'Pasa a una matera dos pulgadas más ancha al inicio de la temporada de lluvias.',
+  },
+] as const;
+
+const accordions = [
+  {
+    key: 'desc',
+    title: 'Descripción',
+    open: true,
+    body: `${product.description} Cultivada en nuestro vivero de Juan Díaz y entregada en matera de vivero, lista para sembrar o pasar a una matera decorativa. La despachamos con el cepellón húmedo y protegido para que llegue igual que salió del vivero.`,
+  },
+  {
+    key: 'cuidado',
+    title: 'Guía de cuidado',
+    open: false,
+    body: `${lightDetail} ${waterDetailByDifficulty[product.care.difficulty]} El detalle completo, riego por riego, está más abajo en la guía de cuidado.`,
+  },
+  {
+    key: 'envio',
+    title: 'Entrega y garantía',
+    open: false,
+    body: 'Entregamos en Ciudad de Panamá en 24 a 48 horas (envío estándar $3.00; también hay entrega express y retiro gratis en el vivero). Fuera de la ciudad coordinamos por WhatsApp. Si la planta llega dañada, mándanos una foto dentro de los primeros 30 días y la reponemos.',
+  },
+  {
+    key: 'resenas',
+    title: 'Reseñas y fotos de clientes (4.8 de 128 reseñas)',
+    open: false,
+    body: 'Las reseñas verificadas y las fotos que nos envían los clientes están al final de la página.',
+  },
+];
+
+const careTitle = `Cuidado de ${product.name.replace(/\s*\(.*\)$/, '').toLowerCase()}`;
+
+const ratingBars = [
+  { stars: '5★', pct: 88 },
+  { stars: '4★', pct: 7 },
+  { stars: '3★', pct: 3 },
+  { stars: '2★', pct: 1 },
+  { stars: '1★', pct: 1 },
+];
+
+const reviews = [
+  {
+    n: 5,
+    date: 'hace 4 días',
+    name: 'Marielena C.',
+    text: 'Llegó impecable a Costa del Este, bien empacada y en muy buen estado. Se ve exactamente como en las fotos.',
+    gift: 'No',
+    level: 'Principiante',
+    place: 'Terraza',
+  },
+  {
+    n: 5,
+    date: 'hace 2 semanas',
+    name: 'José R.',
+    text: 'Compré seis para la jardinera del frente y todas pegaron. El equipo me explicó por WhatsApp cómo prepararle el suelo, buenísima atención.',
+    gift: 'No',
+    level: 'Jardinera',
+    place: 'Jardín',
+  },
+  {
+    n: 4,
+    date: 'hace 1 mes',
+    name: 'Ana P.',
+    text: 'La regalé para el cumpleaños de mi mamá con la tarjeta personalizada. Le encantó. Le quito una estrella porque llegó al final de la ventana de entrega.',
+    gift: 'Sí',
+    level: 'Intermedia',
+    place: 'Balcón',
+  },
+];
+
+const STAR_PATH =
+  'M12 2.6l2.9 5.9 6.5.95-4.7 4.58 1.11 6.47L12 17.45 6.19 20.5l1.11-6.47-4.7-4.58 6.5-.95z';
 ---
 
-<Base
-  title={product.name}
-  description={product.description}
-  whatsappMessage={whatsappMessage}
->
-  <section class="section">
-    <div class="container product-layout">
-      <div>
-        <nav class="breadcrumb" aria-label="Miga de pan">
-          <a href="/plantas">Plantas</a> /
-          <a href={`/plantas/${category.slug}`}>{category.name}</a> /
-          <span>{product.name}</span>
-        </nav>
-        <div class="photo-placeholder product-photo">{product.emoji}</div>
+<Base title={product.name} description={product.description} whatsappMessage={whatsappMessage}>
+  <div class="container product-hero">
+    <div class="gallery">
+      <div class="thumbs" data-thumbs>
+        {
+          Array.from({ length: GALLERY_SIZE }, (_, i) => (
+            <button
+              class:list={['thumb', { active: i === 0 }]}
+              data-thumb={i}
+              aria-label={`Ver foto ${i + 1}`}
+            >
+              <!-- FOTO PENDIENTE: galeria {product.sku} #{i + 1} — cuadrada, minimo 800×800 px -->
+              <span class="thumb-num">{i + 1}</span>
+            </button>
+          ))
+        }
+      </div>
+      <div class="main-photo">
+        <!-- FOTO PENDIENTE: foto principal {product.sku} — cuadrada, minimo 1200×1200 px -->
+        <div class="main-photo-ph" data-medidas="Foto cuadrada · 1200×1200" data-main-photo>
+          {product.emoji}
+          <span class="main-photo-num" data-main-num>Foto 1 de {GALLERY_SIZE}</span>
+        </div>
+        {soldOut && <div class="soldout-stamp">Agotado</div>}
+        <button class="photo-arrow photo-arrow--prev" data-gallery-prev aria-label="Foto anterior">
+          <Icon name="chevron-left" size={20} />
+        </button>
+        <button class="photo-arrow photo-arrow--next" data-gallery-next aria-label="Foto siguiente">
+          <Icon name="chevron-right" size={20} />
+        </button>
+      </div>
+    </div>
+
+    <div class="panel-col">
+      <nav class="breadcrumb" aria-label="Miga de pan">
+        <a href="/" aria-label="Inicio"><Icon name="home" size={15} /></a>
+        <span>›</span>
+        <a href={`/plantas/${category.slug}`}>{category.name}</a>
+      </nav>
+
+      <h1>{product.name}</h1>
+      <div class="scientific">{product.scientificName}</div>
+
+      <div class="price-row">
+        <div class="price-group">
+          <StockBadge sku={product.sku} available={product.available} />
+          {compareAt && <span class="compare">{formatPrice(compareAt)}</span>}
+          <span class="price">{formatPrice(product.price)}</span>
+        </div>
+        <a href="#resenas" class="rating-link">
+          <span class="stars stars--sm" aria-hidden="true">
+            {Array.from({ length: 5 }, () => (
+              <svg viewBox="0 0 24 24" width="15" height="15"><path d={STAR_PATH} /></svg>
+            ))}
+          </span>
+          <span>128 reseñas</span>
+        </a>
       </div>
 
-      <div class="product-info">
-        <StockBadge sku={product.sku} available={product.available} />
-        <h1>{product.name}</h1>
-        <p class="scientific">{product.scientificName}</p>
-        <p class="price">{formatPrice(product.price)}</p>
-        <p>{product.description}</p>
-
-        <div class="buy-box">
-          <div class="qty-row" hidden={outOfStock}>
-            <label for="qty">Cantidad</label>
-            <input type="number" id="qty" value="1" min="1" max={Math.max(product.available, 1)} />
+      {
+        lowStock && (
+          <div class="low-stock">
+            <Icon name="alert-circle" size={17} />
+            Quedan {product.available}
+            {product.available === 1 ? ' unidad en el vivero' : ' unidades en el vivero'}
           </div>
-          <button
-            class="btn btn--green add-to-cart"
-            disabled={outOfStock}
-            data-sku={product.sku}
-            data-name={product.name}
-            data-price={product.price}
-            data-slug={product.slug}
-            data-category={product.category}
-            data-emoji={product.emoji}
-          >
-            {outOfStock ? 'Agotado' : 'Agregar al carrito'}
-          </button>
-          <p class="added-note" hidden>✓ Agregado. <a href="/carrito">Ver carrito</a></p>
-        </div>
+        )
+      }
 
-        <div class="care card">
-          <h3>Cuidados</h3>
-          <ul>
-            <li><strong>Luz:</strong> {product.care.light}</li>
-            <li><strong>Riego:</strong> {product.care.water}</li>
-            <li><strong>Dificultad:</strong> {product.care.difficulty}</li>
-          </ul>
-        </div>
+      <hr class="rule" />
 
-        <p class="delivery-note">
-          🚚 Entrega a domicilio en la ciudad de Panama y alrededores.
-          <a href="/entrega">Ver zonas y tarifas</a>.
-        </p>
+      <div class="variant-head">
+        <div class="variant-title">Tamaño — Mediana — matera 8"</div>
+        <button class="size-guide" type="button" disabled title="No disponible por ahora">
+          Guía de tamaños <Icon name="ruler" size={15} />
+        </button>
       </div>
+      <div class="sizes">
+        {
+          SIZES.map((s) => (
+            <button
+              class:list={['size-circle', { active: s.key === 'M' }]}
+              disabled={s.key !== 'M'}
+              title={s.key !== 'M' ? 'No disponible por ahora' : s.label}
+            >
+              {s.key}
+            </button>
+          ))
+        }
+      </div>
+
+      <div class="variant-title variant-title--gap">Maceta — De vivero</div>
+      <div class="pots">
+        <button class="pot" disabled title="No disponible por ahora">
+          <span class="pot-circle"><Icon name="flower-2" size={20} /></span>
+          <span>De vivero</span>
+        </button>
+        <button class="pot" disabled title="No disponible por ahora">
+          <span class="pot-circle"><Icon name="cup-soda" size={20} /></span>
+          <span>Cerámica</span>
+        </button>
+      </div>
+
+      <div class="variant-title variant-title--gap">Color de maceta — De vivero</div>
+      <div class="pot-colors">
+        {
+          POT_COLORS.map((c) => (
+            <button
+              class="pot-color"
+              disabled
+              title="No disponible por ahora"
+              aria-label={`Color ${c.key}`}
+              style={`background: linear-gradient(to top left, transparent calc(50% - 1px), rgba(27,42,31,0.55) calc(50% - 1px), rgba(27,42,31,0.55) calc(50% + 1px), transparent calc(50% + 1px)), ${c.swatch};`}
+            />
+          ))
+        }
+      </div>
+
+      <div class="assurances">
+        <div><Icon name="gift" size={18} class="assure-icon" /> Opciones de regalo disponibles en el carrito</div>
+        <div><Icon name="shield-check" size={18} class="assure-icon" /> Garantía de 30 días: llega sana o la reponemos</div>
+        {
+          product.petFriendly !== undefined && (
+            <div>
+              <Icon name={product.petFriendly ? 'paw-print' : 'alert-triangle'} size={18} class="assure-icon" />
+              {product.petFriendly
+                ? 'Apta para hogares con mascotas'
+                : 'No apta para mascotas: mantenla fuera de su alcance'}
+            </div>
+          )
+        }
+      </div>
+
+      {
+        !soldOut ? (
+          <div class="cta-block">
+            <button class="cta-outline" type="button" disabled title="No disponible por ahora">
+              <Icon name="pencil" size={16} /> Personalizar tarjeta (+$5.00)
+            </button>
+            <button
+              class="cta-add add-to-cart"
+              data-sku={product.sku}
+              data-name={product.name}
+              data-price={product.price}
+              data-slug={product.slug}
+              data-category={product.category}
+              data-emoji={product.emoji}
+              data-label={`Agregar al carrito — ${formatPrice(product.price)}`}
+            >
+              Agregar al carrito — {formatPrice(product.price)}
+            </button>
+          </div>
+        ) : (
+          <div class="soldout-box">
+            <div class="soldout-title">Esta planta está agotada</div>
+            <p>
+              Sembramos tandas nuevas cada mes. Déjanos tu correo y te avisamos apenas vuelva al
+              vivero.
+            </p>
+            <form data-notify-form data-wa={SITE.whatsappNumber} data-product={`${product.name} (${product.sku})`}>
+              <input type="email" name="email" placeholder="Tu correo" required />
+              <button type="submit">Avísame</button>
+            </form>
+            <a href="/plantas" class="soldout-link">Ver plantas similares disponibles</a>
+          </div>
+        )
+      }
+
+      <div class="shipping-line">
+        <Icon name="truck" size={18} class="assure-icon" />
+        {soldOut ? 'Sembramos tandas nuevas cada mes' : 'Entrega en Ciudad de Panamá en 24–48 h'}
+      </div>
+    </div>
+  </div>
+
+  <section class="container accordion-section">
+    {
+      accordions.map((acc) => (
+        <div class="acc">
+          <button class="acc-toggle" data-acc-toggle aria-expanded={acc.open ? 'true' : 'false'}>
+            {acc.title}
+            <span class="when-closed"><Icon name="chevron-down" size={20} class="acc-chev" /></span>
+            <span class="when-open"><Icon name="chevron-up" size={20} class="acc-chev" /></span>
+          </button>
+          <div class="acc-body" hidden={!acc.open}>
+            {acc.body}
+          </div>
+        </div>
+      ))
+    }
+    <hr class="rule rule--flush" />
+  </section>
+
+  <section class="container care-section">
+    <h2>{careTitle}</h2>
+    <div class="care-grid">
+      <!-- FOTO PENDIENTE: {product.sku} en el vivero — cuadrada (se muestra en circulo), minimo 800×800 px -->
+      <div class="care-photo" data-medidas="Foto cuadrada · 800×800">{product.emoji}</div>
+      <div>
+        {
+          careRows.map((row) => (
+            <div class="care-row">
+              <button class="care-toggle" data-acc-toggle aria-expanded="false">
+                <Icon name={row.icon} size={20} class="care-icon" />
+                <span class="care-label">{row.label}</span>
+                <span class="care-value">{row.value}</span>
+                <span class="when-closed"><Icon name="chevron-down" size={18} class="acc-chev" /></span>
+                <span class="when-open"><Icon name="chevron-up" size={18} class="acc-chev" /></span>
+              </button>
+              <div class="care-detail" hidden>
+                {row.detail}
+              </div>
+            </div>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <section class="container related-section">
+    <h2>Va bien con…</h2>
+    <div class="related-grid">
+      {related.map((p) => <ProductCard product={p} />)}
+    </div>
+  </section>
+
+  <section id="resenas" class="container reviews-section">
+    <h2>Reseñas de clientes</h2>
+    <hr class="rule rule--flush reviews-rule" />
+
+    <div class="reviews-top">
+      <div>
+        <div class="score-row">
+          <div class="score">4.8</div>
+          <div class="score-of">/ 5</div>
+          <div>
+            <span class="stars stars--lg" aria-hidden="true">
+              {Array.from({ length: 5 }, () => (
+                <svg viewBox="0 0 24 24" width="20" height="20"><path d={STAR_PATH} /></svg>
+              ))}
+            </span>
+            <div class="score-count">128 reseñas</div>
+          </div>
+        </div>
+        <div class="bars">
+          {
+            ratingBars.map((bar) => (
+              <div class="bar-row">
+                <span>{bar.stars}</span>
+                <span class="bar-track">
+                  <span class="bar-fill" style={`width: ${bar.pct}%`} />
+                </span>
+                <span class="bar-pct">{bar.pct}%</span>
+              </div>
+            ))
+          }
+        </div>
+      </div>
+      <div class="review-photos">
+        {
+          Array.from({ length: 6 }, (_, i) => (
+            <div class="review-photo" data-n={i + 1}>
+              <!-- FOTO PENDIENTE: foto de cliente #{i + 1} — cuadrada, minimo 400×400 px -->
+            </div>
+          ))
+        }
+      </div>
+    </div>
+
+    <div class="review-questions">
+      <div>
+        <div class="rq-title">¿Fue un regalo?</div>
+        <div class="rq-body">Sí (31) · No (18)</div>
+      </div>
+      <div>
+        <div class="rq-title">¿Cuánta experiencia tienes con plantas?</div>
+        <div class="rq-body">Principiante (22) · Intermedia (14) · Jardinera (9)</div>
+      </div>
+      <div>
+        <div class="rq-title">¿Dónde vive tu planta?</div>
+        <div class="rq-body">Jardín (19) · Terraza (12) · Balcón (7) · Oficina (4)</div>
+      </div>
+    </div>
+
+    <div class="reviews-tabbar">
+      <div class="reviews-tab">
+        <span class="reviews-tab-name">Reseñas</span>
+        <span class="reviews-tab-count">128</span>
+      </div>
+      <a
+        href={`https://wa.me/${SITE.whatsappNumber}?text=${encodeURIComponent(`Hola, quiero dejar una reseña de "${product.name}".`)}`}
+        class="write-review"
+        target="_blank"
+        rel="noopener">Escribir una reseña</a
+      >
+    </div>
+
+    <div class="review-filters">
+      <form class="review-search" onsubmit="return false">
+        <Icon name="search" size={15} class="review-search-icon" />
+        <input type="search" placeholder="Buscar reseñas" aria-label="Buscar reseñas" />
+      </form>
+      <button class="review-chip" type="button" disabled title="No disponible por ahora">Más relevantes</button>
+      <button class="review-chip" type="button" disabled title="No disponible por ahora">Todas las estrellas</button>
+      <button class="review-chip" type="button" disabled title="No disponible por ahora">Con fotos</button>
+      <button class="review-chip" type="button" disabled title="No disponible por ahora">Más filtros</button>
+    </div>
+
+    <div class="review-list">
+      {
+        reviews.map((review) => (
+          <div class="review">
+            <div class="review-head">
+              <span class="stars stars--md" aria-hidden="true">
+                {Array.from({ length: 5 }, (_, i) => (
+                  <svg viewBox="0 0 24 24" width="16" height="16" style={i < review.n ? '' : 'opacity:0.25'}>
+                    <path d={STAR_PATH} />
+                  </svg>
+                ))}
+              </span>
+              <span class="review-date">{review.date}</span>
+            </div>
+            <div class="review-byline">
+              <span class="review-name">{review.name}</span>
+              <span class="verified">
+                <Icon name="badge-check" size={15} class="verified-icon" /> Compra verificada
+              </span>
+            </div>
+            <p class="review-text">{review.text}</p>
+            <div class="review-meta">
+              <div>
+                <div class="rq-title">¿Fue un regalo?</div>
+                <div class="rq-body">{review.gift}</div>
+              </div>
+              <div>
+                <div class="rq-title">Experiencia</div>
+                <div class="rq-body">{review.level}</div>
+              </div>
+              <div>
+                <div class="rq-title">¿Dónde vive?</div>
+                <div class="rq-body">{review.place}</div>
+              </div>
+            </div>
+          </div>
+        ))
+      }
     </div>
   </section>
 </Base>
@@ -80,105 +539,802 @@ const whatsappMessage = `Hola, me interesa "${product.name}" (${product.sku}) qu
 <script>
   import { addToCart } from '../../../lib/cart';
 
-  const btn = document.querySelector<HTMLButtonElement>('.add-to-cart');
-  const qtyInput = document.querySelector<HTMLInputElement>('#qty');
-  const note = document.querySelector<HTMLElement>('.added-note');
+  // Galeria: miniatura activa y flechas en bucle (solo placeholders por ahora;
+  // cuando existan fotos reales, aqui se intercambia la imagen principal).
+  const thumbs = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-thumb]'));
+  const mainNum = document.querySelector<HTMLElement>('[data-main-num]');
+  let current = 0;
 
-  btn?.addEventListener('click', () => {
-    const d = btn.dataset;
-    addToCart(
-      {
-        sku: d.sku!,
-        name: d.name!,
-        price: Number(d.price),
-        slug: d.slug!,
-        category: d.category!,
-        emoji: d.emoji!,
-      },
-      Math.max(1, Number(qtyInput?.value ?? 1)),
+  function selectPhoto(index: number) {
+    current = (index + thumbs.length) % thumbs.length;
+    thumbs.forEach((t, i) => t.classList.toggle('active', i === current));
+    if (mainNum) mainNum.textContent = `Foto ${current + 1} de ${thumbs.length}`;
+  }
+
+  thumbs.forEach((t, i) => t.addEventListener('click', () => selectPhoto(i)));
+  document.querySelector('[data-gallery-prev]')?.addEventListener('click', () => selectPhoto(current - 1));
+  document.querySelector('[data-gallery-next]')?.addEventListener('click', () => selectPhoto(current + 1));
+
+  // Acordeones y filas de cuidado: apertura independiente, sin exclusivos.
+  document.querySelectorAll<HTMLButtonElement>('[data-acc-toggle]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const body = btn.nextElementSibling as HTMLElement | null;
+      if (!body) return;
+      const willOpen = body.hidden;
+      body.hidden = !willOpen;
+      btn.classList.toggle('open', willOpen);
+      btn.setAttribute('aria-expanded', String(willOpen));
+    });
+  });
+  // Estado inicial de los abiertos por defecto (Descripcion).
+  document.querySelectorAll<HTMLButtonElement>('[data-acc-toggle][aria-expanded="true"]').forEach((btn) => {
+    btn.classList.add('open');
+  });
+
+  // Agregar al carrito con confirmacion de 1.6 s (diseno).
+  const addBtn = document.querySelector<HTMLButtonElement>('.add-to-cart');
+  addBtn?.addEventListener('click', () => {
+    const d = addBtn.dataset;
+    addToCart({
+      sku: d.sku!,
+      name: d.name!,
+      price: Number(d.price),
+      slug: d.slug!,
+      category: d.category!,
+      emoji: d.emoji!,
+    });
+    addBtn.textContent = 'Agregado al carrito ✓';
+    setTimeout(() => {
+      addBtn.textContent = d.label!;
+    }, 1600);
+  });
+
+  // Producto agotado: el aviso de disponibilidad se coordina por WhatsApp
+  // (no hay backend de correos todavia).
+  const notifyForm = document.querySelector<HTMLFormElement>('[data-notify-form]');
+  notifyForm?.addEventListener('submit', (event) => {
+    event.preventDefault();
+    const email = (notifyForm.querySelector('input[name="email"]') as HTMLInputElement).value;
+    const msg = `Hola, avísenme cuando "${notifyForm.dataset.product}" vuelva a estar disponible. Mi correo: ${email}`;
+    window.open(
+      `https://wa.me/${notifyForm.dataset.wa}?text=${encodeURIComponent(msg)}`,
+      '_blank',
+      'noopener',
     );
-    note?.removeAttribute('hidden');
   });
 </script>
 
 <style>
-  .product-layout {
+  /* Bloque superior */
+  .product-hero {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 2.5rem;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 460px);
+    gap: 46px;
     align-items: start;
+    padding-top: 27.6px;
+    padding-bottom: 55px;
   }
 
-  @media (max-width: 800px) {
-    .product-layout { grid-template-columns: 1fr; }
+  .gallery {
+    display: grid;
+    grid-template-columns: 88px minmax(0, 1fr);
+    gap: 14px;
   }
 
-  .breadcrumb {
-    font-size: 0.9rem;
-    color: var(--ink-soft);
-    margin-bottom: 1rem;
+  .thumbs {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    overflow-x: auto;
+    padding-bottom: 2px;
   }
 
-  .product-photo {
-    border-radius: var(--radius-lg);
+  .thumb {
+    flex: none;
+    padding: 0;
+    cursor: pointer;
+    width: 88px;
+    aspect-ratio: 1 / 1;
+    border-radius: 14px;
+    overflow: hidden;
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .thumb.active { border: 2px solid var(--green); }
+
+  .thumb-num {
+    font-size: 12px;
+    color: rgba(27, 42, 31, 0.45);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .main-photo {
+    position: relative;
+    aspect-ratio: 1 / 1;
+    border-radius: var(--radius-photo);
+    overflow: hidden;
+    background: var(--surface-2);
+    outline: 1px solid rgba(27, 42, 31, 0.12);
+  }
+
+  .main-photo-ph {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     font-size: 5rem;
+    background: var(--surface-2);
+  }
+
+  .main-photo-ph::after {
+    content: attr(data-medidas);
+    position: absolute;
+    left: 50%;
+    bottom: 12px;
+    transform: translateX(-50%);
+    font-size: 0.62rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(27, 42, 31, 0.5);
+    background: rgba(238, 245, 240, 0.85);
+    padding: 2px 8px;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+
+  .main-photo-num {
+    position: absolute;
+    top: 12px;
+    right: 14px;
+    font-size: 11px;
+    color: rgba(27, 42, 31, 0.5);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .soldout-stamp {
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    padding: 7px 14px;
+    border-radius: 999px;
+    background: rgba(27, 42, 31, 0.85);
+    color: #eef5f0;
+  }
+
+  .photo-arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 0;
+    background: rgba(255, 255, 255, 0.9);
+    color: var(--ink);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+
+  .photo-arrow:hover { background: #ffffff; }
+  .photo-arrow--prev { left: 14px; }
+  .photo-arrow--next { right: 14px; }
+
+  /* Panel derecho */
+  .breadcrumb {
+    font-size: 12px;
+    color: rgba(27, 42, 31, 0.6);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+
+  .breadcrumb a { color: rgba(27, 42, 31, 0.6); display: inline-flex; }
+
+  h1 {
+    font-size: 40px;
+    line-height: 1.08;
+    letter-spacing: -0.02em;
+    margin: 0;
   }
 
   .scientific {
+    font-size: 15px;
     font-style: italic;
     color: var(--ink-soft);
-    margin: -0.3rem 0 0.6rem;
+    margin-top: 6px;
   }
 
-  .price {
-    font-size: 1.6rem;
-    font-weight: 700;
-    margin-bottom: 1rem;
-  }
-
-  .buy-box {
-    margin: 1.5rem 0;
-    padding: 1.25rem;
-    background: var(--surface);
-    border: 1px solid var(--line);
-    border-radius: var(--radius-lg);
-  }
-
-  .qty-row {
+  .price-row {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
-    margin-bottom: 1rem;
+    justify-content: space-between;
+    gap: 18px;
+    flex-wrap: wrap;
+    margin-top: 18.4px;
   }
 
-  .qty-row label { margin: 0; }
-  .qty-row input { width: 5rem; }
+  .price-group {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
 
-  .added-note {
-    margin: 0.75rem 0 0;
-    color: var(--green-dark);
+  .compare {
+    font-size: 17px;
+    color: rgba(27, 42, 31, 0.5);
+    text-decoration: line-through;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .price { font-size: 26px; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+  .rating-link {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: rgba(27, 42, 31, 0.7);
+    font-size: 13px;
+  }
+
+  .stars { display: inline-flex; gap: 2px; color: var(--terracotta); }
+  .stars svg { display: block; fill: currentColor; }
+
+  .low-stock {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    margin-top: 14px;
+    font-size: 14px;
+    color: var(--amber-note);
+  }
+
+  .rule { height: 1px; border: 0; background: var(--line); margin: 22px 0; }
+  .rule--flush { margin: 0; }
+
+  /* Variantes */
+  .variant-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .variant-title { font-size: 15px; font-weight: 600; }
+  .variant-title--gap { margin-top: 22px; }
+
+  .size-guide {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-family: var(--font-ui);
+    font-size: 13px;
+    color: var(--green-deep);
+    background: transparent;
+    border: 0;
+    padding: 0;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  .size-guide:disabled { cursor: not-allowed; }
+
+  .sizes { display: flex; gap: 12px; margin-top: 12px; flex-wrap: wrap; }
+
+  .size-circle {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    font-family: var(--font-ui);
+    font-size: 14px;
+    background: transparent;
+    color: var(--ink);
+    border: 1px solid var(--line-strong);
+    cursor: pointer;
+  }
+
+  .size-circle.active { border: 2px solid var(--green); }
+  .size-circle:disabled { cursor: not-allowed; opacity: 0.35; }
+
+  .pots { display: flex; gap: 18px; margin-top: 12px; }
+
+  .pot {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    background: transparent;
+    border: 0;
+    font-family: var(--font-ui);
+    font-size: 13px;
+    color: var(--ink);
+    padding: 0;
+  }
+
+  .pot:disabled { cursor: not-allowed; opacity: 0.35; }
+
+  .pot-circle {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--line-strong);
+    color: var(--green-deep);
+  }
+
+  .pot-colors { display: flex; gap: 14px; margin-top: 12px; }
+
+  .pot-color {
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    border: 1px solid var(--line-strong);
+  }
+
+  .pot-color:disabled { cursor: not-allowed; opacity: 0.55; }
+
+  /* Garantias y CTAs */
+  .assurances {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 27.6px;
+    font-size: 14px;
+  }
+
+  .assurances div { display: flex; align-items: center; gap: 11px; }
+  .assure-icon { color: var(--green-deep); flex: none; }
+
+  .cta-block { margin-top: 22px; }
+
+  .cta-outline {
+    width: 100%;
+    padding: 15px;
+    border-radius: 999px;
+    font-family: var(--font-ui);
+    font-size: 15px;
+    font-weight: 500;
+    background: transparent;
+    border: 1px solid var(--green-deep);
+    color: var(--green-deep);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+  }
+
+  .cta-outline:not(:disabled):hover { background: rgba(22, 163, 74, 0.08); }
+  .cta-outline:disabled { opacity: 0.35; cursor: not-allowed; }
+
+  .cta-add {
+    width: 100%;
+    margin-top: 12px;
+    padding: 16px;
+    border-radius: 999px;
+    font-family: var(--font-ui);
+    font-size: 16px;
     font-weight: 600;
+    background: var(--green);
+    border: 1px solid var(--green);
+    color: #ffffff;
+    cursor: pointer;
   }
 
-  .care {
-    padding: 1.25rem;
-    margin-bottom: 1.25rem;
+  .cta-add:hover { background: var(--green-dark); }
+
+  .soldout-box {
+    margin-top: 22px;
+    padding: 18.4px;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--line);
+    background: var(--surface-tint);
   }
 
-  .care ul {
-    margin: 0;
-    padding-left: 1.2rem;
+  .soldout-title { font-weight: 600; font-size: 15px; }
+
+  .soldout-box p {
+    margin: 6px 0 14px;
+    font-size: 14px;
+    color: rgba(27, 42, 31, 0.75);
   }
 
-  .care li { margin-bottom: 0.35rem; }
+  .soldout-box form { display: flex; gap: 9.2px; flex-wrap: wrap; }
 
-  .delivery-note {
-    font-size: 0.95rem;
-    color: var(--ink-soft);
+  .soldout-box input {
+    flex: 1;
+    min-width: 180px;
+    min-height: 44px;
+    padding: 6px 18px;
+    font-size: 14px;
+    border-radius: 999px;
+    width: auto;
   }
 
-  button:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
+  .soldout-box button {
+    font-family: var(--font-ui);
+    font-size: 15px;
+    font-weight: 600;
+    padding: 12px 22px;
+    border-radius: 999px;
+    border: 1px solid var(--green);
+    background: var(--green);
+    color: #ffffff;
+    cursor: pointer;
+  }
+
+  .soldout-box button:hover { background: var(--green-dark); }
+  .soldout-link { display: inline-block; margin-top: 14px; font-size: 14px; }
+
+  .shipping-line {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    margin-top: 18.4px;
+    font-size: 14px;
+    color: rgba(27, 42, 31, 0.75);
+  }
+
+  /* Acordeones */
+  .accordion-section { padding-bottom: 55px; }
+
+  .acc { border-top: 1px solid var(--line); }
+
+  .acc-toggle {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    padding: 22px 0;
+    background: transparent;
+    border: 0;
+    cursor: pointer;
+    font-family: var(--font-ui);
+    font-size: 24px;
+    font-weight: 500;
+    color: var(--ink);
+    text-align: left;
+  }
+
+  .acc-chev { color: rgba(27, 42, 31, 0.6); flex: none; }
+
+  .when-open { display: none; }
+  .open .when-open { display: inline-flex; }
+  .open .when-closed { display: none; }
+
+  .acc-body {
+    padding: 0 0 27.6px;
+    max-width: 60rem;
+    font-size: 15px;
+    line-height: 1.75;
+    color: rgba(27, 42, 31, 0.85);
+  }
+
+  .acc-body[hidden] { display: none; }
+
+  /* Guia de cuidado */
+  .care-section { padding-bottom: 55px; }
+  .care-section h2 { margin: 0 0 27.6px; }
+
+  .care-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 46px;
+    align-items: start;
+  }
+
+  .care-photo {
+    position: relative;
+    aspect-ratio: 1 / 1;
+    border-radius: 50%;
+    overflow: hidden;
+    background: var(--surface-2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 4rem;
+  }
+
+  .care-photo::after {
+    content: attr(data-medidas);
+    position: absolute;
+    left: 50%;
+    bottom: 18%;
+    transform: translateX(-50%);
+    font-size: 0.62rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(27, 42, 31, 0.5);
+    background: rgba(238, 245, 240, 0.85);
+    padding: 2px 8px;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+
+  .care-row { border-bottom: 1px solid var(--line); }
+
+  .care-toggle {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 18px 0;
+    background: transparent;
+    border: 0;
+    cursor: pointer;
+    font-family: var(--font-ui);
+    color: var(--ink);
+    text-align: left;
+  }
+
+  .care-icon { color: var(--green-deep); flex: none; }
+  .care-label { font-weight: 600; font-size: 16px; }
+  .care-value { font-size: 16px; color: rgba(27, 42, 31, 0.7); }
+  .care-toggle .when-closed,
+  .care-toggle .when-open { margin-left: auto; }
+
+  .care-detail {
+    padding: 0 0 18px 34px;
+    font-size: 14px;
+    line-height: 1.7;
+    color: rgba(27, 42, 31, 0.8);
+  }
+
+  .care-detail[hidden] { display: none; }
+
+  /* Va bien con… */
+  .related-section { padding-bottom: 55px; }
+  .related-section h2 { margin: 0 0 27.6px; }
+
+  .related-grid {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 18.4px;
+  }
+
+  /* Resenas */
+  .reviews-section { padding-bottom: 73.6px; }
+  .reviews-section h2 { margin: 0 0 27.6px; }
+  .reviews-rule { margin-bottom: 36.8px; }
+
+  .reviews-top {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 46px;
+    align-items: start;
+  }
+
+  .score-row { display: flex; align-items: baseline; gap: 18px; flex-wrap: wrap; }
+  .score { font-size: 52px; font-weight: 600; line-height: 1; font-variant-numeric: tabular-nums; }
+  .score-of { font-size: 19px; color: var(--ink-faint); }
+  .score-count { font-size: 13px; color: rgba(27, 42, 31, 0.6); margin-top: 4px; }
+
+  .bars {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 27.6px;
+    max-width: 26rem;
+  }
+
+  .bar-row {
+    display: grid;
+    grid-template-columns: 34px minmax(0, 1fr) 44px;
+    align-items: center;
+    gap: 12px;
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .bar-track {
+    height: 5px;
+    border-radius: 999px;
+    background: rgba(27, 42, 31, 0.12);
+    display: block;
+    overflow: hidden;
+  }
+
+  .bar-fill {
+    display: block;
+    height: 100%;
+    background: var(--terracotta);
+    border-radius: 999px;
+  }
+
+  .bar-pct { text-align: right; color: rgba(27, 42, 31, 0.7); }
+
+  .review-photos {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .review-photo {
+    aspect-ratio: 1 / 1;
+    overflow: hidden;
+    background: var(--surface-2);
+    border-radius: 8px;
+  }
+
+  .review-questions {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 27.6px;
+    margin-top: 36.8px;
+    text-align: center;
+  }
+
+  .rq-title { font-size: 14px; font-weight: 600; }
+  .rq-body { font-size: 14px; color: rgba(27, 42, 31, 0.7); margin-top: 6px; }
+
+  .reviews-tabbar {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 18px;
+    flex-wrap: wrap;
+    margin-top: 46px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .reviews-tab {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid var(--green);
+    margin-bottom: -1px;
+  }
+
+  .reviews-tab-name { font-size: 22px; font-weight: 600; }
+  .reviews-tab-count { font-size: 14px; color: rgba(27, 42, 31, 0.6); font-variant-numeric: tabular-nums; }
+
+  .write-review {
+    margin-bottom: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 10px 20px;
+    border-radius: 999px;
+    border: 1px solid var(--green);
+    background: var(--green);
+    color: #ffffff;
+  }
+
+  .write-review:hover { background: var(--green-dark); color: #ffffff; text-decoration: none; }
+
+  .review-filters { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 22px; }
+
+  .review-search {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 16px;
+    border-radius: 999px;
+    background: #ffffff;
+    border: 1px solid var(--line);
+  }
+
+  .review-search-icon { color: rgba(27, 42, 31, 0.5); flex: none; }
+
+  .review-search input {
+    min-height: 44px;
+    min-width: 160px;
+    border: 0;
+    background: transparent;
+    font-size: 14px;
+    color: var(--ink);
+    outline: none;
+    padding: 0;
+    width: auto;
+  }
+
+  .review-search input:focus { outline: none; }
+
+  .review-chip {
+    font-family: var(--font-ui);
+    font-size: 14px;
+    padding: 11px 18px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: #ffffff;
+    color: var(--ink);
+  }
+
+  .review-chip:disabled { cursor: not-allowed; opacity: 0.55; }
+
+  .review-list {
+    display: flex;
+    flex-direction: column;
+    gap: 36.8px;
+    margin-top: 36.8px;
+  }
+
+  .review-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+  }
+
+  .review-date { font-size: 13px; color: var(--ink-faint); }
+
+  .review-byline {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    margin-top: 12px;
+    font-size: 14px;
+    flex-wrap: wrap;
+  }
+
+  .review-name { font-weight: 600; }
+
+  .verified {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    color: rgba(27, 42, 31, 0.6);
+    font-size: 13px;
+  }
+
+  .verified-icon { color: var(--green-deep); }
+
+  .review-text {
+    margin: 10px 0 0;
+    font-size: 15px;
+    line-height: 1.7;
+    max-width: 56rem;
+  }
+
+  .review-meta {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+    margin-top: 18px;
+    font-size: 13px;
+    max-width: 44rem;
+    text-align: left;
+  }
+
+  .review-meta .rq-body { margin-top: 4px; }
+
+  /* Movil (punto de quiebre unificado del handoff: 768px) */
+  @media (max-width: 768px) {
+    .product-hero {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 27.6px;
+      padding-top: 18.4px;
+    }
+
+    .gallery { grid-template-columns: minmax(0, 1fr); }
+
+    .thumbs { flex-direction: row; order: 2; }
+    .thumb { width: 72px; }
+
+    h1 { font-size: 30px; }
+
+    .acc-toggle { font-size: 19px; }
+
+    .care-grid,
+    .reviews-top { grid-template-columns: minmax(0, 1fr); gap: 27.6px; }
+
+    .care-photo { max-width: 280px; }
+
+    .related-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+    .review-questions { grid-template-columns: minmax(0, 1fr); gap: 18.4px; }
   }
 </style>

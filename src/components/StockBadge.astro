@@ -15,3 +15,30 @@ const status = stockStatus(available);
 <span class:list={['badge', `badge--${status === 'in-stock' ? 'in-stock' : status}`]} data-sku={sku} data-stock-badge>
   {stockLabel(available)}
 </span>
+
+<script>
+  // Refresco en cliente: consulta el stock proxy por todos los SKU visibles y
+  // actualiza texto y clase de cada badge. Si PUBLIC_STOCK_PROXY_URL no esta
+  // configurada, fetchStock devuelve null y el stock de build queda tal cual.
+  import { fetchStock, stockLabel, stockStatus } from '../lib/stock';
+
+  async function refreshBadges() {
+    const badges = Array.from(
+      document.querySelectorAll<HTMLElement>('[data-stock-badge][data-sku]'),
+    );
+    const skus = [...new Set(badges.map((b) => b.dataset.sku!))];
+    const items = await fetchStock(skus);
+    if (!items) return;
+    const bySku = new Map(items.map((i) => [i.sku, i]));
+    for (const badge of badges) {
+      const item = bySku.get(badge.dataset.sku!);
+      if (!item) continue;
+      const status = stockStatus(item.available);
+      badge.textContent = stockLabel(item.available);
+      badge.classList.remove('badge--in-stock', 'badge--low', 'badge--out');
+      badge.classList.add(`badge--${status === 'in-stock' ? 'in-stock' : status}`);
+    }
+  }
+
+  refreshBadges();
+</script>

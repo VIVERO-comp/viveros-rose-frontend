@@ -25,6 +25,11 @@ export interface Product {
   // Stock de ejemplo. En produccion `available` viene del stock proxy.
   available: number;
   emoji: string;
+  // Apta para hogares con mascotas (aviso del diseno de producto).
+  // Opcional a proposito: si falta, la pagina de producto OCULTA la linea de
+  // mascotas en vez de mostrar un dato inventado. Solo esta definido en las
+  // especies cuya toxicidad es conocida; completar el resto con el equipo.
+  petFriendly?: boolean;
 }
 
 export const categories: Category[] = [
@@ -67,6 +72,7 @@ export const products: Product[] = [
     care: { light: 'Sol directo (4-6 h)', water: '3 veces por semana', difficulty: 'Media' },
     available: 47,
     emoji: '🌹',
+    petFriendly: true,
   },
   {
     sku: 'FICUS-LYRATA-M',
@@ -80,6 +86,7 @@ export const products: Product[] = [
     care: { light: 'Luz indirecta brillante', water: '1 vez por semana', difficulty: 'Exigente' },
     available: 4,
     emoji: '🌿',
+    petFriendly: false,
   },
   {
     sku: 'AGLAO-SILVER',
@@ -93,6 +100,7 @@ export const products: Product[] = [
     care: { light: 'Luz baja a media', water: 'Cada 7-10 dias', difficulty: 'Facil' },
     available: 22,
     emoji: '🍃',
+    petFriendly: false,
   },
   {
     sku: 'MONSTERA-DEL-G',
@@ -106,6 +114,7 @@ export const products: Product[] = [
     care: { light: 'Luz indirecta', water: '1-2 veces por semana', difficulty: 'Facil' },
     available: 9,
     emoji: '🌱',
+    petFriendly: false,
   },
   {
     sku: 'VERANERA-FUCSIA',
@@ -132,6 +141,7 @@ export const products: Product[] = [
     care: { light: 'Sol o sombra parcial', water: '2-3 veces por semana', difficulty: 'Facil' },
     available: 15,
     emoji: '🌴',
+    petFriendly: true,
   },
   {
     sku: 'IXORA-ROJA',
@@ -184,6 +194,7 @@ export const products: Product[] = [
     care: { light: 'Sol pleno o parcial', water: '2 veces por semana', difficulty: 'Facil' },
     available: 80,
     emoji: '🍂',
+    petFriendly: false,
   },
 ];
 
@@ -201,4 +212,12 @@ export function getProduct(category: string, slug: string): Product | undefined 
 
 export function formatPrice(price: number): string {
   return `$${price.toFixed(2)}`;
+}
+
+// Promocion "temporada de lluvias": 15% de descuento en plantas de exterior
+// (barra de anuncio del diseno). El precio de lista tachado se deriva del
+// precio actual; si la promocion termina, devolver siempre null.
+export function compareAtPrice(product: Product): number | null {
+  if (product.category !== 'exterior') return null;
+  return Math.round((product.price / 0.85) * 100) / 100;
 }

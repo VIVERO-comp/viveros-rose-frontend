@@ -1,9 +1,12 @@
 ---
-// Tarjeta de producto con el estilo del diseno: tesela oscura 4:5 con la
-// informacion superpuesta abajo. El StockBadge se conserva tal cual (el
-// stock proxy lo actualiza en el cliente via data-sku).
+// Tarjeta de producto del handoff (Shop Plantas / "Va bien con…"): tesela 4:5
+// radio 20px, foto a sangre con degradado de abajo hacia arriba, contenido
+// superpuesto abajo y boton circular blanco de 36px para agregar al carrito.
+// El StockBadge se conserva tal cual (el stock proxy lo actualiza en el
+// cliente via data-sku); aqui solo cambia a texto claro sobre la foto.
 import type { Product } from '../data/products';
 import { formatPrice } from '../data/products';
+import Icon from './Icon.astro';
 import StockBadge from './StockBadge.astro';
 
 interface Props {
@@ -12,11 +15,14 @@ interface Props {
 
 const { product } = Astro.props;
 const url = `/plantas/${product.category}/${product.slug}`;
+const outOfStock = product.available <= 0;
 ---
 
 <article class="product-tile">
   <a href={url} class="tile-link">
-    <!-- FOTO PENDIENTE: producto {product.sku} — proporcion 4:5, minimo 640×800 px -->
+    <!-- FOTO PENDIENTE: producto {product.sku} — proporcion 4:5, minimo 640×800 px.
+         El diseno usa una segunda foto que aparece al pasar el cursor (opacity 0→1
+         en 0.4s); se conecta cuando existan las fotos reales. -->
     <div class="tile-photo" data-medidas="Foto 4:5 · 640×800" aria-hidden="true">
       {product.emoji}
     </div>
@@ -28,7 +34,47 @@ const url = `/plantas/${product.category}/${product.slug}`;
       <p class="price">{formatPrice(product.price)}</p>
     </div>
   </a>
+  {
+    !outOfStock && (
+      <button
+        class="tile-add"
+        aria-label={`Agregar ${product.name} al carrito`}
+        data-tile-add
+        data-sku={product.sku}
+        data-name={product.name}
+        data-price={product.price}
+        data-slug={product.slug}
+        data-category={product.category}
+        data-emoji={product.emoji}
+      >
+        <Icon name="plus" size={16} />
+      </button>
+    )
+  }
 </article>
+
+<script>
+  // Agregar al carrito desde la tarjeta (delegado: hay muchas tarjetas por
+  // pagina y este script se incluye una sola vez).
+  import { addToCart } from '../lib/cart';
+
+  document.addEventListener('click', (event) => {
+    const btn = (event.target as HTMLElement).closest<HTMLButtonElement>('[data-tile-add]');
+    if (!btn) return;
+    event.preventDefault();
+    const d = btn.dataset;
+    addToCart({
+      sku: d.sku!,
+      name: d.name!,
+      price: Number(d.price),
+      slug: d.slug!,
+      category: d.category!,
+      emoji: d.emoji!,
+    });
+    btn.classList.add('added');
+    setTimeout(() => btn.classList.remove('added'), 1600);
+  });
+</script>
 
 <style>
   .product-tile {
@@ -37,7 +83,7 @@ const url = `/plantas/${product.category}/${product.slug}`;
     border-radius: var(--radius-lg);
     overflow: hidden;
     outline: 1px solid var(--line);
-    background: var(--card-dark);
+    background: var(--surface-2);
   }
 
   .tile-link {
@@ -60,7 +106,7 @@ const url = `/plantas/${product.category}/${product.slug}`;
     align-items: center;
     justify-content: center;
     font-size: 3.5rem;
-    background: linear-gradient(160deg, #2a4432, var(--card-dark));
+    background: var(--surface-2);
   }
 
   .tile-photo::after {
@@ -72,8 +118,8 @@ const url = `/plantas/${product.category}/${product.slug}`;
     font-size: 0.62rem;
     letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: rgba(238, 245, 240, 0.6);
-    background: rgba(27, 42, 31, 0.55);
+    color: rgba(27, 42, 31, 0.55);
+    background: rgba(238, 245, 240, 0.85);
     padding: 2px 8px;
     border-radius: 999px;
     white-space: nowrap;
@@ -84,40 +130,82 @@ const url = `/plantas/${product.category}/${product.slug}`;
     inset: 0;
     background: linear-gradient(
       to top,
-      rgba(27, 42, 31, 0.92) 0%,
-      rgba(27, 42, 31, 0.55) 34%,
-      rgba(27, 42, 31, 0) 60%
+      rgba(27, 42, 31, 0.94) 0%,
+      rgba(27, 42, 31, 0.86) 34%,
+      rgba(27, 42, 31, 0.4) 72%,
+      rgba(27, 42, 31, 0) 100%
     );
     pointer-events: none;
   }
 
   .tile-info {
     position: relative;
-    padding: 0.9rem;
+    padding: 13.8px;
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    gap: 0.25rem;
+    gap: 4px;
   }
 
+  /* Estado de stock sobre la foto: texto claro de 10px, sin relleno. */
+  .tile-info :global(.badge) {
+    padding: 0;
+    background: transparent;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+  }
+
+  .tile-info :global(.badge--in-stock) { color: var(--green-light); }
+  .tile-info :global(.badge--low) { color: #ffd28a; }
+  .tile-info :global(.badge--out) { color: #d7d7d7; }
+
   h3 {
-    font-size: 1.15rem;
-    line-height: 1.15;
+    font-size: 17px;
+    font-weight: 600;
+    line-height: 1.2;
     margin: 0;
     color: #eef5f0;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
   }
 
   .scientific {
-    font-size: 0.78rem;
+    font-size: 12px;
     font-style: italic;
-    color: rgba(255, 255, 255, 0.72);
+    color: rgba(238, 245, 240, 0.75);
     margin: 0;
   }
 
   .price {
-    font-size: 1rem;
+    font-size: 15px;
     font-variant-numeric: tabular-nums;
     color: #eef5f0;
-    margin: 0.25rem 0 0;
+    margin: 2px 0 0;
+  }
+
+  .tile-add {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 2;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 0;
+    background: rgba(255, 255, 255, 0.92);
+    color: var(--ink);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+
+  .tile-add:hover { background: #ffffff; }
+
+  .tile-add.added {
+    background: var(--green);
+    color: #ffffff;
   }
 </style>
