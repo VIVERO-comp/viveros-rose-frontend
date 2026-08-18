@@ -5,6 +5,7 @@
 // formularios: al enviar se abre WhatsApp con el mensaje armado.
 import Base from '../layouts/Base.astro';
 import BackArrow from '../components/BackArrow.astro';
+import GotasHero from '../components/GotasHero.astro';
 import Icon from '../components/Icon.astro';
 import { SITE, whatsappLink } from '../lib/site';
 
@@ -26,9 +27,9 @@ const topics = [
   <BackArrow />
   <div class="contact-grid">
     <section class="contact-left">
-      <!-- FOTO PENDIENTE: lateral de contacto — vertical, minimo 960×1080 px -->
-      <div class="left-photo" data-medidas="Foto · 960×1080" aria-hidden="true"></div>
+      <div class="left-photo" style="background-image: url('/fotos_homepage/contacto_hojas.jpg'); background-size: cover; background-position: center;" aria-hidden="true"></div>
       <div class="left-scrim" aria-hidden="true"></div>
+      <GotasHero />
       <div class="left-copy">
         <div>
           <span class="left-eyebrow">Escríbenos</span>
@@ -160,7 +161,7 @@ const topics = [
     background: linear-gradient(150deg, #2a4432, var(--card-dark) 70%);
   }
 
-  .left-photo::after {
+  .left-photo[data-medidas]::after {
     content: attr(data-medidas);
     position: absolute;
     right: 12px;
