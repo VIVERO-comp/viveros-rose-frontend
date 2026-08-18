@@ -24,25 +24,35 @@ const bestsellers = bySlugs(['ixora', 'palma-abanico', 'cactus-mediano', 'jazmin
 
 const colName = (slug: string) => collections.find((c) => c.slug === slug)!.name;
 
-// Tiles de "Compra por coleccion" (copia del diseno, filtros reales).
-const collectionTiles = [
-  { label: 'Fáciles de cuidar', slug: 'faciles' },
-  { label: 'Poca luz', slug: 'poca-luz' },
-  { label: 'Sol pleno', slug: 'jardin' },
-  { label: 'Cercas vivas', slug: 'palmas' },
-  { label: 'Para interiores', slug: 'interior' },
-  { label: 'Para regalar', slug: 'mas-vendidas' },
+// Tiles de "Compra por coleccion" (referencia "Shop By Collection" de The
+// Sill: visual redondeado arriba y nombre debajo, 6 por fila en escritorio).
+// El emoji es el visual provisional hasta tener fotos por coleccion; cuando
+// existan, agregar `image: '/ruta.jpg'` al tile y la foto reemplaza al emoji.
+interface HomeTile {
+  label: string;
+  slug: string;
+  emoji: string;
+  image?: string; // foto del tile; si falta, el visual es el emoji
+}
+
+const collectionTiles: HomeTile[] = [
+  { label: 'Fáciles de cuidar', slug: 'faciles', emoji: '🪴' },
+  { label: 'Poca luz', slug: 'poca-luz', emoji: '🌿' },
+  { label: 'Sol pleno', slug: 'jardin', emoji: '☀️' },
+  { label: 'Cercas vivas', slug: 'palmas', emoji: '🌴' },
+  { label: 'Para interiores', slug: 'interior', emoji: '🛋️' },
+  { label: 'Para regalar', slug: 'mas-vendidas', emoji: '🎁' },
 ];
 
 // Tiles de "Compra por tipo". Veraneras y frutales se quitaron porque el
 // catalogo de Odoo aun no los tiene; reponerlos cuando existan.
-const typeTiles = [
-  { label: 'Rosales', slug: 'rosales' },
-  { label: 'Palmas', slug: 'palmas' },
-  { label: 'Crotos', slug: 'crotos' },
-  { label: 'Florales', slug: 'florales' },
-  { label: 'Cactus y suculentas', slug: 'suculentas' },
-  { label: 'Hierbas de cocina', slug: 'hierbas' },
+const typeTiles: HomeTile[] = [
+  { label: 'Rosales', slug: 'rosales', emoji: '🌹' },
+  { label: 'Palmas', slug: 'palmas', emoji: '🌴' },
+  { label: 'Crotos', slug: 'crotos', emoji: '🍃' },
+  { label: 'Florales', slug: 'florales', emoji: '🌺' },
+  { label: 'Cactus y suculentas', slug: 'suculentas', emoji: '🌵' },
+  { label: 'Hierbas de cocina', slug: 'hierbas', emoji: '🌱' },
 ];
 
 const reviews = [
@@ -69,11 +79,6 @@ const guideThumbs: Record<string, string> = {
   'preparar-jardin-temporada-lluviosa': '/fotos_homepage/cuidar_de_lluvia.jpeg',
 };
 
-// El "test de la planta ideal" no tiene backend: la promesa del diseno
-// ("te decimos que hay disponible hoy") se cumple por WhatsApp.
-const quizMessage = whatsappLink(
-  'Hola, quiero ayuda para elegir una planta. Luz que tengo: ___ · Espacio: ___ · Tiempo para cuidarla: ___',
-);
 const clubMessage = whatsappLink('Hola, quiero unirme al Club Vivero Rose.');
 const paisajismoMessage = whatsappLink('Hola, quiero cotizar un proyecto de paisajismo.');
 ---
@@ -160,36 +165,73 @@ const paisajismoMessage = whatsappLink('Hola, quiero cotizar un proyecto de pais
     <hr class="section-rule" />
     <h2 class="tiles-title">Compra por colección</h2>
     <div class="tiles-6">
-      {collectionTiles.map((t) => <a href={`/plantas?c=${t.slug}`} class="tile">{t.label}</a>)}
+      {collectionTiles.map((t) => (
+        <a href={`/plantas?c=${t.slug}`} class="tile">
+          <span
+            class="tile-visual"
+            style={t.image ? `background-image: url('${t.image}'); background-size: cover; background-position: center;` : undefined}
+            aria-hidden="true"
+          >{t.image ? '' : t.emoji}</span>
+          <span class="tile-name">{t.label}</span>
+        </a>
+      ))}
     </div>
   </section>
 
   <section class="container home-section--tight">
     <h2 class="tiles-title">Compra por tipo de planta</h2>
     <div class="tiles-6">
-      {typeTiles.map((t) => <a href={`/plantas?c=${t.slug}`} class="tile">{t.label}</a>)}
+      {typeTiles.map((t) => (
+        <a href={`/plantas?c=${t.slug}`} class="tile">
+          <span
+            class="tile-visual"
+            style={t.image ? `background-image: url('${t.image}'); background-size: cover; background-position: center;` : undefined}
+            aria-hidden="true"
+          >{t.image ? '' : t.emoji}</span>
+          <span class="tile-name">{t.label}</span>
+        </a>
+      ))}
     </div>
   </section>
 
   <section class="quiz-band">
-    <!-- La foto del quiz mide 400x342: se muestra a tamano natural como
-         figura sobre el fondo verde en vez de estirarla (se pixelaba). -->
-    <div class="quiz-photo" aria-hidden="true">
-      <img src="/fotos_homepage/quiz_foto.jpg" alt="" width="400" height="342" loading="lazy" />
-    </div>
-    <div class="quiz-content">
-      <div class="container quiz-align">
-        <div class="quiz-card">
-          <h2>Encuentra tu planta ideal</h2>
-          <p>
-            Tres preguntas: cuánta luz tienes, cuánto espacio y cuánto tiempo quieres dedicarle. Te
-            decimos qué hay disponible hoy.
-          </p>
-          <a href={quizMessage} class="btn btn--green" target="_blank" rel="noopener">Hacer el test</a>
-        </div>
+    <div class="container quiz-grid">
+      <!-- La foto del quiz mide 400x342: se muestra a tamano natural (se
+           pixelaba estirada) y flota suave; sin JS la tarjeta queda visible. -->
+      <div class="quiz-photo" aria-hidden="true">
+        <img src="/fotos_homepage/quiz_foto.jpg" alt="" width="400" height="342" loading="lazy" />
+      </div>
+      <div class="quiz-card">
+        <h2>Encuentra tu planta ideal</h2>
+        <p>
+          Tres preguntas: cuánta luz tienes, cuánto espacio y cuánto tiempo quieres dedicarle. Te
+          decimos qué hay disponible hoy.
+        </p>
+        <a href="/quiz" class="btn btn--green quiz-btn">Hacer el test</a>
       </div>
     </div>
   </section>
+
+  <script>
+    // Revela la tarjeta del quiz al entrar en pantalla. La clase js-reveal se
+    // agrega aqui para que sin JavaScript la tarjeta nunca quede oculta.
+    const banda = document.querySelector('.quiz-band');
+    const tarjeta = document.querySelector('.quiz-card');
+    const prefiereQuieto = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (banda && tarjeta && !prefiereQuieto && 'IntersectionObserver' in window) {
+      banda.classList.add('js-reveal');
+      const observador = new IntersectionObserver(
+        (entradas) => {
+          if (entradas[0].isIntersecting) {
+            tarjeta.classList.add('is-visible');
+            observador.disconnect();
+          }
+        },
+        { threshold: 0.35 },
+      );
+      observador.observe(tarjeta);
+    }
+  </script>
 
   <section class="container home-section">
     <div class="section-head">
@@ -219,15 +261,22 @@ const paisajismoMessage = whatsappLink('Hola, quiero cotizar un proyecto de pais
   </section>
 
   <section id="paisajismo" class="container home-section--tight">
-    <p class="kicker">Paisajismo</p>
-    <h2 class="paisajismo-title">Jardines que sembramos nosotros</h2>
-    <p class="paisajismo-copy">
-      Diseñamos, sembramos y mantenemos jardines residenciales y comerciales con material del propio
-      vivero. Cotizamos en sitio y entregamos un plan de mantenimiento por temporada.
-    </p>
-    <a href={paisajismoMessage} class="btn btn--green paisajismo-btn" target="_blank" rel="noopener">
-      <Icon name="message-circle" size={16} /> Cotizar por WhatsApp
-    </a>
+    <!-- Banda oscura dividida como la de mayoristas: texto a la izquierda y
+         foto de un trabajo propio recortada en diagonal a la derecha. -->
+    <div class="paisajismo-band">
+      <div class="paisajismo-photo" style="background-image: url('/fotos_homepage/paisajismo_trabajo.jpg'); background-size: cover; background-position: center 60%;" aria-hidden="true"></div>
+      <div class="paisajismo-inner">
+        <p class="kicker kicker--light">Paisajismo</p>
+        <h2 class="paisajismo-title">Jardines que sembramos nosotros</h2>
+        <p class="paisajismo-copy">
+          Diseñamos, sembramos y mantenemos jardines residenciales y comerciales con material del propio
+          vivero. Cotizamos en sitio y entregamos un plan de mantenimiento por temporada.
+        </p>
+        <a href={paisajismoMessage} class="btn btn--green paisajismo-btn" target="_blank" rel="noopener">
+          <Icon name="message-circle" size={16} /> Cotizar por WhatsApp
+        </a>
+      </div>
+    </div>
   </section>
 
   <section class="reviews-band">
@@ -507,7 +556,8 @@ const paisajismoMessage = whatsappLink('Hola, quiero cotizar un proyecto de pais
     max-width: 28rem;
   }
 
-  /* Tiles de coleccion y tipo */
+  /* Tiles de coleccion y tipo (referencia "Shop By Collection" de The Sill):
+     visual cuadrado con esquinas redondeadas y el nombre centrado debajo. */
   .tiles-6 {
     display: grid;
     grid-template-columns: repeat(6, 1fr);
@@ -516,67 +566,116 @@ const paisajismoMessage = whatsappLink('Hola, quiero cotizar un proyecto de pais
 
   .tile {
     display: flex;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    min-height: 96px;
-    padding: 18.4px 13.8px;
-    border: 1px solid var(--line-strong);
-    border-radius: var(--radius-lg);
-    background: var(--bg);
+    flex-direction: column;
+    gap: 12px;
     color: var(--ink);
     font-size: 15px;
     font-weight: 500;
   }
 
   .tile:hover {
-    background: var(--surface-2);
     text-decoration: none;
     color: var(--ink);
   }
 
-  /* Banda del quiz */
+  .tile:hover .tile-name { text-decoration: underline; }
+
+  .tile-visual {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    aspect-ratio: 1 / 1;
+    border-radius: var(--radius-photo);
+    overflow: hidden;
+    outline: 1px solid rgba(27, 42, 31, 0.12);
+    background: linear-gradient(160deg, var(--green-tint), var(--surface-2));
+    font-size: clamp(40px, 4vw, 56px);
+  }
+
+  .tile-name { text-align: center; }
+
+  /* Banda del quiz: fondo verde oscuro, como las bandas de mayoristas. */
   .quiz-band {
     margin-top: 73.6px;
-    position: relative;
     border-top: 1px solid var(--line);
     border-bottom: 1px solid var(--line);
-    height: 460px;
+    background: var(--card-dark);
     overflow: hidden;
-    background: #f4f7f1;
   }
 
-  .quiz-photo {
-    position: absolute;
-    inset: 0;
-    background: var(--green-tint);
-    display: flex;
+  .quiz-grid {
+    display: grid;
+    grid-template-columns: 1fr minmax(0, 460px);
     align-items: center;
-    justify-content: flex-start;
-    padding-left: clamp(24px, 12vw, 220px);
+    gap: clamp(27.6px, 5vw, 73.6px);
+    padding-top: 64px;
+    padding-bottom: 64px;
   }
+
+  .quiz-photo { display: flex; justify-content: center; }
 
   .quiz-photo img {
-    width: min(400px, 38vw);
+    width: min(400px, 100%);
     height: auto;
     border: 1px solid var(--line);
+    border-radius: var(--radius-photo);
     background: #fff;
+    box-shadow: 0 18px 40px rgba(27, 42, 31, 0.14);
+    transform: rotate(-2deg);
+    animation: quiz-float 6s ease-in-out infinite;
   }
 
-  .quiz-content {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: center;
+  @keyframes quiz-float {
+    0%,
+    100% {
+      transform: rotate(-2deg) translateY(0);
+    }
+    50% {
+      transform: rotate(-2deg) translateY(-10px);
+    }
   }
-
-  .quiz-align { width: 100%; display: flex; justify-content: flex-end; }
 
   .quiz-card {
-    max-width: 420px;
+    max-width: 460px;
     background: var(--bg);
     border: 1px solid var(--line);
     padding: 36.8px;
+  }
+
+  /* Estado previo al reveal: solo cuando el script agrego js-reveal. */
+  .js-reveal .quiz-card {
+    opacity: 0;
+    transform: translateY(18px);
+    transition:
+      opacity 0.7s ease,
+      transform 0.7s ease;
+  }
+
+  .js-reveal .quiz-card.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .quiz-btn {
+    transition:
+      transform 0.2s ease,
+      box-shadow 0.2s ease;
+  }
+
+  .quiz-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 18px rgba(27, 42, 31, 0.22);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .quiz-photo img {
+      animation: none;
+    }
+    .quiz-btn,
+    .quiz-btn:hover {
+      transform: none;
+      transition: none;
+    }
   }
 
   .quiz-card h2 {
@@ -627,18 +726,56 @@ const paisajismoMessage = whatsappLink('Hola, quiero cotizar un proyecto de pais
     margin-bottom: 9.2px;
   }
 
-  /* Paisajismo */
+  /* Paisajismo: banda oscura con la foto en diagonal, como ObraBand. */
+  .paisajismo-band {
+    position: relative;
+    overflow: hidden;
+    background: var(--card-dark);
+    border-radius: var(--radius-lg);
+    padding: 55px;
+  }
+
+  .paisajismo-photo {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 52%;
+    background: #2a4432;
+    clip-path: polygon(26% 0, 100% 0, 100% 100%, 4% 100%);
+    transition: width 0.5s cubic-bezier(0.22, 0.61, 0.36, 1);
+  }
+
+  .paisajismo-band:hover .paisajismo-photo { width: 58%; }
+
+  .paisajismo-photo::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      to right,
+      rgba(30, 51, 36, 0.92) 0%,
+      rgba(30, 51, 36, 0.4) 45%,
+      rgba(30, 51, 36, 0.12) 100%
+    );
+  }
+
+  .paisajismo-inner { position: relative; max-width: 34rem; }
+
+  .kicker--light { color: var(--green-light); }
+
   .paisajismo-title {
     font-weight: 400;
     font-size: clamp(32px, 4vw, 46px);
     line-height: 1.08;
     margin: 0 0 18.4px;
+    color: #ffffff;
   }
 
   .paisajismo-copy {
     font-size: 16px;
     line-height: 1.65;
-    color: rgba(27, 42, 31, 0.75);
+    color: rgba(255, 255, 255, 0.82);
     max-width: 34rem;
   }
 
@@ -774,30 +911,89 @@ const paisajismoMessage = whatsappLink('Hola, quiero cotizar un proyecto de pais
 
   /* Movil (768px, punto de quiebre unificado del handoff) */
   @media (max-width: 768px) {
+    /* Hero como el celular de la referencia: la foto llena la pantalla y el
+       texto va abajo, centrado, con los dos botones apilados. */
     .hero { height: auto; }
 
-    .hero-content { position: relative; padding: 55px 0; }
+    .hero-content { position: relative; padding: 300px 0 44px; }
 
-    .assurance-grid { grid-template-columns: repeat(2, 1fr); }
+    .hero-scrim {
+      background: linear-gradient(
+        to top,
+        rgba(27, 42, 31, 0.88) 0%,
+        rgba(27, 42, 31, 0.5) 45%,
+        rgba(27, 42, 31, 0.12) 100%
+      );
+    }
 
-    .cards-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .hero-copy { max-width: none; text-align: center; }
+    .hero-kicker { display: none; }
+    .hero h1 { font-size: 32px; }
+
+    .hero-sub {
+      font-size: 15px;
+      margin-left: auto;
+      margin-right: auto;
+      max-width: 26rem;
+    }
+
+    /* Franja de garantias oscura en 2×2, como los sellos de confianza de la
+       referencia movil. */
+    .assurance-band {
+      background: var(--card-dark);
+      border-bottom: 0;
+    }
+
+    .assurance-grid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 36.8px 18.4px;
+      padding-top: 44px;
+      padding-bottom: 44px;
+    }
+
+    .assurance-grid > div { font-size: 14px; color: #eef5f0; }
+
+    .assurance-grid :global(.assurance-icon) { color: var(--green-light); }
+
+    .cards-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 13.8px; }
+
+    .hero-ctas { flex-direction: column; }
+
+    .hero-btn {
+      width: 100%;
+      box-sizing: border-box;
+      justify-content: center;
+    }
 
     .duo-grid { grid-template-columns: 1fr; }
 
-    .tiles-6 { grid-template-columns: repeat(2, 1fr); }
+    /* En movil las mismas tarjetas pasan a 2 columnas. */
+    .tiles-6 { grid-template-columns: repeat(2, 1fr); gap: 13.8px; }
+
+    .tile { gap: 9.2px; font-size: 14px; }
+
+    .tile-visual {
+      border-radius: var(--radius);
+      font-size: 44px;
+    }
 
     .section-head h2,
     .tiles-title,
     .reviews-inner h2,
     .club-grid h2 { font-size: 25px; }
 
-    .quiz-band { height: auto; }
-    .quiz-photo { display: none; }
-    .quiz-content { position: relative; padding: 36.8px 0; }
-    .quiz-align { justify-content: stretch; }
+    .quiz-grid {
+      grid-template-columns: 1fr;
+      padding-top: 36.8px;
+      padding-bottom: 36.8px;
+    }
+    .quiz-photo img { width: min(260px, 70vw); }
     .quiz-card { max-width: none; width: 100%; }
 
     .club-grid { grid-template-columns: 1fr; gap: 27.6px; }
+
+    .paisajismo-band { padding: 27.6px; }
+    .paisajismo-photo { display: none; }
 
     .reviews-grid { grid-template-columns: 1fr; }
 

@@ -66,6 +66,16 @@ const VIVERO_URL = 'https://viverorose.com/';
 
 // Colecciones sugeridas cuando el carrito esta vacio (todas existen).
 const emptyCartCollections = ['mas-vendidas', 'interior', 'jardin', 'faciles'].map(col);
+
+// Niveles del menu movil (drill-down como el menu de celular de la
+// referencia: raiz → submenu con encabezado de regreso subrayado).
+const menuColecciones = [
+  ...['mas-vendidas', 'recien', 'pet-friendly', 'interior', 'exterior', 'faciles', 'poca-luz', 'jardin', 'ultimas'].map(col),
+];
+const menuTipos = [
+  ...['rosales', 'palmas', 'crotos', 'suculentas', 'hierbas'].map(col),
+  { href: '/plantas/florales', label: 'Florales' },
+];
 ---
 
 <div class="announce">
@@ -132,25 +142,31 @@ const emptyCartCollections = ['mas-vendidas', 'interior', 'jardin', 'faciles'].m
   </div>
 
   <nav class="mobile-menu" data-region="mobile-menu" aria-label="Navegación móvil" hidden>
-    <div class="mobile-card">
-      <a href="/plantas" class="mobile-item">
+    <!-- Nivel raiz: tarjeta con miniaturas arriba y filas simples abajo,
+         como el menu de celular de la referencia. -->
+    <div class="mobile-card" data-menu-panel="root">
+      <button class="mobile-item" data-menu-goto="plantas">
         <!-- FOTO PENDIENTE: miniatura menu "Plantas" — cuadrada, 96×96 px -->
         <span class="mobile-thumb" aria-hidden="true">🪴</span>
         <span class="mobile-label">Plantas</span>
         <Icon name="chevron-right" size={18} class="mobile-chev" />
-      </a>
-      <a href="/colecciones" class="mobile-item">
+      </button>
+      <button class="mobile-item" data-menu-goto="colecciones">
         <!-- FOTO PENDIENTE: miniatura menu "Colecciones" — cuadrada, 96×96 px -->
         <span class="mobile-thumb" aria-hidden="true">🌿</span>
         <span class="mobile-label">Colecciones</span>
         <Icon name="chevron-right" size={18} class="mobile-chev" />
-      </a>
-      <a href="/eventos" class="mobile-item">
+      </button>
+      <button class="mobile-item" data-menu-goto="eventos">
         <!-- FOTO PENDIENTE: miniatura menu "Eventos" — cuadrada, 96×96 px -->
         <span class="mobile-thumb" aria-hidden="true">🌺</span>
         <span class="mobile-label">Eventos</span>
         <Icon name="chevron-right" size={18} class="mobile-chev" />
-      </a>
+      </button>
+      <button class="mobile-item" data-menu-goto="servicios">
+        <span class="mobile-label">Servicios</span>
+        <Icon name="chevron-right" size={18} class="mobile-chev" />
+      </button>
       <button class="mobile-item" data-panel-open="orders">
         <span class="mobile-label">Pedidos</span>
         <Icon name="chevron-right" size={18} class="mobile-chev" />
@@ -159,14 +175,6 @@ const emptyCartCollections = ['mas-vendidas', 'interior', 'jardin', 'faciles'].m
         <span class="mobile-label">Nuestro Vivero</span>
         <Icon name="chevron-right" size={18} class="mobile-chev" />
       </a>
-      <button class="mobile-item" data-toggle="mobile-servicios" aria-expanded="false">
-        <span class="mobile-label">Servicios</span>
-        <span class="when-closed"><Icon name="chevron-right" size={18} class="mobile-chev" /></span>
-        <span class="when-open"><Icon name="chevron-down" size={18} class="mobile-chev" /></span>
-      </button>
-      <div class="mobile-sub" data-region="mobile-servicios" hidden>
-        {serviciosLinks.map((l) => <a href={l.href}>{l.label}</a>)}
-      </div>
       <a href="/mayorista" class="mobile-item">
         <span class="mobile-label">Mayorista</span>
         <Icon name="chevron-right" size={18} class="mobile-chev" />
@@ -176,15 +184,98 @@ const emptyCartCollections = ['mas-vendidas', 'interior', 'jardin', 'faciles'].m
         <Icon name="chevron-right" size={18} class="mobile-chev" />
       </a>
     </div>
-    <a href="/plantas" class="btn btn--green mobile-cta"><Icon name="leaf" size={17} /> Ir a plantas</a>
-    <a
-      href={whatsappLink('Hola, vengo de plantaspanama.com y tengo una consulta.')}
-      class="mobile-wa"
-      target="_blank"
-      rel="noopener"
-    >
-      <Icon name="message-circle" size={17} class="wa-icon" /> WhatsApp +{SITE.whatsappNumber.slice(0, 3)} {SITE.whatsappNumber.slice(3)}
-    </a>
+
+    <!-- Nivel: Plantas -->
+    <div class="mobile-card" data-menu-panel="plantas" hidden>
+      <button class="mobile-back" data-menu-back>
+        <Icon name="chevron-left" size={18} />
+        <span>Plantas</span>
+      </button>
+      <a href="/plantas" class="mobile-item">
+        <span class="mobile-label">Ver todas</span>
+        <Icon name="chevron-right" size={18} class="mobile-chev" />
+      </a>
+      <button class="mobile-item" data-menu-goto="colecciones">
+        <span class="mobile-label">Colecciones populares</span>
+        <Icon name="chevron-right" size={18} class="mobile-chev" />
+      </button>
+      <button class="mobile-item" data-menu-goto="tipos">
+        <span class="mobile-label">Tipo de planta</span>
+        <Icon name="chevron-right" size={18} class="mobile-chev" />
+      </button>
+      <a href="/quiz" class="mobile-item">
+        <span class="mobile-label">Quiz</span>
+        <Icon name="chevron-right" size={18} class="mobile-chev" />
+      </a>
+    </div>
+
+    <!-- Nivel: Colecciones populares -->
+    <div class="mobile-card" data-menu-panel="colecciones" hidden>
+      <button class="mobile-back" data-menu-back>
+        <Icon name="chevron-left" size={18} />
+        <span>Colecciones populares</span>
+      </button>
+      {menuColecciones.map((l) => (
+        <a href={l.href} class="mobile-item">
+          <span class="mobile-label">{l.label}</span>
+          <Icon name="chevron-right" size={18} class="mobile-chev" />
+        </a>
+      ))}
+      <a href="/colecciones" class="mobile-item">
+        <span class="mobile-label">Todas las colecciones</span>
+        <Icon name="chevron-right" size={18} class="mobile-chev" />
+      </a>
+    </div>
+
+    <!-- Nivel: Tipo de planta -->
+    <div class="mobile-card" data-menu-panel="tipos" hidden>
+      <button class="mobile-back" data-menu-back>
+        <Icon name="chevron-left" size={18} />
+        <span>Tipo de planta</span>
+      </button>
+      {menuTipos.map((l) => (
+        <a href={l.href} class="mobile-item">
+          <span class="mobile-label">{l.label}</span>
+          <Icon name="chevron-right" size={18} class="mobile-chev" />
+        </a>
+      ))}
+    </div>
+
+    <!-- Nivel: Eventos -->
+    <div class="mobile-card" data-menu-panel="eventos" hidden>
+      <button class="mobile-back" data-menu-back>
+        <Icon name="chevron-left" size={18} />
+        <span>Eventos</span>
+      </button>
+      <a href="/eventos" class="mobile-item">
+        <span class="mobile-label">Ver todo</span>
+        <Icon name="chevron-right" size={18} class="mobile-chev" />
+      </a>
+      {eventosLinks.map((l) => (
+        <a href={l.href} class="mobile-item">
+          <span class="mobile-label">{l.label}</span>
+          <Icon name="chevron-right" size={18} class="mobile-chev" />
+        </a>
+      ))}
+    </div>
+
+    <!-- Nivel: Servicios -->
+    <div class="mobile-card" data-menu-panel="servicios" hidden>
+      <button class="mobile-back" data-menu-back>
+        <Icon name="chevron-left" size={18} />
+        <span>Servicios</span>
+      </button>
+      <a href="/servicios" class="mobile-item">
+        <span class="mobile-label">Ver todo</span>
+        <Icon name="chevron-right" size={18} class="mobile-chev" />
+      </a>
+      {serviciosLinks.map((l) => (
+        <a href={l.href} class="mobile-item">
+          <span class="mobile-label">{l.label}</span>
+          <Icon name="chevron-right" size={18} class="mobile-chev" />
+        </a>
+      ))}
+    </div>
   </nav>
 
   <nav class="nav-row" aria-label="Navegación principal">
@@ -498,7 +589,7 @@ const emptyCartCollections = ['mas-vendidas', 'interior', 'jardin', 'faciles'].m
     });
   });
 
-  // Alternadores del movil (buscador, menu, submenu de servicios).
+  // Alternadores del movil (buscador y menu).
   document.querySelectorAll<HTMLElement>('[data-toggle]').forEach((btn) => {
     btn.addEventListener('click', () => {
       const name = btn.dataset.toggle!;
@@ -517,6 +608,37 @@ const emptyCartCollections = ['mas-vendidas', 'interior', 'jardin', 'faciles'].m
       region.hidden = !willOpen;
       btn.classList.toggle('open', willOpen);
       btn.setAttribute('aria-expanded', String(willOpen));
+      // Al abrir o cerrar el menu se vuelve al nivel raiz del drill-down.
+      if (name === 'mobile-menu') showMenuPanel('root');
+    });
+  });
+
+  // Drill-down del menu movil: cada nivel es una tarjeta; el encabezado de
+  // regreso vuelve al nivel desde el que se entro (pila de navegacion).
+  const menuStack: string[] = [];
+
+  function currentMenuPanel(): string {
+    const visible = document.querySelector<HTMLElement>('[data-menu-panel]:not([hidden])');
+    return visible?.dataset.menuPanel ?? 'root';
+  }
+
+  function showMenuPanel(name: string) {
+    document.querySelectorAll<HTMLElement>('[data-menu-panel]').forEach((p) => {
+      p.hidden = p.dataset.menuPanel !== name;
+    });
+    if (name === 'root') menuStack.length = 0;
+  }
+
+  document.querySelectorAll<HTMLElement>('[data-menu-goto]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      menuStack.push(currentMenuPanel());
+      showMenuPanel(btn.dataset.menuGoto!);
+    });
+  });
+
+  document.querySelectorAll<HTMLElement>('[data-menu-back]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      showMenuPanel(menuStack.pop() ?? 'root');
     });
   });
 </script>
@@ -844,14 +966,25 @@ const emptyCartCollections = ['mas-vendidas', 'interior', 'jardin', 'faciles'].m
   .mobile-search .search { max-width: none; }
   .mobile-search[hidden] { display: none; }
 
-  /* Menu movil */
+  /* Menu movil: panel que flota sobre el contenido (el hero queda visible
+     debajo), como el menu de celular de la referencia. */
   .mobile-menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 60;
     border-top: 1px solid var(--line);
     background: var(--bg);
     padding: 15px 15px 22px;
+    box-shadow: 0 24px 48px rgba(27, 42, 31, 0.28);
+    max-height: 78vh;
+    overflow-y: auto;
   }
 
   .mobile-menu[hidden] { display: none; }
+
+  [data-menu-panel][hidden] { display: none; }
 
   .mobile-card {
     background: #f8fbf9;
@@ -878,9 +1011,30 @@ const emptyCartCollections = ['mas-vendidas', 'interior', 'jardin', 'faciles'].m
   }
 
   .mobile-item + .mobile-item,
-  .mobile-sub + .mobile-item { border-top: 1px solid rgba(27, 42, 31, 0.1); }
+  .mobile-back + .mobile-item { border-top: 1px solid rgba(27, 42, 31, 0.1); }
 
   .mobile-item:hover { background: var(--bg); text-decoration: none; color: var(--ink); }
+
+  /* Encabezado de regreso de un submenu: "‹ Nivel" subrayado. */
+  .mobile-back {
+    width: 100%;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 15px;
+    color: var(--ink);
+    background: transparent;
+    border: 0;
+    font-family: var(--font-ui);
+    font-size: 17px;
+    font-weight: 500;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .mobile-back span { text-decoration: underline; text-underline-offset: 4px; }
+  .mobile-back:hover { background: var(--bg); }
 
   .mobile-thumb {
     width: 48px;
@@ -897,47 +1051,6 @@ const emptyCartCollections = ['mas-vendidas', 'interior', 'jardin', 'faciles'].m
 
   .mobile-label { flex: 1; min-width: 0; }
   .mobile-chev { color: rgba(27, 42, 31, 0.45); flex: none; }
-
-  .mobile-sub {
-    border-top: 1px solid rgba(27, 42, 31, 0.1);
-    background: var(--bg);
-    padding: 6px 0;
-  }
-
-  .mobile-sub[hidden] { display: none; }
-
-  .mobile-sub a {
-    display: block;
-    padding: 12px 15px 12px 30px;
-    font-size: 15px;
-    color: var(--ink);
-  }
-
-  .mobile-sub a:hover { background: #e2ece5; text-decoration: none; }
-
-  .mobile-cta {
-    margin-top: 15px;
-    width: 100%;
-    justify-content: center;
-    min-height: 50px;
-    font-size: 16px;
-  }
-
-  .mobile-wa {
-    margin-top: 11px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    font-size: 15px;
-    min-height: 48px;
-    border-radius: 999px;
-    border: 1px solid rgba(27, 42, 31, 0.22);
-    color: var(--ink);
-  }
-
-  .mobile-wa:hover { background: #e2ece5; text-decoration: none; color: var(--ink); }
-  .wa-icon { color: var(--green); }
 
   /* Paneles laterales */
   .panel { position: fixed; inset: 0; z-index: 80; }

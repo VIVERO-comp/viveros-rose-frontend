@@ -208,4 +208,62 @@ const outOfStock = product.available <= 0;
     background: var(--green);
     color: #ffffff;
   }
+
+  /* Movil: tarjeta como la referencia de celular — foto arriba con esquinas
+     redondeadas y la info debajo, en texto oscuro sobre el fondo de la pagina
+     (ya no superpuesta sobre la foto con degradado). */
+  @media (max-width: 768px) {
+    .product-tile {
+      aspect-ratio: auto;
+      border-radius: 0;
+      overflow: visible;
+      outline: none;
+      background: transparent;
+    }
+
+    .tile-link {
+      position: static;
+      display: block;
+      color: var(--ink);
+    }
+
+    .tile-link:hover { color: var(--ink); }
+
+    .tile-photo {
+      position: relative;
+      inset: auto;
+      aspect-ratio: 4 / 5;
+      border-radius: var(--radius);
+      overflow: hidden;
+      outline: 1px solid var(--line);
+      font-size: 2.6rem;
+    }
+
+    .tile-photo::after { display: none; }
+    .tile-overlay { display: none; }
+
+    .tile-info {
+      padding: 10px 2px 0;
+      gap: 3px;
+    }
+
+    h3 { font-size: 14px; color: var(--ink); }
+    .scientific { font-size: 11px; color: var(--ink-soft); }
+    .price { font-size: 13px; color: var(--ink); margin: 1px 0 0; }
+
+    /* El estado de stock baja al final de la info (como las etiquetas "Pet
+       Friendly" de la referencia) y recupera sus colores sobre fondo claro. */
+    .tile-info :global(.badge) { order: 4; margin-top: 3px; }
+    .tile-info :global(.badge--in-stock) { color: var(--green-deep); }
+    .tile-info :global(.badge--low) { color: var(--amber-note); }
+    .tile-info :global(.badge--out) { color: var(--ink-faint); }
+
+    .tile-add {
+      width: 32px;
+      height: 32px;
+      top: 8px;
+      right: 8px;
+      box-shadow: 0 2px 8px rgba(27, 42, 31, 0.18);
+    }
+  }
 </style>

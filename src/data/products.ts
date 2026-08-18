@@ -2,7 +2,10 @@
 // El SKU es la referencia interna de Odoo: la llave que conecta con el stock proxy.
 // Datos que Odoo aun no tiene y quedan como placeholder hasta completarlos:
 // precio ($5 parejo), descripcion, cuidados, nombre cientifico y categoria
-// (asignada por heuristica sobre el nombre). `available` queda en 0 porque el
+// (asignada por heuristica sobre el nombre). Los cuidados (luz, riego,
+// dificultad) y el tamano tambien estan asignados por heuristica sobre el
+// nombre de la especie: revisarlos con el equipo del vivero.
+// `available` queda en 0 porque el
 // stock real lo pinta el stock proxy en el navegador via data-sku.
 
 export interface Category {
@@ -72,9 +75,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Agave gigante de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Sol pleno', water: 'Cada 10–15 días', difficulty: 'Facil' },
     available: 0,
     emoji: '🌳',
+    size: 'grande',
   },
   {
     sku: 'PL-AGLONEMAS',
@@ -85,9 +89,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Aglonemas de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Luz baja o indirecta', water: '1 vez por semana', difficulty: 'Facil' },
     available: 0,
     emoji: '🪴',
+    size: 'mediana',
   },
   {
     sku: 'PL-AJI-BOLITA',
@@ -98,9 +103,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Aji bolita de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Sol pleno', water: 'Diario o interdiario', difficulty: 'Facil' },
     available: 0,
     emoji: '🌳',
+    size: 'mediana',
   },
   {
     sku: 'PL-ALBAHACA-ROJA',
@@ -111,9 +117,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Albahaca roja de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Sol pleno', water: 'Diario o interdiario', difficulty: 'Facil' },
     available: 0,
     emoji: '🌿',
+    size: 'pequena',
   },
   {
     sku: 'PL-ALBAHACA-VERDE',
@@ -124,9 +131,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Albahaca verde de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Sol pleno', water: 'Diario o interdiario', difficulty: 'Facil' },
     available: 0,
     emoji: '🌿',
+    size: 'pequena',
   },
   {
     sku: 'PL-ALCANCEL',
@@ -137,9 +145,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Alcancel de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Sol pleno', water: 'Diario o interdiario', difficulty: 'Facil' },
     available: 0,
     emoji: '🪴',
+    size: 'pequena',
   },
   {
     sku: 'PL-ALOCASIA-GIGANTE-VARIEGADA',
@@ -150,9 +159,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Alocasia gigante variegada de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Luz indirecta brillante', water: '1–2 veces por semana', difficulty: 'Media' },
     available: 0,
     emoji: '🪴',
+    size: 'grande',
   },
   {
     sku: 'PL-ALOCASIA-LAVA-ROJA',
@@ -163,9 +173,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Alocasia lava roja de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Luz indirecta brillante', water: '1–2 veces por semana', difficulty: 'Media' },
     available: 0,
     emoji: '🪴',
+    size: 'mediana',
   },
   {
     sku: 'PL-ALOCASIA-VERDE',
@@ -176,9 +187,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Alocasia verde de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Luz indirecta brillante', water: '1–2 veces por semana', difficulty: 'Media' },
     available: 0,
     emoji: '🪴',
+    size: 'mediana',
   },
   {
     sku: 'PL-ANITA-POTO-MEDIANO',
@@ -189,9 +201,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Anita poto mediano de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Luz baja o indirecta', water: '1 vez por semana', difficulty: 'Facil' },
     available: 0,
     emoji: '🪴',
+    size: 'mediana',
   },
   {
     sku: 'PL-ANITAS-EN-TRAPO',
@@ -202,9 +215,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Anitas en trapo de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Luz baja o indirecta', water: '1 vez por semana', difficulty: 'Facil' },
     available: 0,
     emoji: '🪴',
+    size: 'pequena',
   },
   {
     sku: 'PL-ANTHURIO-FLOR',
@@ -215,9 +229,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Anthurio flor de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Luz indirecta brillante', water: '1–2 veces por semana', difficulty: 'Media' },
     available: 0,
     emoji: '🌺',
+    size: 'mediana',
   },
   {
     sku: 'PL-ANTORCHA',
@@ -228,9 +243,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Antorcha de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Luz indirecta brillante', water: '1–2 veces por semana', difficulty: 'Media' },
     available: 0,
     emoji: '🌺',
+    size: 'mediana',
   },
   {
     sku: 'PL-APIO',
@@ -241,9 +257,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Apio de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Sol pleno', water: 'Diario o interdiario', difficulty: 'Facil' },
     available: 0,
     emoji: '🌳',
+    size: 'pequena',
   },
   {
     sku: 'PL-ARALIAS',
@@ -254,9 +271,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Aralias de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Sol o luz indirecta brillante', water: '2–3 veces por semana', difficulty: 'Media' },
     available: 0,
     emoji: '🪴',
+    size: 'mediana',
   },
   {
     sku: 'PL-ARBOL-CITRONELA',
@@ -267,9 +285,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Arbol citronela de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Sol pleno', water: 'Diario o interdiario', difficulty: 'Facil' },
     available: 0,
     emoji: '🌳',
+    size: 'pequena',
   },
   {
     sku: 'PL-BAMBU-ENTRENZAS',
@@ -280,9 +299,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Bambu entrenzas de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Sol o luz indirecta brillante', water: '2–3 veces por semana', difficulty: 'Media' },
     available: 0,
     emoji: '🌳',
+    size: 'mediana',
   },
   {
     sku: 'PL-BIJAO-TRICOLOR',
@@ -293,9 +313,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Bijao tricolor de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Luz indirecta brillante', water: 'Riego frecuente, sustrato húmedo', difficulty: 'Exigente' },
     available: 0,
     emoji: '🪴',
+    size: 'mediana',
   },
   {
     sku: 'PL-BUQUE-COLOMBIANO',
@@ -306,9 +327,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Buque colombiano de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Sol o media sombra', water: '2–3 veces por semana', difficulty: 'Facil' },
     available: 0,
     emoji: '🌺',
+    size: 'mediana',
   },
   {
     sku: 'PL-CACTUS-GRANDE',
@@ -319,9 +341,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Cactus grande de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Sol pleno', water: 'Cada 10–15 días', difficulty: 'Facil' },
     available: 0,
     emoji: '🌵',
+    size: 'grande',
   },
   {
     sku: 'PL-CACTUS-HUESO-DE-DRAGON',
@@ -332,9 +355,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Cactus hueso de dragon de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Sol pleno', water: 'Cada 10–15 días', difficulty: 'Facil' },
     available: 0,
     emoji: '🌵',
+    size: 'pequena',
   },
   {
     sku: 'PL-CACTUS-MEDIANO',
@@ -345,9 +369,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Cactus mediano de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Sol pleno', water: 'Cada 10–15 días', difficulty: 'Facil' },
     available: 0,
     emoji: '🌵',
+    size: 'mediana',
   },
   {
     sku: 'PL-CACTUS-PEQUENO',
@@ -358,9 +383,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Cactus pequeno de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Sol pleno', water: 'Cada 10–15 días', difficulty: 'Facil' },
     available: 0,
     emoji: '🌵',
+    size: 'pequena',
   },
   {
     sku: 'PL-CALATHEA-CEBRINA',
@@ -371,9 +397,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Calathea cebrina de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Luz indirecta brillante', water: 'Riego frecuente, sustrato húmedo', difficulty: 'Exigente' },
     available: 0,
     emoji: '🪴',
+    size: 'mediana',
   },
   {
     sku: 'PL-CELOCIA',
@@ -384,9 +411,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Celocia de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Sol pleno', water: '3 veces por semana', difficulty: 'Facil' },
     available: 0,
     emoji: '🌺',
+    size: 'pequena',
   },
   {
     sku: 'PLT-CHAVELITAS-01',
@@ -397,9 +425,10 @@ export const products: Product[] = [
     price: 1.5,
     description:
       'Chavelitas de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Sol pleno', water: '3 veces por semana', difficulty: 'Facil' },
     available: 0,
     emoji: '🌺',
+    size: 'pequena',
   },
   {
     sku: 'PL-CIELITO-AZUL',
@@ -410,9 +439,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Cielito azul de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Sol pleno', water: '3 veces por semana', difficulty: 'Facil' },
     available: 0,
     emoji: '🌺',
+    size: 'pequena',
   },
   {
     sku: 'PL-CINTA',
@@ -423,9 +453,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Cinta de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Luz baja o indirecta', water: '1–2 veces por semana', difficulty: 'Facil' },
     available: 0,
     emoji: '🪴',
+    size: 'pequena',
   },
   {
     sku: 'PL-CINTA-MALA-MADRE',
@@ -436,9 +467,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Cinta mala madre de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Luz baja o indirecta', water: '1–2 veces por semana', difficulty: 'Facil' },
     available: 0,
     emoji: '🪴',
+    size: 'pequena',
   },
   {
     sku: 'PL-CIPRE-RASTRERO',
@@ -449,9 +481,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Cipre rastrero de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Sol pleno', water: '2 veces por semana', difficulty: 'Media' },
     available: 0,
     emoji: '🌳',
+    size: 'pequena',
   },
   {
     sku: 'PL-PINO-ROMANO',
@@ -462,9 +495,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Cipre thuja de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Sol pleno', water: '2 veces por semana', difficulty: 'Media' },
     available: 0,
     emoji: '🌳',
+    size: 'mediana',
   },
   {
     sku: 'PL-CLAVEL-CHINO',
@@ -475,9 +509,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Clavel chino de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Sol pleno', water: '3 veces por semana', difficulty: 'Facil' },
     available: 0,
     emoji: '🌺',
+    size: 'pequena',
   },
   {
     sku: 'PL-CLAVELITO',
@@ -488,9 +523,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Clavelito de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Sol pleno', water: '3 veces por semana', difficulty: 'Facil' },
     available: 0,
     emoji: '🌺',
+    size: 'pequena',
   },
   {
     sku: 'PL-COBRA-GIGANTE',
@@ -501,9 +537,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Cobra gigante de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Luz baja o indirecta', water: 'Cada 10–15 días', difficulty: 'Facil' },
     available: 0,
     emoji: '🪴',
+    size: 'grande',
   },
   {
     sku: 'PL-COBRA-VERDE',
@@ -514,9 +551,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Cobra verde de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Luz baja o indirecta', water: 'Cada 10–15 días', difficulty: 'Facil' },
     available: 0,
     emoji: '🪴',
+    size: 'mediana',
   },
   {
     sku: 'PL-COLEOS',
@@ -527,9 +565,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Coleos de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Sol o media sombra', water: '2–3 veces por semana', difficulty: 'Facil' },
     available: 0,
     emoji: '🌳',
+    size: 'mediana',
   },
   {
     sku: 'PL-CORDILINIA',
@@ -540,9 +579,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Cordilinia de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Luz baja o indirecta', water: '1 vez por semana', difficulty: 'Facil' },
     available: 0,
     emoji: '🪴',
+    size: 'mediana',
   },
   {
     sku: 'PL-CORONITA',
@@ -553,9 +593,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Coronita de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Sol pleno', water: '3 veces por semana', difficulty: 'Facil' },
     available: 0,
     emoji: '🌺',
+    size: 'pequena',
   },
   {
     sku: 'PL-CRINUM-ASIATICO-VARIEGADO',
@@ -566,9 +607,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Crinum asiatico variegado de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Sol pleno', water: '3 veces por semana', difficulty: 'Facil' },
     available: 0,
     emoji: '🪴',
+    size: 'pequena',
   },
   {
     sku: 'PLT-CRISANTEMOS-01',
@@ -579,9 +621,10 @@ export const products: Product[] = [
     price: 2.5,
     description:
       'Crisantemos de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Sol pleno', water: '3 veces por semana', difficulty: 'Facil' },
     available: 0,
     emoji: '🌺',
+    size: 'pequena',
   },
   {
     sku: 'PL-CROTO-MAMY-AMARILLO',
@@ -592,9 +635,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Croto mamy amarillo de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Sol o media sombra', water: '2–3 veces por semana', difficulty: 'Facil' },
     available: 0,
     emoji: '🌳',
+    size: 'mediana',
   },
   {
     sku: 'PL-DALIA',
@@ -605,9 +649,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Dalia de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Sol pleno', water: '3 veces por semana', difficulty: 'Facil' },
     available: 0,
     emoji: '🌺',
+    size: 'pequena',
   },
   {
     sku: 'PL-DRACAENA-REFLEXA',
@@ -618,9 +663,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Dracaena reflexa de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Luz baja o indirecta', water: '1 vez por semana', difficulty: 'Facil' },
     available: 0,
     emoji: '🪴',
+    size: 'mediana',
   },
   {
     sku: 'PL-DRACONTIUM',
@@ -631,9 +677,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Dracontium de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Luz indirecta brillante', water: 'Riego frecuente, sustrato húmedo', difficulty: 'Exigente' },
     available: 0,
     emoji: '🪴',
+    size: 'mediana',
   },
   {
     sku: 'PL-DURANTA-LIMON',
@@ -644,9 +691,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Duranta limon de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Sol o media sombra', water: '2–3 veces por semana', difficulty: 'Facil' },
     available: 0,
     emoji: '🌳',
+    size: 'mediana',
   },
   {
     sku: 'PL-DURANTA-MATIZADA',
@@ -657,9 +705,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Duranta matizada de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Sol o media sombra', water: '2–3 veces por semana', difficulty: 'Facil' },
     available: 0,
     emoji: '🌳',
+    size: 'mediana',
   },
   {
     sku: 'PL-EPISCIAS-VR',
@@ -670,9 +719,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Episcias vr de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Luz indirecta brillante', water: 'Riego frecuente, sustrato húmedo', difficulty: 'Exigente' },
     available: 0,
     emoji: '🪴',
+    size: 'mediana',
   },
   {
     sku: 'PL-ESCUDO-PERSA',
@@ -683,9 +733,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Escudo persa de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Luz indirecta brillante', water: 'Riego frecuente, sustrato húmedo', difficulty: 'Exigente' },
     available: 0,
     emoji: '🪴',
+    size: 'mediana',
   },
   {
     sku: 'PL-ESPARRAGO-MEYERI',
@@ -696,9 +747,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Esparrago meyeri de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Luz baja o indirecta', water: '1–2 veces por semana', difficulty: 'Facil' },
     available: 0,
     emoji: '🪴',
+    size: 'pequena',
   },
   {
     sku: 'PL-FICUS-ELASTICA',
@@ -709,9 +761,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Ficus elastica de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Luz indirecta brillante', water: '1 vez por semana', difficulty: 'Media' },
     available: 0,
     emoji: '🪴',
+    size: 'grande',
   },
   {
     sku: 'PL-FICUS-LYRATA',
@@ -722,9 +775,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Ficus lyrata de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Luz indirecta brillante', water: '1 vez por semana', difficulty: 'Media' },
     available: 0,
     emoji: '🪴',
+    size: 'grande',
   },
   {
     sku: 'PL-FICUS-LYRATA-3-RAMAS',
@@ -735,9 +789,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Ficus lyrata 3 ramas (hasta 175cm) de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Luz indirecta brillante', water: '1 vez por semana', difficulty: 'Media' },
     available: 0,
     emoji: '🪴',
+    size: 'grande',
   },
   {
     sku: 'PL-FICUS-TRIANGULAR-GRANDE',
@@ -748,9 +803,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Ficus triangular grande de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Luz indirecta brillante', water: '1 vez por semana', difficulty: 'Media' },
     available: 0,
     emoji: '🪴',
+    size: 'grande',
   },
   {
     sku: 'PL-FITONIA-ROJA',
@@ -761,9 +817,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Fitonia roja de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Luz indirecta brillante', water: 'Riego frecuente, sustrato húmedo', difficulty: 'Exigente' },
     available: 0,
     emoji: '🪴',
+    size: 'mediana',
   },
   {
     sku: 'PL-FLOR-DE-SAN-JUAN',
@@ -774,9 +831,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Flor de san juan de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Sol pleno', water: '3 veces por semana', difficulty: 'Facil' },
     available: 0,
     emoji: '🌺',
+    size: 'pequena',
   },
   {
     sku: 'PL-GINGER',
@@ -787,9 +845,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Ginger de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Sol pleno', water: '3 veces por semana', difficulty: 'Facil' },
     available: 0,
     emoji: '🌺',
+    size: 'pequena',
   },
   {
     sku: 'PL-GRONFENA',
@@ -800,9 +859,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Gronfena de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Luz indirecta brillante', water: '1–2 veces por semana', difficulty: 'Facil' },
     available: 0,
     emoji: '🪴',
+    size: 'pequena',
   },
   {
     sku: 'PL-HAWORTHIA',
@@ -813,9 +873,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Haworthia de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Sol pleno', water: 'Cada 10–15 días', difficulty: 'Facil' },
     available: 0,
     emoji: '🪴',
+    size: 'pequena',
   },
   {
     sku: 'PL-HELECHOS',
@@ -826,9 +887,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Helechos de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Luz indirecta brillante', water: 'Riego frecuente, sustrato húmedo', difficulty: 'Exigente' },
     available: 0,
     emoji: '🌿',
+    size: 'mediana',
   },
   {
     sku: 'PLT-HIERBABUENA-01',
@@ -839,9 +901,10 @@ export const products: Product[] = [
     price: 1.75,
     description:
       'Hierba buena de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Sol pleno', water: 'Diario o interdiario', difficulty: 'Facil' },
     available: 0,
     emoji: '🌿',
+    size: 'pequena',
   },
   {
     sku: 'PL-HIERBA-CITRONELA',
@@ -852,9 +915,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Hierba citronela de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Sol pleno', water: 'Diario o interdiario', difficulty: 'Facil' },
     available: 0,
     emoji: '🌿',
+    size: 'pequena',
   },
   {
     sku: 'PL-HIERBA-DE-LIMON',
@@ -865,9 +929,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Hierba de limon de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Sol pleno', water: 'Diario o interdiario', difficulty: 'Facil' },
     available: 0,
     emoji: '🌿',
+    size: 'pequena',
   },
   {
     sku: 'PL-HYPOESTES',
@@ -878,9 +943,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Hypoestes de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Luz indirecta brillante', water: '1–2 veces por semana', difficulty: 'Facil' },
     available: 0,
     emoji: '🪴',
+    size: 'pequena',
   },
   {
     sku: 'PL-IXORA',
@@ -891,9 +957,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Ixora de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Sol pleno', water: '3 veces por semana', difficulty: 'Facil' },
     available: 0,
     emoji: '🌺',
+    size: 'pequena',
   },
   {
     sku: 'PLT-JADE-01',
@@ -904,9 +971,10 @@ export const products: Product[] = [
     price: 3.2,
     description:
       'Jade de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Sol pleno', water: 'Cada 10–15 días', difficulty: 'Facil' },
     available: 0,
     emoji: '🪴',
+    size: 'pequena',
   },
   {
     sku: 'PL-JAZMIN-BLANCO-ENANO',
@@ -917,9 +985,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Jazmin blanco enano de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Sol pleno', water: '3 veces por semana', difficulty: 'Facil' },
     available: 0,
     emoji: '🌺',
+    size: 'pequena',
   },
   {
     sku: 'PL-KALANCHOE',
@@ -930,9 +999,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Kalanchoe de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Sol pleno', water: 'Cada 10–15 días', difficulty: 'Facil' },
     available: 0,
     emoji: '🌺',
+    size: 'pequena',
   },
   {
     sku: 'PL-LAVANDA',
@@ -943,9 +1013,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Lavanda de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Sol pleno', water: '1–2 veces por semana', difficulty: 'Exigente' },
     available: 0,
     emoji: '🌳',
+    size: 'pequena',
   },
   {
     sku: 'PL-LENGUA-DE-SUEGRA-ENANA',
@@ -956,9 +1027,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Lengua de suegra enana de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Luz baja o indirecta', water: 'Cada 10–15 días', difficulty: 'Facil' },
     available: 0,
     emoji: '🪴',
+    size: 'pequena',
   },
   {
     sku: 'PL-LENGUA-DE-SUEGRA-MINI',
@@ -969,9 +1041,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Lengua de suegra mini de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Luz baja o indirecta', water: 'Cada 10–15 días', difficulty: 'Facil' },
     available: 0,
     emoji: '🪴',
+    size: 'pequena',
   },
   {
     sku: 'PL-LIRIO',
@@ -982,9 +1055,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Lirio de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Sol pleno', water: '3 veces por semana', difficulty: 'Facil' },
     available: 0,
     emoji: '🌺',
+    size: 'pequena',
   },
   {
     sku: 'PL-LIRIO-GIGANTE-MORADO',
@@ -995,9 +1069,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Lirio gigante morado de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Sol pleno', water: '3 veces por semana', difficulty: 'Facil' },
     available: 0,
     emoji: '🌺',
+    size: 'grande',
   },
   {
     sku: 'PL-LORITO-GRANDE',
@@ -1011,6 +1086,7 @@ export const products: Product[] = [
     care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
     available: 0,
     emoji: '🌳',
+    size: 'grande',
   },
   {
     sku: 'PL-LORITO-MEDIANO',
@@ -1024,6 +1100,7 @@ export const products: Product[] = [
     care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
     available: 0,
     emoji: '🌳',
+    size: 'mediana',
   },
   {
     sku: 'PL-LORITOS-CHICO',
@@ -1037,6 +1114,7 @@ export const products: Product[] = [
     care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
     available: 0,
     emoji: '🌳',
+    size: 'pequena',
   },
   {
     sku: 'PL-MARGINATA',
@@ -1047,9 +1125,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Marginata de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Luz baja o indirecta', water: '1 vez por semana', difficulty: 'Facil' },
     available: 0,
     emoji: '🪴',
+    size: 'mediana',
   },
   {
     sku: 'PL-MARIGOLD-VR',
@@ -1060,9 +1139,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Marigold vr de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Sol pleno', water: '3 veces por semana', difficulty: 'Facil' },
     available: 0,
     emoji: '🌺',
+    size: 'pequena',
   },
   {
     sku: 'PLT-MENTA-01',
@@ -1073,9 +1153,10 @@ export const products: Product[] = [
     price: 1.75,
     description:
       'Menta de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Sol pleno', water: 'Diario o interdiario', difficulty: 'Facil' },
     available: 0,
     emoji: '🌿',
+    size: 'pequena',
   },
   {
     sku: 'PL-MICKY',
@@ -1086,9 +1167,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Micky de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Luz indirecta brillante', water: '1–2 veces por semana', difficulty: 'Facil' },
     available: 0,
     emoji: '🪴',
+    size: 'pequena',
   },
   {
     sku: 'PL-MILLONARIA-ZAMIOCULCA',
@@ -1099,9 +1181,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Millonaria zamioculca de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Luz baja o indirecta', water: 'Cada 10–15 días', difficulty: 'Facil' },
     available: 0,
     emoji: '🪴',
+    size: 'mediana',
   },
   {
     sku: 'PL-MILLONARIA-ZAMIOCULCA-NEGRA',
@@ -1112,9 +1195,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Millonaria zamioculca negra de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Luz baja o indirecta', water: 'Cada 10–15 días', difficulty: 'Facil' },
     available: 0,
     emoji: '🪴',
+    size: 'mediana',
   },
   {
     sku: 'PL-MINI-ARBUSTO',
@@ -1125,9 +1209,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Mini arbusto de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Luz indirecta brillante', water: '1–2 veces por semana', difficulty: 'Facil' },
     available: 0,
     emoji: '🌳',
+    size: 'pequena',
   },
   {
     sku: 'PL-MINI-CALATHEA',
@@ -1138,9 +1223,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Mini calathea de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Luz indirecta brillante', water: 'Riego frecuente, sustrato húmedo', difficulty: 'Exigente' },
     available: 0,
     emoji: '🪴',
+    size: 'pequena',
   },
   {
     sku: 'PL-MINI-JADE',
@@ -1151,9 +1237,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Mini jade de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Sol pleno', water: 'Cada 10–15 días', difficulty: 'Facil' },
     available: 0,
     emoji: '🪴',
+    size: 'pequena',
   },
   {
     sku: 'PL-MOLLEJA',
@@ -1164,9 +1251,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Molleja de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Luz indirecta brillante', water: '1–2 veces por semana', difficulty: 'Facil' },
     available: 0,
     emoji: '🪴',
+    size: 'pequena',
   },
   {
     sku: 'PL-MONSTERA-ADANSONII',
@@ -1177,9 +1265,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Monstera adansonii de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Luz indirecta brillante', water: '1–2 veces por semana', difficulty: 'Media' },
     available: 0,
     emoji: '🪴',
+    size: 'mediana',
   },
   {
     sku: 'PL-MONSTERA-DELICIOSA',
@@ -1190,9 +1279,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Monstera deliciosa de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Luz indirecta brillante', water: '1–2 veces por semana', difficulty: 'Media' },
     available: 0,
     emoji: '🪴',
+    size: 'mediana',
   },
   {
     sku: 'PL-NOVIO-CHINO',
@@ -1203,9 +1293,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Novio chino de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Sol o media sombra', water: '2–3 veces por semana', difficulty: 'Facil' },
     available: 0,
     emoji: '🌺',
+    size: 'mediana',
   },
   {
     sku: 'PL-OREGANO',
@@ -1216,9 +1307,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Oregano de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Sol pleno', water: 'Diario o interdiario', difficulty: 'Facil' },
     available: 0,
     emoji: '🌿',
+    size: 'pequena',
   },
   {
     sku: 'PL-ORTENCIA',
@@ -1229,9 +1321,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Ortencia de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Sol o media sombra', water: '3 veces por semana', difficulty: 'Media' },
     available: 0,
     emoji: '🌺',
+    size: 'mediana',
   },
   {
     sku: 'PL-PALMA-ABANICO',
@@ -1242,9 +1335,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Palma abanico de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Sol pleno', water: '2–3 veces por semana', difficulty: 'Facil' },
     available: 0,
     emoji: '🌴',
+    size: 'mediana',
   },
   {
     sku: 'PL-PALMA-BISMARKIA-GRANDE',
@@ -1255,9 +1349,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Palma bismarkia grande de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Sol pleno', water: '2–3 veces por semana', difficulty: 'Facil' },
     available: 0,
     emoji: '🌴',
+    size: 'grande',
   },
   {
     sku: 'PL-PALMA-BISMARKIA-MEDIANA',
@@ -1268,9 +1363,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Palma bismarkia mediana de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Sol pleno', water: '2–3 veces por semana', difficulty: 'Facil' },
     available: 0,
     emoji: '🌴',
+    size: 'mediana',
   },
   {
     sku: 'PL-PALMA-BISMARKIA-PEQUENA',
@@ -1281,9 +1377,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Palma bismarkia pequena de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Sol pleno', water: '2–3 veces por semana', difficulty: 'Facil' },
     available: 0,
     emoji: '🌴',
+    size: 'pequena',
   },
   {
     sku: 'PL-PALMA-CUBANA',
@@ -1294,9 +1391,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Palma cubana de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Sol pleno', water: '2–3 veces por semana', difficulty: 'Facil' },
     available: 0,
     emoji: '🌴',
+    size: 'grande',
   },
   {
     sku: 'PL-PALMA-DRACAENA',
@@ -1307,9 +1405,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Palma dracaena de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Sol pleno', water: '2–3 veces por semana', difficulty: 'Facil' },
     available: 0,
     emoji: '🌴',
+    size: 'mediana',
   },
   {
     sku: 'PL-PALMA-FENIX',
@@ -1320,9 +1419,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Palma fenix de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Sol pleno', water: '2–3 veces por semana', difficulty: 'Facil' },
     available: 0,
     emoji: '🌴',
+    size: 'mediana',
   },
   {
     sku: 'PL-PALMA-MADAGASCAR',
@@ -1333,9 +1433,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Palma madagascar de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Sol pleno', water: '2–3 veces por semana', difficulty: 'Facil' },
     available: 0,
     emoji: '🌴',
+    size: 'mediana',
   },
   {
     sku: 'PL-PALMA-MAJESTIC',
@@ -1346,9 +1447,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Palma majestic de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Sol pleno', water: '2–3 veces por semana', difficulty: 'Facil' },
     available: 0,
     emoji: '🌴',
+    size: 'grande',
   },
   {
     sku: 'PL-PALMA-MULTIPLE',
@@ -1359,9 +1461,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Palma multiple de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Sol pleno', water: '2–3 veces por semana', difficulty: 'Facil' },
     available: 0,
     emoji: '🌴',
+    size: 'grande',
   },
   {
     sku: 'PL-PALMA-NAVIDAD',
@@ -1372,9 +1475,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Palma navidad de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Sol pleno', water: '2–3 veces por semana', difficulty: 'Facil' },
     available: 0,
     emoji: '🌴',
+    size: 'mediana',
   },
   {
     sku: 'PL-PALMA-PHOENIX-ROBELINA',
@@ -1385,9 +1489,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Palma phoenix robelina de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Sol pleno', water: '2–3 veces por semana', difficulty: 'Facil' },
     available: 0,
     emoji: '🌴',
+    size: 'mediana',
   },
   {
     sku: 'PL-PALMA-PINANGO',
@@ -1398,9 +1503,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Palma pinango de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Sol pleno', water: '2–3 veces por semana', difficulty: 'Facil' },
     available: 0,
     emoji: '🌴',
+    size: 'mediana',
   },
   {
     sku: 'PL-PALMA-REAL-ENANA',
@@ -1411,9 +1517,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Palma real enana de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Sol pleno', water: '2–3 veces por semana', difficulty: 'Facil' },
     available: 0,
     emoji: '🌴',
+    size: 'grande',
   },
   {
     sku: 'PL-PALMA-ROJA',
@@ -1424,9 +1531,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Palma roja de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Sol pleno', water: '2–3 veces por semana', difficulty: 'Facil' },
     available: 0,
     emoji: '🌴',
+    size: 'mediana',
   },
   {
     sku: 'PL-PALMA-ROJA-GRANDE',
@@ -1437,9 +1545,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Palma roja grande de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Sol pleno', water: '2–3 veces por semana', difficulty: 'Facil' },
     available: 0,
     emoji: '🌴',
+    size: 'grande',
   },
   {
     sku: 'PL-PALMA-WASHINTONIA',
@@ -1450,9 +1559,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Palma washintonia de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Sol pleno', water: '2–3 veces por semana', difficulty: 'Facil' },
     available: 0,
     emoji: '🌴',
+    size: 'grande',
   },
   {
     sku: 'PL-PALMA-ZICA',
@@ -1463,9 +1573,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Palma zica de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Sol pleno', water: '2–3 veces por semana', difficulty: 'Facil' },
     available: 0,
     emoji: '🌴',
+    size: 'mediana',
   },
   {
     sku: 'PL-PALO-DE-BRASIL',
@@ -1476,9 +1587,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Palo de brasil de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Luz baja o indirecta', water: '1 vez por semana', difficulty: 'Facil' },
     available: 0,
     emoji: '🪴',
+    size: 'mediana',
   },
   {
     sku: 'PL-PALO-DE-BRASIL-DE-ESCRITORIO',
@@ -1489,9 +1601,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Palo de brasil de escritorio de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Luz baja o indirecta', water: '1 vez por semana', difficulty: 'Facil' },
     available: 0,
     emoji: '🪴',
+    size: 'pequena',
   },
   {
     sku: 'PL-PALO-DE-BRAZIL-MEDIANO',
@@ -1502,9 +1615,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Palo de brazil mediano de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Luz baja o indirecta', water: '1 vez por semana', difficulty: 'Facil' },
     available: 0,
     emoji: '🪴',
+    size: 'mediana',
   },
   {
     sku: 'PL-PAPIRO',
@@ -1515,9 +1629,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Papiro de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Sol o luz indirecta brillante', water: '2–3 veces por semana', difficulty: 'Media' },
     available: 0,
     emoji: '🪴',
+    size: 'mediana',
   },
   {
     sku: 'PL-PAPO',
@@ -1528,9 +1643,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Papo de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Sol pleno', water: '2–3 veces por semana', difficulty: 'Facil' },
     available: 0,
     emoji: '🌺',
+    size: 'mediana',
   },
   {
     sku: 'PL-PAPO-MATIZADO',
@@ -1541,9 +1657,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Papo matizado de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Sol pleno', water: '2–3 veces por semana', difficulty: 'Facil' },
     available: 0,
     emoji: '🌺',
+    size: 'mediana',
   },
   {
     sku: 'PL-PEPERONIA-SANDIA',
@@ -1554,9 +1671,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Peperonia sandia de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Luz indirecta brillante', water: '1–2 veces por semana', difficulty: 'Facil' },
     available: 0,
     emoji: '🪴',
+    size: 'pequena',
   },
   {
     sku: 'PL-PETUNIN',
@@ -1567,9 +1685,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Petunin de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Sol pleno', water: '3 veces por semana', difficulty: 'Facil' },
     available: 0,
     emoji: '🌺',
+    size: 'pequena',
   },
   {
     sku: 'PL-PHILODENDRO-NEON',
@@ -1580,9 +1699,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Philodendro neon de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Luz indirecta brillante', water: '1–2 veces por semana', difficulty: 'Media' },
     available: 0,
     emoji: '🪴',
+    size: 'mediana',
   },
   {
     sku: 'PL-PHILODENDRO-ROJO',
@@ -1593,9 +1713,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Philodendro rojo de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Luz indirecta brillante', water: '1–2 veces por semana', difficulty: 'Media' },
     available: 0,
     emoji: '🪴',
+    size: 'mediana',
   },
   {
     sku: 'PL-PHILOMENDRO-PINK-PRINCESS',
@@ -1606,9 +1727,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Philomendro pink princess de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Luz indirecta brillante', water: '1–2 veces por semana', difficulty: 'Media' },
     available: 0,
     emoji: '🪴',
+    size: 'mediana',
   },
   {
     sku: 'PL-PHOTOS-MULTI-RAMA',
@@ -1619,9 +1741,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Photos multi rama de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Luz baja o indirecta', water: '1 vez por semana', difficulty: 'Facil' },
     available: 0,
     emoji: '🪴',
+    size: 'pequena',
   },
   {
     sku: 'PL-PHOTUS',
@@ -1632,9 +1755,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Photus de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Luz baja o indirecta', water: '1 vez por semana', difficulty: 'Facil' },
     available: 0,
     emoji: '🪴',
+    size: 'pequena',
   },
   {
     sku: 'PL-PIE-DE-NINO-TRADICIONAL',
@@ -1645,9 +1769,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Pie de nino tradicional de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Sol o media sombra', water: '2–3 veces por semana', difficulty: 'Facil' },
     available: 0,
     emoji: '🌳',
+    size: 'mediana',
   },
   {
     sku: 'PL-PIE-DE-NINO-VERDE',
@@ -1658,9 +1783,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Pie de nino verde de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Sol o media sombra', water: '2–3 veces por semana', difficulty: 'Facil' },
     available: 0,
     emoji: '🌳',
+    size: 'mediana',
   },
   {
     sku: 'PL-PINO-ENANO',
@@ -1671,9 +1797,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Pino bonsai de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Sol pleno', water: '2 veces por semana', difficulty: 'Media' },
     available: 0,
     emoji: '🌳',
+    size: 'pequena',
   },
   {
     sku: 'PL-PINO-ESTRELLA',
@@ -1684,9 +1811,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Pino estrella de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Sol pleno', water: '2 veces por semana', difficulty: 'Media' },
     available: 0,
     emoji: '🌳',
+    size: 'mediana',
   },
   {
     sku: 'PL-PINO-HINDU',
@@ -1697,9 +1825,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Pino hindu de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Sol pleno', water: '2 veces por semana', difficulty: 'Media' },
     available: 0,
     emoji: '🌳',
+    size: 'mediana',
   },
   {
     sku: 'PL-PINO-MONTESUMA',
@@ -1710,9 +1839,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Pino montesuma de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Sol pleno', water: '2 veces por semana', difficulty: 'Media' },
     available: 0,
     emoji: '🌳',
+    size: 'mediana',
   },
   {
     sku: 'PL-PINO-RASTRERO',
@@ -1723,9 +1853,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Pino rastrero de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Sol pleno', water: '2 veces por semana', difficulty: 'Media' },
     available: 0,
     emoji: '🌳',
+    size: 'pequena',
   },
   {
     sku: 'PL-POLCAS',
@@ -1736,9 +1867,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Polcas de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Luz indirecta brillante', water: '1–2 veces por semana', difficulty: 'Facil' },
     available: 0,
     emoji: '🪴',
+    size: 'pequena',
   },
   {
     sku: 'PL-POTHOS',
@@ -1749,9 +1881,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Pothos de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Luz baja o indirecta', water: '1 vez por semana', difficulty: 'Facil' },
     available: 0,
     emoji: '🪴',
+    size: 'pequena',
   },
   {
     sku: 'PL-PURPLE-LADY-EN-BOLSA',
@@ -1762,9 +1895,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Purple lady en bolsa de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Luz indirecta brillante', water: '1–2 veces por semana', difficulty: 'Facil' },
     available: 0,
     emoji: '🪴',
+    size: 'pequena',
   },
   {
     sku: 'PL-ROMERO',
@@ -1775,9 +1909,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Romero de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Sol pleno', water: 'Diario o interdiario', difficulty: 'Facil' },
     available: 0,
     emoji: '🌿',
+    size: 'pequena',
   },
   {
     sku: 'PL-ROSA',
@@ -1788,9 +1923,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Rosa de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Sol pleno', water: '2–3 veces por semana', difficulty: 'Media' },
     available: 0,
     emoji: '🌹',
+    size: 'pequena',
   },
   {
     sku: 'PL-ROSITA-MINIATURA',
@@ -1801,9 +1937,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Rosita miniatura de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Sol pleno', water: '2–3 veces por semana', difficulty: 'Media' },
     available: 0,
     emoji: '🌹',
+    size: 'pequena',
   },
   {
     sku: 'PL-ROSSETTA',
@@ -1814,9 +1951,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Rossetta de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Luz indirecta brillante', water: '1–2 veces por semana', difficulty: 'Facil' },
     available: 0,
     emoji: '🌳',
+    size: 'pequena',
   },
   {
     sku: 'PLT-RUDA-01',
@@ -1827,9 +1965,10 @@ export const products: Product[] = [
     price: 1.75,
     description:
       'Ruda de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Sol pleno', water: 'Diario o interdiario', difficulty: 'Facil' },
     available: 0,
     emoji: '🌳',
+    size: 'pequena',
   },
   {
     sku: 'PL-SABILA-ALOE-MEDIANA',
@@ -1840,9 +1979,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Sabila aloe mediana de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Sol pleno', water: 'Cada 10–15 días', difficulty: 'Facil' },
     available: 0,
     emoji: '🪴',
+    size: 'mediana',
   },
   {
     sku: 'PL-SABILA-ALOE-PEQUENA',
@@ -1853,9 +1993,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Sabila aloe pequena de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Sol pleno', water: 'Cada 10–15 días', difficulty: 'Facil' },
     available: 0,
     emoji: '🪴',
+    size: 'pequena',
   },
   {
     sku: 'PL-SALVIA-ESPLENDA',
@@ -1866,9 +2007,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Salvia esplenda de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Sol pleno', water: 'Diario o interdiario', difficulty: 'Facil' },
     available: 0,
     emoji: '🌺',
+    size: 'pequena',
   },
   {
     sku: 'PL-SANSEVIERIA',
@@ -1879,9 +2021,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Sansevieria de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Luz baja o indirecta', water: 'Cada 10–15 días', difficulty: 'Facil' },
     available: 0,
     emoji: '🪴',
+    size: 'mediana',
   },
   {
     sku: 'PL-SUCULENTA-PEQUENA',
@@ -1892,9 +2035,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Suculenta pequena de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Sol pleno', water: 'Cada 10–15 días', difficulty: 'Facil' },
     available: 0,
     emoji: '🌵',
+    size: 'pequena',
   },
   {
     sku: 'PL-SUCULENTAS-GRANDE',
@@ -1905,9 +2049,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Suculentas grande de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Sol pleno', water: 'Cada 10–15 días', difficulty: 'Facil' },
     available: 0,
     emoji: '🌵',
+    size: 'grande',
   },
   {
     sku: 'PL-SUCULENTAS-MEDIANAS',
@@ -1918,9 +2063,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Suculentas medianas de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Sol pleno', water: 'Cada 10–15 días', difficulty: 'Facil' },
     available: 0,
     emoji: '🌵',
+    size: 'mediana',
   },
   {
     sku: 'PL-TOMILLO',
@@ -1931,9 +2077,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Tomillo de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Sol pleno', water: 'Diario o interdiario', difficulty: 'Facil' },
     available: 0,
     emoji: '🌿',
+    size: 'pequena',
   },
   {
     sku: 'PLT-TORENIA-01',
@@ -1944,9 +2091,10 @@ export const products: Product[] = [
     price: 2.5,
     description:
       'Torenia de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Sol pleno', water: '3 veces por semana', difficulty: 'Facil' },
     available: 0,
     emoji: '🌺',
+    size: 'pequena',
   },
   {
     sku: 'PL-TRASDESCANTIA',
@@ -1957,9 +2105,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Trasdescantia de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Luz indirecta brillante', water: '1–2 veces por semana', difficulty: 'Facil' },
     available: 0,
     emoji: '🪴',
+    size: 'pequena',
   },
   {
     sku: 'PL-MILLONARIA-ZAMIOCULCA-BLANCA',
@@ -1970,9 +2119,10 @@ export const products: Product[] = [
     price: 5, // pendiente de precio en Odoo
     description:
       'Zamiculca variegada de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta', water: '2 veces por semana', difficulty: 'Media' },
+    care: { light: 'Luz baja o indirecta', water: 'Cada 10–15 días', difficulty: 'Facil' },
     available: 0,
     emoji: '🪴',
+    size: 'mediana',
   },
 ];
 

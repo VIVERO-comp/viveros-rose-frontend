@@ -1,0 +1,346 @@
+---
+// Test "Encuentra tu planta ideal" (banda del quiz del home). Tres preguntas
+// (luz, espacio, tiempo) que filtran el catalogo real en el cliente, igual
+// que /plantas: todas las tarjetas se renderizan con sus datos y el script
+// puntua y muestra las mejores. Si el stock proxy responde, lo disponible
+// hoy sube al inicio (la promesa "te decimos que hay disponible hoy").
+import Base from '../layouts/Base.astro';
+import Icon from '../components/Icon.astro';
+import ProductCard from '../components/ProductCard.astro';
+import { products } from '../data/products';
+import { factsOf } from '../data/collections';
+import { whatsappLink } from '../lib/site';
+
+const preguntas = [
+  {
+    id: 'luz',
+    titulo: '¿Cuánta luz tiene tu espacio?',
+    opciones: [
+      { valor: 'sol', label: 'Sol directo', detalle: 'Balcón, terraza o jardín a pleno sol' },
+      { valor: 'indirecta', label: 'Luz brillante sin sol directo', detalle: 'Cerca de una ventana con luz filtrada' },
+      { valor: 'baja', label: 'Poca luz', detalle: 'Pasillos, baños u oficinas con luz baja' },
+    ],
+  },
+  {
+    id: 'espacio',
+    titulo: '¿Cuánto espacio tienes?',
+    opciones: [
+      { valor: 'poco', label: 'Poco', detalle: 'Una mesa, escritorio o repisa' },
+      { valor: 'medio', label: 'Medio', detalle: 'Una esquina o el piso del apartamento' },
+      { valor: 'amplio', label: 'Amplio', detalle: 'Jardín, patio o terraza' },
+    ],
+  },
+  {
+    id: 'tiempo',
+    titulo: '¿Cuánto tiempo quieres dedicarle?',
+    opciones: [
+      { valor: 'poco', label: 'Casi nada', detalle: 'Que perdone el olvido' },
+      { valor: 'medio', label: 'Un rato a la semana', detalle: 'Riego y revisión sin complicarme' },
+      { valor: 'mucho', label: 'Me encanta cuidarlas', detalle: 'No le tengo miedo a una exigente' },
+    ],
+  },
+];
+
+const consultaWhatsApp = whatsappLink(
+  'Hola, hice el test de la planta ideal y quiero asesoría. Luz: ___ · Espacio: ___ · Tiempo: ___',
+);
+---
+
+<Base
+  title="Encuentra tu planta ideal"
+  description="Tres preguntas y te decimos qué plantas del vivero encajan con tu espacio, con disponibilidad real."
+>
+  <section class="container quiz-page">
+    <p class="quiz-kicker">Test de la planta ideal</p>
+    <h1 class="quiz-title">Encuentra tu planta ideal</h1>
+    <p class="quiz-sub">
+      Tres preguntas y te mostramos las plantas del vivero que encajan con tu espacio.
+    </p>
+
+    <div class="quiz-box" data-quiz>
+      {preguntas.map((q, i) => (
+        <section class="quiz-step" data-step={q.id} hidden={i !== 0}>
+          <p class="step-count">Pregunta {i + 1} de {preguntas.length}</p>
+          <h2>{q.titulo}</h2>
+          <div class="step-options">
+            {q.opciones.map((o) => (
+              <button type="button" class="step-option" data-answer={q.id} data-value={o.valor} data-label={o.label}>
+                <span class="option-label">{o.label}</span>
+                <span class="option-detail">{o.detalle}</span>
+              </button>
+            ))}
+          </div>
+          {i > 0 && (
+            <button type="button" class="step-back" data-back>
+              <Icon name="arrow-left" size={15} /> Anterior
+            </button>
+          )}
+        </section>
+      ))}
+
+      <section class="quiz-results" data-results hidden>
+        <p class="step-count" data-results-count></p>
+        <h2>Estas son tus plantas</h2>
+        <p class="results-answers" data-results-answers></p>
+        <div class="grid grid--4 results-grid" data-results-grid>
+          {products.map((product) => {
+            const f = factsOf(product);
+            return (
+              <div
+                data-quiz-card
+                data-sku={product.sku}
+                data-light={f.light}
+                data-size={f.size}
+                data-care={f.care}
+                data-category={f.category}
+                hidden
+              >
+                <ProductCard product={product} />
+              </div>
+            );
+          })}
+        </div>
+        <div class="results-actions">
+          <button type="button" class="btn results-again" data-restart>Volver a empezar</button>
+          <a href="/plantas" class="btn">Ver todo el catálogo</a>
+          <a href={consultaWhatsApp} class="btn btn--green" target="_blank" rel="noopener" data-wa-link>
+            <Icon name="message-circle" size={16} /> Pedir asesoría por WhatsApp
+          </a>
+        </div>
+      </section>
+    </div>
+  </section>
+</Base>
+
+<script>
+  import { fetchStock } from '../lib/stock';
+
+  const respuestas: Record<string, { valor: string; label: string }> = {};
+  const pasos = Array.from(document.querySelectorAll<HTMLElement>('[data-step]'));
+  const resultados = document.querySelector<HTMLElement>('[data-results]')!;
+  const tarjetas = Array.from(document.querySelectorAll<HTMLElement>('[data-quiz-card]'));
+  const grid = document.querySelector<HTMLElement>('[data-results-grid]')!;
+
+  const MAX_RESULTADOS = 8;
+
+  // Disponibilidad real del proxy (sku -> unidades). Se pide una sola vez al
+  // cargar; si el proxy no responde, el test funciona igual sin ese dato.
+  let stock: Map<string, number> | null = null;
+  fetchStock(tarjetas.map((t) => t.dataset.sku!)).then((items) => {
+    if (items) stock = new Map(items.map((i) => [i.sku, i.available]));
+  });
+
+  function puntuar(card: HTMLElement): number {
+    const luz = respuestas.luz?.valor;
+    const espacio = respuestas.espacio?.valor;
+    const tiempo = respuestas.tiempo?.valor;
+    const light = (card.dataset.light ?? '').toLowerCase();
+    const size = card.dataset.size ?? '';
+    const care = card.dataset.care ?? '';
+    let puntos = 0;
+
+    // La luz es lo que mas mata plantas: pesa doble.
+    if (luz === 'sol' && /sol/.test(light)) puntos += 2;
+    if (luz === 'indirecta' && /indirect|filtrad|brillante|media/.test(light)) puntos += 2;
+    if (luz === 'baja' && /baja|sombra|poca/.test(light)) puntos += 2;
+
+    if (espacio === 'poco' && size === 'pequena') puntos += 1;
+    if (espacio === 'medio' && size === 'mediana') puntos += 1;
+    if (espacio === 'amplio' && (size === 'grande' || card.dataset.category === 'exterior')) puntos += 1;
+
+    if (tiempo === 'poco' && care === 'Facil') puntos += 1;
+    if (tiempo === 'medio' && (care === 'Facil' || care === 'Media')) puntos += 1;
+    if (tiempo === 'mucho' && (care === 'Media' || care === 'Exigente')) puntos += 1;
+
+    return puntos;
+  }
+
+  function mostrarResultados() {
+    // Si falta alguna respuesta (p.ej. tras un recargo a mitad del test), se
+    // vuelve a esa pregunta en vez de fallar.
+    const faltante = pasos.findIndex((p) => !respuestas[p.dataset.step!]);
+    if (faltante !== -1) {
+      irAPaso(faltante);
+      return;
+    }
+
+    pasos.forEach((p) => (p.hidden = true));
+
+    const puntuadas = tarjetas
+      .map((card) => {
+        const disponible = stock?.get(card.dataset.sku!) ?? null;
+        let puntos = puntuar(card);
+        // Lo que hay hoy en el vivero sube; lo agotado confirmado baja.
+        if (disponible !== null) puntos += disponible > 0 ? 2 : -3;
+        return { card, puntos };
+      })
+      .sort((a, b) => b.puntos - a.puntos);
+
+    const minimo = puntuadas[0] && puntuadas[0].puntos >= 2 ? 2 : 0;
+    const elegidas = puntuadas.filter((p) => p.puntos > minimo - 1).slice(0, MAX_RESULTADOS);
+
+    tarjetas.forEach((c) => (c.hidden = true));
+    elegidas.forEach(({ card }) => {
+      card.hidden = false;
+      grid.appendChild(card); // en orden de puntaje
+    });
+
+    const n = elegidas.length;
+    document.querySelector('[data-results-count]')!.textContent =
+      n > 0 ? `${n} ${n === 1 ? 'planta encaja' : 'plantas encajan'} contigo` : 'Resultado';
+    document.querySelector('[data-results-answers]')!.textContent =
+      `Luz: ${respuestas.luz.label} · Espacio: ${respuestas.espacio.label} · Tiempo: ${respuestas.tiempo.label}`;
+
+    // El enlace de WhatsApp sale con las respuestas ya puestas.
+    const wa = document.querySelector<HTMLAnchorElement>('[data-wa-link]');
+    if (wa) {
+      const texto = `Hola, hice el test de la planta ideal y quiero asesoría. Luz: ${respuestas.luz.label} · Espacio: ${respuestas.espacio.label} · Tiempo: ${respuestas.tiempo.label}`;
+      const url = new URL(wa.href);
+      url.searchParams.set('text', texto);
+      wa.href = url.toString();
+    }
+
+    resultados.hidden = false;
+    resultados.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function irAPaso(indice: number) {
+    resultados.hidden = true;
+    pasos.forEach((p, i) => (p.hidden = i !== indice));
+  }
+
+  document.querySelectorAll<HTMLButtonElement>('[data-answer]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      respuestas[btn.dataset.answer!] = { valor: btn.dataset.value!, label: btn.dataset.label! };
+      const indice = pasos.findIndex((p) => p.dataset.step === btn.dataset.answer);
+      if (indice < pasos.length - 1) irAPaso(indice + 1);
+      else mostrarResultados();
+    });
+  });
+
+  document.querySelectorAll<HTMLButtonElement>('[data-back]').forEach((btn) =>
+    btn.addEventListener('click', () => {
+      const indice = pasos.findIndex((p) => !p.hidden);
+      if (indice > 0) irAPaso(indice - 1);
+    }),
+  );
+
+  document.querySelector('[data-restart]')?.addEventListener('click', () => irAPaso(0));
+</script>
+
+<style>
+  .quiz-page {
+    padding-top: 3.4rem;
+    padding-bottom: 4.6rem;
+  }
+
+  .quiz-kicker {
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--green-deep);
+    margin: 0 0 0.85rem;
+  }
+
+  .quiz-title {
+    font-weight: 400;
+    font-size: clamp(2rem, 4vw, 2.9rem);
+    line-height: 1.08;
+    margin: 0 0 0.85rem;
+  }
+
+  .quiz-sub {
+    font-size: 1.05rem;
+    color: var(--ink-soft);
+    max-width: 34rem;
+    margin: 0 0 2.3rem;
+  }
+
+  .quiz-step[hidden],
+  .quiz-results[hidden] { display: none; }
+
+  .step-count {
+    font-size: 0.72rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin: 0 0 0.55rem;
+  }
+
+  .quiz-step h2,
+  .quiz-results h2 {
+    font-size: clamp(1.5rem, 3vw, 2rem);
+    margin: 0 0 1.4rem;
+  }
+
+  .step-options {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.15rem;
+    max-width: 60rem;
+  }
+
+  .step-option {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.4rem;
+    text-align: left;
+    padding: 1.4rem;
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius-lg);
+    background: var(--bg);
+    cursor: pointer;
+    font-family: var(--font-ui);
+    color: var(--ink);
+  }
+
+  .step-option:hover {
+    background: var(--green-tint);
+    border-color: var(--green);
+  }
+
+  .option-label { font-size: 1.05rem; font-weight: 600; }
+  .option-detail { font-size: 0.85rem; color: var(--ink-soft); }
+
+  .step-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    margin-top: 1.7rem;
+    border: 0;
+    background: transparent;
+    font-family: var(--font-ui);
+    font-size: 0.88rem;
+    color: var(--ink-soft);
+    text-decoration: underline;
+    cursor: pointer;
+    padding: 0;
+  }
+
+  .results-answers {
+    font-size: 0.9rem;
+    color: var(--ink-soft);
+    margin: -0.85rem 0 1.7rem;
+  }
+
+  .results-grid { margin-bottom: 2.3rem; }
+  .results-grid [data-quiz-card][hidden] { display: none; }
+
+  .results-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.85rem;
+  }
+
+  .results-again {
+    border: 1px solid var(--line-strong);
+    background: var(--bg);
+  }
+
+  @media (max-width: 768px) {
+    .step-options { grid-template-columns: 1fr; }
+    .results-actions { flex-direction: column; align-items: stretch; }
+    .results-actions .btn { justify-content: center; }
+  }
+</style>

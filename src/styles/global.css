@@ -227,7 +227,10 @@ input::placeholder { color: rgba(27, 42, 31, 0.45); }
 }
 
 @media (max-width: 560px) {
-  .grid--4, .grid--3, .grid--2 { grid-template-columns: 1fr; }
+  /* Los productos se quedan en 2 columnas en celular (referencia Lively Root
+     movil); solo las grillas de contenido caen a 1 columna. */
+  .grid--4 { grid-template-columns: repeat(2, 1fr); gap: 0.7rem; }
+  .grid--3, .grid--2 { grid-template-columns: 1fr; }
 }
 
 /* Badges de stock (colores del handoff; las clases y data-attrs no cambian
