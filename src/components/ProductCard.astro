@@ -20,11 +20,26 @@ const outOfStock = product.available <= 0;
 
 <article class="product-tile">
   <a href={url} class="tile-link">
-    <!-- FOTO PENDIENTE: producto {product.sku} — proporcion 4:5, minimo 640×800 px.
-         El diseno usa una segunda foto que aparece al pasar el cursor (opacity 0→1
-         en 0.4s); se conecta cuando existan las fotos reales. -->
-    <div class="tile-photo" data-medidas="Foto 4:5 · 640×800" aria-hidden="true">
-      {product.emoji}
+    <!-- Foto del producto con la segunda foto en hover (opacity 0→1 en 0.4s,
+         como el handoff). Si el producto aun no tiene foto, queda el emoji. -->
+    <div
+      class="tile-photo"
+      data-medidas={product.image ? undefined : 'Foto 4:5 · 640×800'}
+      aria-hidden="true"
+    >
+      {product.image ? (
+        <>
+          <div class="tile-photo-img" style={`background-image: url('${product.image}');`} />
+          {product.imageHover && (
+            <div
+              class="tile-photo-img tile-photo-hover"
+              style={`background-image: url('${product.imageHover}');`}
+            />
+          )}
+        </>
+      ) : (
+        product.emoji
+      )}
     </div>
     <div class="tile-overlay" aria-hidden="true"></div>
     <div class="tile-info">
@@ -109,7 +124,22 @@ const outOfStock = product.available <= 0;
     background: var(--surface-2);
   }
 
-  .tile-photo::after {
+  .tile-photo-img {
+    position: absolute;
+    inset: 0;
+    background-size: cover;
+    background-position: center;
+  }
+
+  .tile-photo-hover {
+    opacity: 0;
+    transition: opacity 0.4s ease;
+  }
+
+  .product-tile:hover .tile-photo-hover { opacity: 1; }
+
+  /* La pastilla de medidas solo aparece en tarjetas que aun no tienen foto. */
+  .tile-photo[data-medidas]::after {
     content: attr(data-medidas);
     position: absolute;
     left: 50%;

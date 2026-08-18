@@ -175,8 +175,11 @@ const PAGE_SIZE = 8;
     <div class="popular-grid">
       {popular.map((c) => (
         <a href={`/plantas?c=${c.slug}`} class="popular-tile">
-          <!-- FOTO PENDIENTE: coleccion — cuadrada, minimo 400×400 px -->
-          <div class="popular-photo" data-medidas="Foto 1:1 · 400×400" aria-hidden="true"></div>
+          <div
+            class="popular-photo"
+            style={c.image ? `background-image: url('${c.image}'); background-size: cover; background-position: center;` : undefined}
+            aria-hidden="true"
+          ></div>
           <span>{c.name}</span>
         </a>
       ))}
@@ -703,7 +706,8 @@ const PAGE_SIZE = 8;
     background: linear-gradient(160deg, var(--green-tint), var(--surface-2));
   }
 
-  .popular-photo::after {
+  /* La pastilla de medidas solo aparece en tiles sin foto. */
+  .popular-photo[data-medidas]::after {
     content: attr(data-medidas);
     position: absolute;
     left: 50%;

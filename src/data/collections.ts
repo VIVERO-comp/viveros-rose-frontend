@@ -130,6 +130,7 @@ export const collections: CollectionDef[] = [
   // Tipos de planta del diseno (filtros por nombre sobre el catalogo real).
   {
     slug: 'rosales',
+    image: '/fotos_colecciones/rosales.jpeg',
     name: 'Rosales',
     blurb: 'Rosales de vivero para jardineras con sol de mañana.',
     test: (p) => /rosa/i.test(p.name),

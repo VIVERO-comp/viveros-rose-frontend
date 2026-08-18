@@ -31,8 +31,11 @@ import { events } from '../../data/events';
       {
         events.map((e) => (
           <a href={`/eventos/${e.slug}`} class="service-card">
-            <!-- FOTO PENDIENTE: evento {e.slug} — 4:3, minimo 800×600 px -->
-            <div class="service-photo" data-medidas="Foto 4:3 · 800×600" aria-hidden="true" />
+            <div
+              class="service-photo"
+              style={`background-image: url('/fotos_eventos/${e.slug}.jpg'); background-size: cover; background-position: center;`}
+              aria-hidden="true"
+            />
             <div class="service-copy">
               <h2>{e.name}</h2>
               <p>{e.cardLine}</p>
@@ -129,22 +132,6 @@ import { events } from '../../data/events';
     position: relative;
     aspect-ratio: 4 / 3;
     background: var(--surface-2);
-  }
-
-  .service-photo::after {
-    content: attr(data-medidas);
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
-    font-size: 0.6rem;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: rgba(27, 42, 31, 0.5);
-    background: rgba(238, 245, 240, 0.85);
-    padding: 2px 7px;
-    border-radius: 999px;
-    white-space: nowrap;
   }
 
   .service-copy {

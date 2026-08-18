@@ -36,6 +36,10 @@ export interface Product {
   // mascotas en vez de mostrar un dato inventado. Solo esta definido en las
   // especies cuya toxicidad es conocida; completar el resto con el equipo.
   petFriendly?: boolean;
+  // Foto del producto y foto alterna que aparece al pasar el cursor (hover
+  // de la tarjeta del handoff). Si faltan, la tarjeta muestra el emoji.
+  image?: string;
+  imageHover?: string;
   // Porte de la planta tal como se vende (filtro "Tamano" del catalogo).
   // Valores iniciales estimados por el nombre/descripcion; revisar con el
   // equipo del vivero. Si falta, el filtro de tamano no muestra el producto.
@@ -69,6 +73,8 @@ export const products: Product[] = [
   {
     sku: 'PL-AGAVE-GIGANTE',
     slug: 'agave-gigante',
+    image: '/fotos_productos/agave-gigante.jpg',
+    imageHover: '/fotos_productos/agave-gigante_hover.jpg',
     category: 'exterior',
     name: 'Agave gigante',
     scientificName: '',
@@ -111,6 +117,7 @@ export const products: Product[] = [
   {
     sku: 'PL-ALBAHACA-ROJA',
     slug: 'albahaca-roja',
+    image: '/fotos_productos/albahaca-roja.jpg',
     category: 'exterior',
     name: 'Albahaca roja',
     scientificName: '',
@@ -125,6 +132,8 @@ export const products: Product[] = [
   {
     sku: 'PL-ALBAHACA-VERDE',
     slug: 'albahaca-verde',
+    image: '/fotos_productos/albahaca-verde.jpg',
+    imageHover: '/fotos_productos/albahaca-verde_hover.jpg',
     category: 'exterior',
     name: 'Albahaca verde',
     scientificName: '',
@@ -419,6 +428,8 @@ export const products: Product[] = [
   {
     sku: 'PLT-CHAVELITAS-01',
     slug: 'chavelitas',
+    image: '/fotos_productos/chavelitas.jpg',
+    imageHover: '/fotos_productos/chavelitas_hover.jpg',
     category: 'florales',
     name: 'Chavelitas',
     scientificName: '',
@@ -2029,6 +2040,7 @@ export const products: Product[] = [
   {
     sku: 'PL-SUCULENTA-PEQUENA',
     slug: 'suculenta-pequena',
+    image: '/fotos_productos/suculenta-pequena.webp',
     category: 'interior',
     name: 'Suculenta pequena',
     scientificName: '',
@@ -2085,6 +2097,8 @@ export const products: Product[] = [
   {
     sku: 'PLT-TORENIA-01',
     slug: 'torenia',
+    image: '/fotos_productos/torenia.jpg',
+    imageHover: '/fotos_productos/torenia_hover.jpg',
     category: 'florales',
     name: 'Torenia',
     scientificName: '',
