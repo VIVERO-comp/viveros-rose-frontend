@@ -44,13 +44,11 @@ const fotosResenas = [...(product.gallery ?? []), product.image, product.imageHo
   .filter((f): f is string => Boolean(f))
   .slice(0, 6);
 
-// Similares para el slider "Te podrian gustar": misma categoria primero,
-// 9 en total (tres paginas de tres tarjetas). No se filtra por available
-// porque en los datos estaticos siempre es 0: el stock real lo pinta el
-// proxy en el navegador sobre cada tarjeta.
+// Similares del carrusel "Te podrian gustar": SOLO de la misma coleccion
+// (categoria) del producto. No se filtra por available porque en los datos
+// estaticos siempre es 0: el stock real lo pinta el proxy en el navegador.
 const similares = products
-  .filter((p) => p.slug !== product.slug)
-  .sort((a, b) => Number(b.category === product.category) - Number(a.category === product.category))
+  .filter((p) => p.slug !== product.slug && p.category === product.category)
   .slice(0, 9);
 
 const SIZES = [
@@ -405,22 +403,33 @@ const STAR_PATH =
     similares.length > 0 && (
       <section id="similares" class="container similares-section">
         <h2 class="similares-title">Te podrían gustar</h2>
-        <div class="similares-wrap">
-          <button type="button" class="sim-arrow sim-arrow--prev" data-sim-prev aria-label="Ver anteriores">
-            <Icon name="chevron-left" size={20} />
-          </button>
-          <div class="similares-track" data-sim-track>
-            {similares.map((p) => (
-              <div class="similares-item">
+        <div class="carrusel" data-carrusel aria-roledescription="carrusel" aria-label="Plantas similares">
+          <div class="carrusel-escenario" data-escenario>
+            {similares.map((p, i) => (
+              <div class="lamina" data-lamina data-indice={i}>
                 <ProductCard product={p} />
               </div>
             ))}
           </div>
-          <button type="button" class="sim-arrow sim-arrow--next" data-sim-next aria-label="Ver siguientes">
+          <button type="button" class="sim-arrow sim-arrow--prev" data-sim-prev aria-label="Anterior">
+            <Icon name="chevron-left" size={20} />
+          </button>
+          <button type="button" class="sim-arrow sim-arrow--next" data-sim-next aria-label="Siguiente">
             <Icon name="chevron-right" size={20} />
           </button>
+          <div class="similares-dots" role="tablist" aria-label="Elegir planta">
+            {similares.map((_, i) => (
+              <button
+                type="button"
+                role="tab"
+                data-sim-dot
+                data-indice={i}
+                aria-label={`Ir a la planta ${i + 1}`}
+                aria-selected={i === 0 ? 'true' : 'false'}
+              />
+            ))}
+          </div>
         </div>
-        <div class="similares-dots" data-sim-dots></div>
       </section>
     )
   }
@@ -634,44 +643,80 @@ const STAR_PATH =
   document.querySelector('[data-gallery-prev]')?.addEventListener('click', () => selectPhoto(current - 1));
   document.querySelector('[data-gallery-next]')?.addEventListener('click', () => selectPhoto(current + 1));
 
-  // Slider de similares: las flechas avanzan una "pagina" (ancho visible +
-  // gap) y las bolitas marcan la pagina activa y navegan al tocarlas.
-  const simTrack = document.querySelector<HTMLElement>('[data-sim-track]');
-  const simDots = document.querySelector<HTMLElement>('[data-sim-dots]');
-  const pasoSimilares = () =>
-    simTrack ? simTrack.clientWidth + parseFloat(getComputedStyle(simTrack).columnGap || '0') : 0;
+  // Carrusel "center mode" de similares: la lamina central grande y las
+  // laterales pequenas y semitransparentes. Flechas, bolitas, teclado,
+  // deslizar con el dedo y clic en una lateral para traerla al centro.
+  const carrusel = document.querySelector<HTMLElement>('[data-carrusel]');
+  if (carrusel) {
+    const laminas = Array.from(carrusel.querySelectorAll<HTMLElement>('[data-lamina]'));
+    const bolitas = Array.from(carrusel.querySelectorAll<HTMLElement>('[data-sim-dot]'));
+    const total = laminas.length;
+    let activo = 0;
 
-  function pintarBolitas() {
-    if (!simTrack || !simDots) return;
-    const paso = pasoSimilares();
-    const gap = parseFloat(getComputedStyle(simTrack).columnGap || '0');
-    // El -0.02 evita una pagina fantasma por redondeo de subpixeles.
-    const paginas = Math.max(1, Math.ceil((simTrack.scrollWidth + gap) / paso - 0.02));
-    const activa = Math.min(paginas - 1, Math.round(simTrack.scrollLeft / paso));
-    if (simDots.children.length !== paginas) {
-      simDots.innerHTML = '';
-      for (let i = 0; i < paginas; i++) {
-        const bolita = document.createElement('button');
-        bolita.type = 'button';
-        bolita.setAttribute('aria-label', `Ir a la página ${i + 1}`);
-        bolita.addEventListener('click', () =>
-          simTrack!.scrollTo({ left: i * pasoSimilares(), behavior: 'smooth' }),
-        );
-        simDots.appendChild(bolita);
-      }
-    }
-    Array.from(simDots.children).forEach((d, i) => d.classList.toggle('active', i === activa));
+    // Distancia con vuelta circular (la lamina 8 queda a -1 de la 0).
+    const distancia = (i: number) => {
+      let d = i - activo;
+      if (d > total / 2) d -= total;
+      if (d < -total / 2) d += total;
+      return d;
+    };
+
+    const pintar = () => {
+      laminas.forEach((lamina, i) => {
+        const d = distancia(i);
+        const lado = Math.sign(d);
+        const lejos = Math.abs(d) > 1;
+        lamina.style.setProperty('--x', `${lado * (lejos ? 110 : 88) * Math.min(Math.abs(d), 1)}%`);
+        lamina.style.setProperty('--s', d === 0 ? '1' : lejos ? '0.45' : 'var(--escala-lateral)');
+        lamina.style.setProperty('--o', d === 0 ? '1' : lejos ? '0' : 'var(--opacidad-lateral)');
+        lamina.style.setProperty('--z', String(30 - Math.abs(d) * 10));
+        lamina.classList.toggle('lamina--activa', d === 0);
+        lamina.setAttribute('aria-hidden', d === 0 ? 'false' : 'true');
+      });
+      bolitas.forEach((b, i) => b.setAttribute('aria-selected', i === activo ? 'true' : 'false'));
+    };
+
+    const ir = (i: number) => {
+      activo = ((i % total) + total) % total;
+      pintar();
+    };
+
+    carrusel.querySelector('[data-sim-prev]')?.addEventListener('click', () => ir(activo - 1));
+    carrusel.querySelector('[data-sim-next]')?.addEventListener('click', () => ir(activo + 1));
+    bolitas.forEach((b, i) => b.addEventListener('click', () => ir(i)));
+
+    // Clic en una lamina lateral: la trae al centro sin abrir su enlace.
+    laminas.forEach((lamina, i) => {
+      lamina.addEventListener(
+        'click',
+        (ev) => {
+          if (i !== activo) {
+            ev.preventDefault();
+            ev.stopPropagation();
+            ir(i);
+          }
+        },
+        true,
+      );
+    });
+
+    carrusel.addEventListener('keydown', (ev: KeyboardEvent) => {
+      if (ev.key === 'ArrowLeft') { ev.preventDefault(); ir(activo - 1); }
+      if (ev.key === 'ArrowRight') { ev.preventDefault(); ir(activo + 1); }
+    });
+
+    // Deslizar con el dedo o el mouse.
+    let inicioX: number | null = null;
+    carrusel.addEventListener('pointerdown', (ev: PointerEvent) => { inicioX = ev.clientX; });
+    carrusel.addEventListener('pointerup', (ev: PointerEvent) => {
+      if (inicioX === null) return;
+      const dx = ev.clientX - inicioX;
+      inicioX = null;
+      if (Math.abs(dx) > 45) ir(activo + (dx < 0 ? 1 : -1));
+    });
+
+    pintar();
   }
-
-  document.querySelector('[data-sim-prev]')?.addEventListener('click', () => {
-    simTrack?.scrollBy({ left: -pasoSimilares(), behavior: 'smooth' });
-  });
-  document.querySelector('[data-sim-next]')?.addEventListener('click', () => {
-    simTrack?.scrollBy({ left: pasoSimilares(), behavior: 'smooth' });
-  });
-  simTrack?.addEventListener('scroll', pintarBolitas, { passive: true });
-  window.addEventListener('resize', pintarBolitas);
-  pintarBolitas();
 
   // Acordeones y filas de cuidado: apertura independiente, sin exclusivos.
   document.querySelectorAll<HTMLButtonElement>('[data-acc-toggle]').forEach((btn) => {
@@ -792,18 +837,53 @@ const STAR_PATH =
   /* Miniaturas con foto real: sin numero, la imagen llena el boton. */
   .thumb--foto { overflow: hidden; }
 
-  /* Slider de similares: flechas centradas a los lados y bolitas debajo. */
+  /* Carrusel "center mode" de similares: la tarjeta central grande, las de
+     los lados pequenas y recortadas por el borde, bolitas debajo. */
   .similares-section { padding-top: 2.3rem; }
 
   .similares-title { font-size: 27px; margin: 0 0 1.15rem; }
 
-  .similares-wrap { position: relative; }
+  .carrusel {
+    --ancho-central: 34%; /* ancho de la tarjeta grande respecto al escenario */
+    --escala-lateral: 0.62;
+    --opacidad-lateral: 0.55;
+    position: relative;
+    padding-bottom: 2.5rem;
+    user-select: none;
+    touch-action: pan-y;
+  }
+
+  /* La altura sale del ancho (la tarjeta central mide 34% del escenario y
+     es 4:5 + su texto), asi nunca se recorta abajo. */
+  .carrusel-escenario {
+    position: relative;
+    aspect-ratio: 1.72;
+    overflow: hidden;
+  }
+
+  .lamina {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: var(--ancho-central);
+    transform: translate(-50%, -50%) translateX(var(--x, 0%)) scale(var(--s, 1));
+    opacity: var(--o, 1);
+    z-index: var(--z, 1);
+    transition:
+      transform 520ms cubic-bezier(0.22, 0.61, 0.36, 1),
+      opacity 520ms cubic-bezier(0.22, 0.61, 0.36, 1);
+    will-change: transform, opacity;
+  }
+
+  /* La tarjeta lateral entera lleva al centro al hacerle clic. */
+  .lamina:not(.lamina--activa) { cursor: pointer; }
 
   .sim-arrow {
     position: absolute;
-    top: 50%;
+    /* centro vertical del escenario (el carrusel reserva 2.5rem abajo). */
+    top: calc((100% - 2.5rem) / 2);
     transform: translateY(-50%);
-    z-index: 2;
+    z-index: 40;
     width: 42px;
     height: 42px;
     border-radius: 50%;
@@ -815,21 +895,24 @@ const STAR_PATH =
     justify-content: center;
     cursor: pointer;
     box-shadow: 0 6px 18px rgba(27, 42, 31, 0.3);
+    transition: background 180ms ease;
   }
 
   .sim-arrow:hover { background: var(--green-deep); }
 
-  .sim-arrow--prev { left: -10px; }
-  .sim-arrow--next { right: -10px; }
+  .sim-arrow--prev { left: 4px; }
+  .sim-arrow--next { right: 4px; }
 
   .similares-dots {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
     display: flex;
-    justify-content: center;
     gap: 8px;
-    margin-top: 1.15rem;
   }
 
-  .similares-dots :global(button) {
+  .similares-dots button {
     width: 8px;
     height: 8px;
     border-radius: 50%;
@@ -840,30 +923,24 @@ const STAR_PATH =
     transition: background 0.2s ease, transform 0.2s ease;
   }
 
-  .similares-dots :global(button.active) {
+  .similares-dots button[aria-selected='true'] {
     background: var(--green-deep);
-    transform: scale(1.3);
+    transform: scale(1.35);
   }
 
-  /* Sin scroll-snap: en Chrome el snap obligatorio cancela el scroll suave
-     de las flechas; las paginas alinean porque el paso se calcula exacto. */
-  .similares-track {
-    display: grid;
-    grid-auto-flow: column;
-    grid-auto-columns: calc((100% - 2 * 18.4px) / 3);
-    gap: 18.4px;
-    overflow-x: auto;
-    scrollbar-width: none;
-    padding-bottom: 4px;
-  }
-
-  .similares-track::-webkit-scrollbar { display: none; }
 
   @media (max-width: 768px) {
-    .similares-track { grid-auto-columns: 78%; }
+    .carrusel {
+      --ancho-central: 68%;
+      --escala-lateral: 0.55;
+      --opacidad-lateral: 0.4;
+    }
+    .carrusel-escenario { aspect-ratio: 0.85; }
     .sim-arrow { width: 36px; height: 36px; }
-    .sim-arrow--prev { left: -4px; }
-    .sim-arrow--next { right: -4px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .lamina { transition-duration: 1ms; }
   }
 
   /* La pastilla de medidas solo aparece cuando aun no hay fotos reales. */
