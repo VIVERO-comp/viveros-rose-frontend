@@ -17,8 +17,7 @@ const { selectedSlug, whatsappMessage = 'Hola, quiero una cotización de servici
 <section class="container contact-split-wrap">
   <div class="contact-split">
     <div class="contact-photo-col">
-      <!-- FOTO PENDIENTE: lateral del formulario — vertical, minimo 640×760 px -->
-      <div class="contact-photo" data-medidas="Foto · 640×760" aria-hidden="true"></div>
+      <div class="contact-photo" style="background-image: url('/fotos_servicios/banda_servicios.jpeg'); background-size: cover; background-position: center;" aria-hidden="true"></div>
       <div class="contact-scrim" aria-hidden="true"></div>
       <div class="contact-copy">
         <h2>Cuéntanos sobre tu proyecto</h2>
@@ -99,22 +98,6 @@ const { selectedSlug, whatsappMessage = 'Hola, quiero una cotización de servici
     position: absolute;
     inset: 0;
     background: linear-gradient(150deg, #2a4432, var(--card-dark) 70%);
-  }
-
-  .contact-photo::after {
-    content: attr(data-medidas);
-    position: absolute;
-    right: 12px;
-    top: 12px;
-    z-index: 1;
-    font-size: 0.6rem;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: rgba(238, 245, 240, 0.7);
-    background: rgba(27, 42, 31, 0.55);
-    padding: 2px 8px;
-    border-radius: 999px;
-    white-space: nowrap;
   }
 
   .contact-scrim {

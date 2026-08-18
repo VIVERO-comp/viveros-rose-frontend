@@ -7,8 +7,7 @@ import Icon from './Icon.astro';
 
 <section class="container obra-wrap">
   <div class="obra-band">
-    <!-- FOTO PENDIENTE: proyecto comercial en obra — vertical/apaisada, minimo 900×700 px -->
-    <div class="obra-photo" data-medidas="Foto · 900×700" aria-hidden="true"></div>
+    <div class="obra-photo" style="background-image: url('/fotos_mayorista/hero.jpeg'); background-size: cover; background-position: center;" aria-hidden="true"></div>
     <div class="obra-copy">
       <p class="obra-kicker">Mayoristas y proyectos</p>
       <h2>¿Compras por volumen o planeas un proyecto comercial?</h2>
@@ -65,20 +64,6 @@ import Icon from './Icon.astro';
       rgba(30, 51, 36, 0.4) 45%,
       rgba(30, 51, 36, 0.12) 100%
     );
-  }
-
-  .obra-photo::after {
-    content: attr(data-medidas);
-    position: absolute;
-    right: 14px;
-    top: 14px;
-    font-size: 0.62rem;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: rgba(238, 245, 240, 0.65);
-    background: rgba(27, 42, 31, 0.55);
-    padding: 2px 8px;
-    border-radius: 999px;
   }
 
   .obra-copy { position: relative; }

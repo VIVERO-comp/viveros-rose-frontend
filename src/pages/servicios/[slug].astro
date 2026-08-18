@@ -83,11 +83,14 @@ const { service } = Astro.props;
     <div class="container">
       <span class="eyebrow">Proyectos recientes</span>
       <h2 class="gallery-title">Cómo se ve el trabajo terminado</h2>
-      <!-- FOTOS PENDIENTES: {service.galleryCount} proyectos de {service.slug} — bloques de minimo 480×300 px c/u -->
       <div class="ev-gallery">
         {
-          Array.from({ length: service.galleryCount }, () => (
-            <div class="gallery-photo" data-medidas="Foto · 480×300" aria-hidden="true" />
+          service.gallery.map((foto) => (
+            <div
+              class="gallery-photo"
+              style={`background-image: url('${foto}'); background-size: cover; background-position: center;`}
+              aria-hidden="true"
+            />
           ))
         }
       </div>
@@ -136,7 +139,6 @@ const { service } = Astro.props;
 
   .ev-hero-photo::after,
   .ev-photo::after,
-  .gallery-photo::after,
   .contact-photo::after {
     content: attr(data-medidas);
     position: absolute;

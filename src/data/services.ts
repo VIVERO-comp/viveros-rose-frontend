@@ -17,8 +17,8 @@ export interface Service {
   incluye: string[];
   // Tres tarjetas informativas (icono de Icon.astro, titulo y texto).
   cards: { icon: string; title: string; body: string }[];
-  // Cantidad de huecos de la galeria "Proyectos recientes".
-  galleryCount: number;
+  // Fotos de la galeria "Proyectos recientes" (rutas bajo /public).
+  gallery: string[];
   whatsappMessage: string;
   metaTitle: string;
   metaDescription: string;
@@ -58,7 +58,12 @@ export const services: Service[] = [
         body: 'Bordes de piedra, drenaje resuelto, riego planificado y plan por temporada.',
       },
     ],
-    galleryCount: 4,
+    gallery: [
+      '/fotos_servicios/proyectos/casa_vista_principal.jpg',
+      '/fotos_servicios/proyectos/casa_club.jpg',
+      '/fotos_servicios/proyectos/jardin_piedras.jpg',
+      '/fotos_servicios/proyectos/jardin_rocas.jpg',
+    ],
     whatsappMessage: 'Hola, quiero iniciar un proyecto de diseño de jardín.',
     metaTitle: 'Diseño de jardines',
     metaDescription:
@@ -97,7 +102,12 @@ export const services: Service[] = [
         body: 'Reponemos plantas cuando hace falta en PH, oficinas y locales comerciales.',
       },
     ],
-    galleryCount: 4,
+    gallery: [
+      '/fotos_servicios/proyectos/casa_club.jpg',
+      '/fotos_servicios/proyectos/entrada_residencial.jpg',
+      '/fotos_servicios/proyectos/casa_vista_principal.jpg',
+      '/fotos_servicios/proyectos/jardin_rocas.jpg',
+    ],
     whatsappMessage: 'Hola, quiero agendar un servicio de mantenimiento de jardín.',
     metaTitle: 'Mantenimiento de jardines',
     metaDescription:
@@ -136,7 +146,12 @@ export const services: Service[] = [
         body: 'El área verde sigue viéndose como el día de la entrega del proyecto.',
       },
     ],
-    galleryCount: 4,
+    gallery: [
+      '/fotos_servicios/proyectos/entrada_residencial.jpg',
+      '/fotos_servicios/proyectos/casa_club.jpg',
+      '/fotos_servicios/proyectos/jardin_piedras.jpg',
+      '/fotos_servicios/proyectos/casa_vista_principal.jpg',
+    ],
     whatsappMessage: 'Hola, quiero cotizar un proyecto comercial de áreas verdes.',
     metaTitle: 'Proyectos comerciales de áreas verdes',
     metaDescription:

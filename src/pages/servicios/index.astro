@@ -14,8 +14,7 @@ import { services } from '../../data/services';
   whatsappMessage="Hola, me interesa una cotización de paisajismo."
 >
   <section class="svc-hero">
-    <!-- FOTO PENDIENTE: banda de servicios — a lo ancho, minimo 1920×220 px -->
-    <div class="svc-hero-photo" data-medidas="Foto banda · 1920×220" aria-hidden="true"></div>
+    <div class="svc-hero-photo" style="background-image: url('/fotos_servicios/banda_servicios.jpeg'); background-size: cover; background-position: center;" aria-hidden="true"></div>
     <div class="svc-hero-scrim" aria-hidden="true"></div>
     <div class="container svc-hero-inner">
       <p class="svc-crumb"><a href="/">Inicio</a> / Servicios</p>
@@ -32,8 +31,11 @@ import { services } from '../../data/services';
       {
         services.map((s) => (
           <a href={`/servicios/${s.slug}`} class="service-card">
-            <!-- FOTO PENDIENTE: servicio {s.slug} — 4:3, minimo 800×600 px -->
-            <div class="service-photo" data-medidas="Foto 4:3 · 800×600" aria-hidden="true" />
+            <div
+              class="service-photo"
+              style={`background-image: url('/fotos_servicios/${s.slug}.jpeg'); background-size: cover; background-position: center;`}
+              aria-hidden="true"
+            />
             <div class="service-copy">
               <h2>{s.name}</h2>
               <p>{s.cardLine}</p>
@@ -66,20 +68,6 @@ import { services } from '../../data/services';
     position: absolute;
     inset: 0;
     background: linear-gradient(150deg, #2a4432, var(--card-dark) 70%);
-  }
-
-  .svc-hero-photo::after {
-    content: attr(data-medidas);
-    position: absolute;
-    right: 14px;
-    top: 14px;
-    font-size: 0.62rem;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: rgba(238, 245, 240, 0.65);
-    background: rgba(27, 42, 31, 0.55);
-    padding: 2px 8px;
-    border-radius: 999px;
   }
 
   .svc-hero-scrim {
@@ -144,22 +132,6 @@ import { services } from '../../data/services';
     position: relative;
     aspect-ratio: 4 / 3;
     background: var(--surface-2);
-  }
-
-  .service-photo::after {
-    content: attr(data-medidas);
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
-    font-size: 0.6rem;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: rgba(27, 42, 31, 0.5);
-    background: rgba(238, 245, 240, 0.85);
-    padding: 2px 7px;
-    border-radius: 999px;
-    white-space: nowrap;
   }
 
   .service-copy {
