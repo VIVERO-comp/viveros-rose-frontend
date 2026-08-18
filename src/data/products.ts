@@ -40,6 +40,8 @@ export interface Product {
   // de la tarjeta del handoff). Si faltan, la tarjeta muestra el emoji.
   image?: string;
   imageHover?: string;
+  // Fotos adicionales (galeria y fotos de clientes en la pagina de producto).
+  gallery?: string[];
   // Porte de la planta tal como se vende (filtro "Tamano" del catalogo).
   // Valores iniciales estimados por el nombre/descripcion; revisar con el
   // equipo del vivero. Si falta, el filtro de tamano no muestra el producto.
@@ -75,6 +77,7 @@ export const products: Product[] = [
     slug: 'agave-gigante',
     image: '/fotos_productos/agave-gigante.jpg',
     imageHover: '/fotos_productos/agave-gigante_hover.jpg',
+    gallery: ['/fotos_productos/agave-gigante_2.jpg'],
     category: 'exterior',
     name: 'Agave gigante',
     scientificName: '',
@@ -118,6 +121,7 @@ export const products: Product[] = [
     sku: 'PL-ALBAHACA-ROJA',
     slug: 'albahaca-roja',
     image: '/fotos_productos/albahaca-roja.jpg',
+    imageHover: '/fotos_productos/albahaca-roja_hover.jpg',
     category: 'exterior',
     name: 'Albahaca roja',
     scientificName: '',
@@ -430,6 +434,7 @@ export const products: Product[] = [
     slug: 'chavelitas',
     image: '/fotos_productos/chavelitas.jpg',
     imageHover: '/fotos_productos/chavelitas_hover.jpg',
+    gallery: ['/fotos_productos/chavelitas_2.jpg', '/fotos_productos/chavelitas_3.jpg'],
     category: 'florales',
     name: 'Chavelitas',
     scientificName: '',
@@ -2099,6 +2104,7 @@ export const products: Product[] = [
     slug: 'torenia',
     image: '/fotos_productos/torenia.jpg',
     imageHover: '/fotos_productos/torenia_hover.jpg',
+    gallery: ['/fotos_productos/torenia_2.jpg'],
     category: 'florales',
     name: 'Torenia',
     scientificName: '',

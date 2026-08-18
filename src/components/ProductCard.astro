@@ -1,9 +1,8 @@
 ---
-// Tarjeta de producto del handoff (Shop Plantas / "Va bien con…"): tesela 4:5
-// radio 20px, foto a sangre con degradado de abajo hacia arriba, contenido
-// superpuesto abajo y boton circular blanco de 36px para agregar al carrito.
-// El StockBadge se conserva tal cual (el stock proxy lo actualiza en el
-// cliente via data-sku); aqui solo cambia a texto claro sobre la foto.
+// Tarjeta de producto estilo tienda (referencia Lively Root): tarjeta clara
+// con la foto arriba, nombre y precio "Desde $" debajo, y el boton circular
+// para agregar al carrito sobre la foto. El StockBadge se conserva tal cual
+// (el stock proxy lo actualiza en el cliente via data-sku).
 import type { Product } from '../data/products';
 import { formatPrice } from '../data/products';
 import Icon from './Icon.astro';
@@ -16,6 +15,21 @@ interface Props {
 const { product } = Astro.props;
 const url = `/plantas/${product.category}/${product.slug}`;
 const outOfStock = product.available <= 0;
+
+// Prueba social provisional: las "vistas" no existen en Odoo todavia, asi
+// que se inventan de forma determinista a partir del SKU (mismo numero en
+// cada build). Sustituir por datos reales cuando existan.
+const semilla = [...product.sku].reduce((suma, letra) => suma + letra.charCodeAt(0), 0);
+const vistas = 60 + (semilla % 340);
+
+// "Mas vendida" usa la misma regla que la coleccion mas-vendidas.
+const esMasVendida = product.available >= 40;
+
+// El nombre ocupa siempre UNA linea para que las filas queden niveladas: la
+// ultima palabra sale mas chica y, si aun asi no cabe, se corta con "…".
+const palabras = product.name.split(' ');
+const nombreBase = palabras.slice(0, -1).join(' ');
+const ultimaPalabra = palabras.length > 1 ? palabras[palabras.length - 1] : '';
 ---
 
 <article class="product-tile">
@@ -40,13 +54,22 @@ const outOfStock = product.available <= 0;
       ) : (
         product.emoji
       )}
+      {esMasVendida && <span class="tile-flag">Más vendida</span>}
     </div>
-    <div class="tile-overlay" aria-hidden="true"></div>
     <div class="tile-info">
       <StockBadge sku={product.sku} available={product.available} />
-      <h3>{product.name}</h3>
+      <h3>
+        {ultimaPalabra ? (
+          <>
+            {`${nombreBase} `}<span class="name-tail">{ultimaPalabra}</span>
+          </>
+        ) : (
+          product.name
+        )}
+      </h3>
       {product.scientificName && <p class="scientific">{product.scientificName}</p>}
-      <p class="price">{formatPrice(product.price)}</p>
+      <p class="tile-views">{vistas} vistas esta semana</p>
+      <p class="price">Desde {formatPrice(product.price)}</p>
     </div>
   </a>
   {
@@ -94,34 +117,50 @@ const outOfStock = product.available <= 0;
 <style>
   .product-tile {
     position: relative;
-    aspect-ratio: 4 / 5;
+    display: flex;
+    flex-direction: column;
     border-radius: var(--radius-lg);
     overflow: hidden;
     outline: 1px solid var(--line);
-    background: var(--surface-2);
+    background: #ffffff;
   }
 
+  .product-tile:hover { outline-color: var(--green); }
+
   .tile-link {
-    position: absolute;
-    inset: 0;
     display: flex;
     flex-direction: column;
-    justify-content: flex-end;
-    color: #eef5f0;
+    flex: 1;
+    color: var(--ink);
     text-decoration: none;
   }
 
-  .tile-link:hover { text-decoration: none; color: #eef5f0; }
+  .tile-link:hover { text-decoration: none; color: var(--ink); }
   .tile-link:hover h3 { text-decoration: underline; }
 
   .tile-photo {
-    position: absolute;
-    inset: 0;
+    position: relative;
+    aspect-ratio: 4 / 5;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 3.5rem;
     background: var(--surface-2);
+  }
+
+  /* Etiqueta "Más vendida" sobre la foto, como la referencia. */
+  .tile-flag {
+    position: absolute;
+    left: 10px;
+    top: 10px;
+    font-size: 0.62rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--green-deep);
+    background: rgba(255, 255, 255, 0.92);
+    padding: 4px 10px;
+    border-radius: 999px;
   }
 
   .tile-photo-img {
@@ -155,19 +194,6 @@ const outOfStock = product.available <= 0;
     white-space: nowrap;
   }
 
-  .tile-overlay {
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(
-      to top,
-      rgba(27, 42, 31, 0.94) 0%,
-      rgba(27, 42, 31, 0.86) 34%,
-      rgba(27, 42, 31, 0.4) 72%,
-      rgba(27, 42, 31, 0) 100%
-    );
-    pointer-events: none;
-  }
-
   .tile-info {
     position: relative;
     padding: 13.8px;
@@ -175,9 +201,10 @@ const outOfStock = product.available <= 0;
     flex-direction: column;
     align-items: flex-start;
     gap: 4px;
+    flex: 1;
   }
 
-  /* Estado de stock sobre la foto: texto claro de 10px, sin relleno. */
+  /* Estado de stock: texto de 10px sin relleno, en tinta sobre blanco. */
   .tile-info :global(.badge) {
     padding: 0;
     background: transparent;
@@ -185,34 +212,46 @@ const outOfStock = product.available <= 0;
     letter-spacing: 0.12em;
   }
 
-  .tile-info :global(.badge--in-stock) { color: var(--green-light); }
-  .tile-info :global(.badge--low) { color: #ffd28a; }
-  .tile-info :global(.badge--out) { color: #d7d7d7; }
+  .tile-info :global(.badge--in-stock) { color: var(--green-deep); }
+  .tile-info :global(.badge--low) { color: #b07908; }
+  .tile-info :global(.badge--out) { color: var(--ink-faint); }
 
+  /* Nombre en UNA sola linea (la ultima palabra mas chica) para que todas
+     las filas de texto de la grilla queden alineadas. */
   h3 {
-    font-size: 17px;
+    font-size: 15px;
     font-weight: 600;
     line-height: 1.2;
     margin: 0;
-    color: #eef5f0;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
+    color: var(--ink);
+    max-width: 100%;
+    white-space: nowrap;
     overflow: hidden;
+    text-overflow: ellipsis;
   }
+
+  .name-tail { font-size: 12px; }
 
   .scientific {
     font-size: 12px;
     font-style: italic;
-    color: rgba(238, 245, 240, 0.75);
+    color: var(--ink-faint);
+    margin: 0;
+  }
+
+  .tile-views {
+    font-size: 11.5px;
+    color: var(--ink-faint);
     margin: 0;
   }
 
   .price {
     font-size: 15px;
+    font-weight: 600;
     font-variant-numeric: tabular-nums;
-    color: #eef5f0;
+    color: var(--ink);
     margin: 2px 0 0;
+    margin-top: auto;
   }
 
   .tile-add {

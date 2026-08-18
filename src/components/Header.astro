@@ -9,6 +9,7 @@
 // una sesion falsa.
 import { SITE, whatsappLink } from '../lib/site';
 import { collections } from '../data/collections';
+import { products } from '../data/products';
 import Icon from './Icon.astro';
 
 const currentPath = Astro.url.pathname;
@@ -72,6 +73,21 @@ const emptyCartCollections = ['mas-vendidas', 'interior', 'jardin', 'faciles'].m
 const menuColecciones = [
   ...['mas-vendidas', 'recien', 'pet-friendly', 'interior', 'exterior', 'faciles', 'poca-luz', 'jardin', 'ultimas'].map(col),
 ];
+// Indice ligero del buscador en vivo del navbar: nombre, ruta, precio y
+// foto (o emoji) por producto, mas las colecciones por nombre. Se sirve como
+// JSON embebido para que las sugerencias salgan sin pedir nada al servidor.
+const indiceBusqueda = {
+  productos: products.map((p) => ({
+    n: p.name,
+    c: p.scientificName || '',
+    u: `/plantas/${p.category}/${p.slug}`,
+    p: p.price,
+    i: p.image ?? null,
+    e: p.emoji,
+  })),
+  colecciones: collections.map((c) => ({ n: c.name, s: c.slug })),
+};
+
 const menuTipos = [
   ...['rosales', 'palmas', 'crotos', 'suculentas', 'hierbas'].map(col),
   { href: '/plantas/florales', label: 'Florales' },
@@ -89,15 +105,20 @@ const menuTipos = [
       <span class="brand-byline">{SITE.byline}</span>
     </a>
 
-    <form class="search search--desktop" action="/plantas" method="get" role="search">
+    <form class="search search--desktop" action="/plantas" method="get" role="search" data-search-form>
       <input
         type="search"
         name="q"
         placeholder="Buscar plantas…"
         aria-label="Buscar plantas"
+        autocomplete="off"
+        data-search-input
       />
       <button type="submit" aria-label="Buscar"><Icon name="search" size={16} /></button>
+      <!-- Sugerencias en vivo (productos y colecciones) bajo el buscador. -->
+      <div class="search-drop" data-search-drop hidden></div>
     </form>
+    <script type="application/json" data-search-index set:html={JSON.stringify(indiceBusqueda)} />
 
     <div class="top-actions">
       <button class="top-action" data-panel-open="account">
@@ -135,9 +156,17 @@ const menuTipos = [
   </div>
 
   <div class="mobile-search" data-region="mobile-search" hidden>
-    <form class="search" action="/plantas" method="get" role="search">
-      <input type="search" name="q" placeholder="Buscar plantas, macetas…" aria-label="Buscar plantas" />
+    <form class="search" action="/plantas" method="get" role="search" data-search-form>
+      <input
+        type="search"
+        name="q"
+        placeholder="Buscar plantas, macetas…"
+        aria-label="Buscar plantas"
+        autocomplete="off"
+        data-search-input
+      />
       <button type="submit" aria-label="Buscar"><Icon name="search" size={17} /></button>
+      <div class="search-drop" data-search-drop hidden></div>
     </form>
   </div>
 
@@ -490,6 +519,93 @@ const menuTipos = [
 <script>
   import { cartCount, cartTotal, getCart, removeFromCart, setQty } from '../lib/cart';
 
+  // ─── Buscador en vivo del navbar ───────────────────────────────────────
+  // Filtra el indice embebido mientras se escribe: hasta 5 productos con su
+  // miniatura y precio, colecciones que coincidan y el enlace a todos los
+  // resultados. Escape o un clic fuera lo cierran. Aplica igual al buscador
+  // de escritorio y al de celular (cada form trae su propio panel).
+  const buscadorIndice = document.querySelector('[data-search-index]');
+
+  if (buscadorIndice) {
+    interface ProductoIndice { n: string; c: string; u: string; p: number; i: string | null; e: string }
+    interface ColeccionIndice { n: string; s: string }
+    const { productos, colecciones } = JSON.parse(buscadorIndice.textContent!) as {
+      productos: ProductoIndice[];
+      colecciones: ColeccionIndice[];
+    };
+
+    const normalizar = (s: string) =>
+      s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+
+    const escapar = (s: string) =>
+      s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+    function renderBusqueda(input: HTMLInputElement, drop: HTMLElement) {
+      const consulta = normalizar(input.value.trim());
+      if (consulta.length < 2) {
+        drop.hidden = true;
+        return;
+      }
+
+      const coincideProducto = productos.filter(
+        (p) => normalizar(p.n).includes(consulta) || normalizar(p.c).includes(consulta),
+      );
+      const coincideColeccion = colecciones.filter((c) => normalizar(c.n).includes(consulta));
+
+      if (!coincideProducto.length && !coincideColeccion.length) {
+        drop.innerHTML = `<p class="drop-empty">Sin resultados para “${escapar(input.value.trim())}”</p>`;
+        drop.hidden = false;
+        return;
+      }
+
+      let html = '';
+      if (coincideProducto.length) {
+        html += '<p class="drop-title">Productos</p>';
+        html += coincideProducto
+          .slice(0, 5)
+          .map((p) => {
+            const visual = p.i
+              ? `<span class="drop-thumb" style="background-image: url('${p.i}')"></span>`
+              : `<span class="drop-thumb drop-thumb--emoji">${p.e}</span>`;
+            const nombreCientifico = p.c ? `<span class="drop-sci">${escapar(p.c)}</span>` : '';
+            return `<a class="drop-row" href="${p.u}">${visual}<span class="drop-copy"><span class="drop-name">${escapar(p.n)}</span>${nombreCientifico}<span class="drop-price">Desde $${p.p.toFixed(2)}</span></span></a>`;
+          })
+          .join('');
+        if (coincideProducto.length > 5) {
+          html += `<a class="drop-all" href="/plantas?q=${encodeURIComponent(input.value.trim())}">Ver los ${coincideProducto.length} resultados →</a>`;
+        }
+      }
+      if (coincideColeccion.length) {
+        html += '<p class="drop-title">Colecciones</p>';
+        html += coincideColeccion
+          .slice(0, 4)
+          .map((c) => `<a class="drop-row drop-row--col" href="/plantas?c=${c.s}">${escapar(c.n)}</a>`)
+          .join('');
+      }
+
+      drop.innerHTML = html;
+      drop.hidden = false;
+    }
+
+    const buscadores = Array.from(document.querySelectorAll<HTMLFormElement>('[data-search-form]'));
+    buscadores.forEach((form) => {
+      const input = form.querySelector<HTMLInputElement>('[data-search-input]');
+      const drop = form.querySelector<HTMLElement>('[data-search-drop]');
+      if (!input || !drop) return;
+      const pintar = () => renderBusqueda(input, drop);
+      input.addEventListener('input', pintar);
+      input.addEventListener('focus', pintar);
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') drop.hidden = true;
+      });
+    });
+    document.addEventListener('click', (e) => {
+      if (!(e.target as HTMLElement).closest('[data-search-form]')) {
+        document.querySelectorAll<HTMLElement>('[data-search-drop]').forEach((d) => (d.hidden = true));
+      }
+    });
+  }
+
   const CATEGORY_LABELS: Record<string, string> = {
     interior: 'Planta de interior',
     exterior: 'Planta de exterior',
@@ -692,6 +808,7 @@ const menuTipos = [
   }
 
   .search {
+    position: relative;
     display: flex;
     align-items: center;
     gap: 6px;
@@ -701,6 +818,87 @@ const menuTipos = [
     width: 100%;
     max-width: 420px;
     margin: 0 auto;
+  }
+
+  /* Panel de sugerencias del buscador en vivo. */
+  .search-drop {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    right: 0;
+    z-index: 60;
+    background: #ffffff;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    box-shadow: 0 18px 44px rgba(27, 42, 31, 0.18);
+    padding: 0.55rem;
+    max-height: 70vh;
+    overflow-y: auto;
+  }
+
+  .search-drop[hidden] { display: none; }
+
+  .search-drop :global(.drop-title) {
+    font-size: 0.62rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin: 0.55rem 0 0.3rem;
+    padding: 0 0.55rem;
+  }
+
+  .search-drop :global(.drop-row) {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    padding: 0.45rem 0.55rem;
+    border-radius: 10px;
+    color: var(--ink);
+    font-size: 0.9rem;
+  }
+
+  .search-drop :global(.drop-row:hover) {
+    background: var(--green-tint);
+    text-decoration: none;
+    color: var(--ink);
+  }
+
+  .search-drop :global(.drop-thumb) {
+    width: 44px;
+    height: 44px;
+    flex: none;
+    border-radius: 10px;
+    background-size: cover;
+    background-position: center;
+    background-color: var(--surface-2);
+    outline: 1px solid rgba(27, 42, 31, 0.1);
+  }
+
+  .search-drop :global(.drop-thumb--emoji) {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+  }
+
+  .search-drop :global(.drop-copy) { display: flex; flex-direction: column; gap: 1px; }
+  .search-drop :global(.drop-name) { font-weight: 600; }
+  .search-drop :global(.drop-sci) { font-size: 0.75rem; font-style: italic; color: var(--ink-faint); }
+  .search-drop :global(.drop-price) { font-size: 0.8rem; color: var(--green-deep); font-weight: 600; }
+
+  .search-drop :global(.drop-all) {
+    display: block;
+    padding: 0.5rem 0.55rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--green-deep);
+  }
+
+  .search-drop :global(.drop-empty) {
+    margin: 0;
+    padding: 0.7rem 0.55rem;
+    font-size: 0.88rem;
+    color: var(--ink-faint);
   }
 
   .search input {

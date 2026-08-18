@@ -32,6 +32,27 @@ const related = products
 
 const GALLERY_SIZE = 5;
 
+// Fotos reales de la galeria (principal + la de estudio del hover + las
+// adicionales). Si el producto aun no tiene fotos, quedan los huecos.
+const fotosGaleria = [product.image, product.imageHover, ...(product.gallery ?? [])].filter(
+  (f): f is string => Boolean(f),
+);
+
+// Fotos "de clientes" del bloque de resenas: primero las adicionales (tomas
+// de ambiente) y luego el resto de la galeria, hasta seis.
+const fotosResenas = [...(product.gallery ?? []), product.image, product.imageHover]
+  .filter((f): f is string => Boolean(f))
+  .slice(0, 6);
+
+// Similares para el slider "Te podrian gustar": misma categoria primero,
+// 9 en total (tres paginas de tres tarjetas). No se filtra por available
+// porque en los datos estaticos siempre es 0: el stock real lo pinta el
+// proxy en el navegador sobre cada tarjeta.
+const similares = products
+  .filter((p) => p.slug !== product.slug)
+  .sort((a, b) => Number(b.category === product.category) - Number(a.category === product.category))
+  .slice(0, 9);
+
 const SIZES = [
   { key: 'S', label: 'Pequeña — matera 6"' },
   { key: 'M', label: 'Mediana — matera 8"' },
@@ -191,23 +212,40 @@ const STAR_PATH =
     <div class="gallery">
       <div class="thumbs" data-thumbs>
         {
-          Array.from({ length: GALLERY_SIZE }, (_, i) => (
-            <button
-              class:list={['thumb', { active: i === 0 }]}
-              data-thumb={i}
-              aria-label={`Ver foto ${i + 1}`}
-            >
-              <!-- FOTO PENDIENTE: galeria {product.sku} #{i + 1} — cuadrada, minimo 800×800 px -->
-              <span class="thumb-num">{i + 1}</span>
-            </button>
-          ))
+          fotosGaleria.length
+            ? fotosGaleria.map((foto, i) => (
+                <button
+                  class:list={['thumb', 'thumb--foto', { active: i === 0 }]}
+                  data-thumb={i}
+                  data-foto={foto}
+                  style={`background-image: url('${foto}'); background-size: cover; background-position: center;`}
+                  aria-label={`Ver foto ${i + 1}`}
+                />
+              ))
+            : Array.from({ length: GALLERY_SIZE }, (_, i) => (
+                <button
+                  class:list={['thumb', { active: i === 0 }]}
+                  data-thumb={i}
+                  aria-label={`Ver foto ${i + 1}`}
+                >
+                  <span class="thumb-num">{i + 1}</span>
+                </button>
+              ))
         }
       </div>
       <div class="main-photo">
-        <!-- FOTO PENDIENTE: foto principal {product.sku} — cuadrada, minimo 1200×1200 px -->
-        <div class="main-photo-ph" data-medidas="Foto cuadrada · 1200×1200" data-main-photo>
-          {product.emoji}
-          <span class="main-photo-num" data-main-num>Foto 1 de {GALLERY_SIZE}</span>
+        <div
+          class="main-photo-ph"
+          data-medidas={fotosGaleria.length ? undefined : 'Foto cuadrada · 1200×1200'}
+          data-main-photo
+          style={
+            fotosGaleria.length
+              ? `background-image: url('${fotosGaleria[0]}'); background-size: cover; background-position: center;`
+              : undefined
+          }
+        >
+          {fotosGaleria.length ? '' : product.emoji}
+          <span class="main-photo-num" data-main-num>Foto 1 de {fotosGaleria.length || GALLERY_SIZE}</span>
         </div>
         {soldOut && <div class="soldout-stamp">Agotado</div>}
         <button class="photo-arrow photo-arrow--prev" data-gallery-prev aria-label="Foto anterior">
@@ -349,7 +387,7 @@ const STAR_PATH =
               <input type="email" name="email" placeholder="Tu correo" required />
               <button type="submit">Avísame</button>
             </form>
-            <a href="/plantas" class="soldout-link">Ver plantas similares disponibles</a>
+            <a href="#similares" class="soldout-link">Ver plantas similares disponibles</a>
           </div>
         )
       }
@@ -360,6 +398,32 @@ const STAR_PATH =
       </div>
     </div>
   </div>
+
+  <!-- Slider "Te podrian gustar": 3 tarjetas visibles y flechas para pasar
+       a las siguientes; el enlace del agotado baja hasta aqui. -->
+  {
+    similares.length > 0 && (
+      <section id="similares" class="container similares-section">
+        <h2 class="similares-title">Te podrían gustar</h2>
+        <div class="similares-wrap">
+          <button type="button" class="sim-arrow sim-arrow--prev" data-sim-prev aria-label="Ver anteriores">
+            <Icon name="chevron-left" size={20} />
+          </button>
+          <div class="similares-track" data-sim-track>
+            {similares.map((p) => (
+              <div class="similares-item">
+                <ProductCard product={p} />
+              </div>
+            ))}
+          </div>
+          <button type="button" class="sim-arrow sim-arrow--next" data-sim-next aria-label="Ver siguientes">
+            <Icon name="chevron-right" size={20} />
+          </button>
+        </div>
+        <div class="similares-dots" data-sim-dots></div>
+      </section>
+    )
+  }
 
   <section class="container accordion-section">
     {
@@ -382,8 +446,17 @@ const STAR_PATH =
   <section class="container care-section">
     <h2>{careTitle}</h2>
     <div class="care-grid">
-      <!-- FOTO PENDIENTE: {product.sku} en el vivero — cuadrada (se muestra en circulo), minimo 800×800 px -->
-      <div class="care-photo" data-medidas="Foto cuadrada · 800×800">{product.emoji}</div>
+      <div
+        class="care-photo"
+        data-medidas={product.image ? undefined : 'Foto cuadrada · 800×800'}
+        style={
+          product.image
+            ? `background-image: url('${product.image}'); background-size: cover; background-position: center;`
+            : undefined
+        }
+      >
+        {product.image ? '' : product.emoji}
+      </div>
       <div>
         {
           careRows.map((row) => (
@@ -446,11 +519,14 @@ const STAR_PATH =
       </div>
       <div class="review-photos">
         {
-          Array.from({ length: 6 }, (_, i) => (
-            <div class="review-photo" data-n={i + 1}>
-              <!-- FOTO PENDIENTE: foto de cliente #{i + 1} — cuadrada, minimo 400×400 px -->
-            </div>
-          ))
+          fotosResenas.length
+            ? fotosResenas.map((foto) => (
+                <div
+                  class="review-photo"
+                  style={`background-image: url('${foto}'); background-size: cover; background-position: center;`}
+                />
+              ))
+            : Array.from({ length: 6 }, (_, i) => <div class="review-photo" data-n={i + 1} />)
         }
       </div>
     </div>
@@ -539,21 +615,63 @@ const STAR_PATH =
 <script>
   import { addToCart } from '../../../lib/cart';
 
-  // Galeria: miniatura activa y flechas en bucle (solo placeholders por ahora;
-  // cuando existan fotos reales, aqui se intercambia la imagen principal).
+  // Galeria: miniatura activa y flechas en bucle. Si la miniatura trae foto
+  // real (data-foto), se intercambia tambien la imagen principal.
   const thumbs = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-thumb]'));
   const mainNum = document.querySelector<HTMLElement>('[data-main-num]');
+  const mainPhoto = document.querySelector<HTMLElement>('[data-main-photo]');
   let current = 0;
 
   function selectPhoto(index: number) {
     current = (index + thumbs.length) % thumbs.length;
     thumbs.forEach((t, i) => t.classList.toggle('active', i === current));
     if (mainNum) mainNum.textContent = `Foto ${current + 1} de ${thumbs.length}`;
+    const foto = thumbs[current]?.dataset.foto;
+    if (foto && mainPhoto) mainPhoto.style.backgroundImage = `url('${foto}')`;
   }
 
   thumbs.forEach((t, i) => t.addEventListener('click', () => selectPhoto(i)));
   document.querySelector('[data-gallery-prev]')?.addEventListener('click', () => selectPhoto(current - 1));
   document.querySelector('[data-gallery-next]')?.addEventListener('click', () => selectPhoto(current + 1));
+
+  // Slider de similares: las flechas avanzan una "pagina" (ancho visible +
+  // gap) y las bolitas marcan la pagina activa y navegan al tocarlas.
+  const simTrack = document.querySelector<HTMLElement>('[data-sim-track]');
+  const simDots = document.querySelector<HTMLElement>('[data-sim-dots]');
+  const pasoSimilares = () =>
+    simTrack ? simTrack.clientWidth + parseFloat(getComputedStyle(simTrack).columnGap || '0') : 0;
+
+  function pintarBolitas() {
+    if (!simTrack || !simDots) return;
+    const paso = pasoSimilares();
+    const gap = parseFloat(getComputedStyle(simTrack).columnGap || '0');
+    // El -0.02 evita una pagina fantasma por redondeo de subpixeles.
+    const paginas = Math.max(1, Math.ceil((simTrack.scrollWidth + gap) / paso - 0.02));
+    const activa = Math.min(paginas - 1, Math.round(simTrack.scrollLeft / paso));
+    if (simDots.children.length !== paginas) {
+      simDots.innerHTML = '';
+      for (let i = 0; i < paginas; i++) {
+        const bolita = document.createElement('button');
+        bolita.type = 'button';
+        bolita.setAttribute('aria-label', `Ir a la página ${i + 1}`);
+        bolita.addEventListener('click', () =>
+          simTrack!.scrollTo({ left: i * pasoSimilares(), behavior: 'smooth' }),
+        );
+        simDots.appendChild(bolita);
+      }
+    }
+    Array.from(simDots.children).forEach((d, i) => d.classList.toggle('active', i === activa));
+  }
+
+  document.querySelector('[data-sim-prev]')?.addEventListener('click', () => {
+    simTrack?.scrollBy({ left: -pasoSimilares(), behavior: 'smooth' });
+  });
+  document.querySelector('[data-sim-next]')?.addEventListener('click', () => {
+    simTrack?.scrollBy({ left: pasoSimilares(), behavior: 'smooth' });
+  });
+  simTrack?.addEventListener('scroll', pintarBolitas, { passive: true });
+  window.addEventListener('resize', pintarBolitas);
+  pintarBolitas();
 
   // Acordeones y filas de cuidado: apertura independiente, sin exclusivos.
   document.querySelectorAll<HTMLButtonElement>('[data-acc-toggle]').forEach((btn) => {
@@ -671,7 +789,85 @@ const STAR_PATH =
     background: var(--surface-2);
   }
 
-  .main-photo-ph::after {
+  /* Miniaturas con foto real: sin numero, la imagen llena el boton. */
+  .thumb--foto { overflow: hidden; }
+
+  /* Slider de similares: flechas centradas a los lados y bolitas debajo. */
+  .similares-section { padding-top: 2.3rem; }
+
+  .similares-title { font-size: 27px; margin: 0 0 1.15rem; }
+
+  .similares-wrap { position: relative; }
+
+  .sim-arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 2;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    border: 0;
+    background: var(--card-dark);
+    color: #eef5f0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 6px 18px rgba(27, 42, 31, 0.3);
+  }
+
+  .sim-arrow:hover { background: var(--green-deep); }
+
+  .sim-arrow--prev { left: -10px; }
+  .sim-arrow--next { right: -10px; }
+
+  .similares-dots {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 1.15rem;
+  }
+
+  .similares-dots :global(button) {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    border: 0;
+    padding: 0;
+    background: var(--line-strong);
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.2s ease;
+  }
+
+  .similares-dots :global(button.active) {
+    background: var(--green-deep);
+    transform: scale(1.3);
+  }
+
+  /* Sin scroll-snap: en Chrome el snap obligatorio cancela el scroll suave
+     de las flechas; las paginas alinean porque el paso se calcula exacto. */
+  .similares-track {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: calc((100% - 2 * 18.4px) / 3);
+    gap: 18.4px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding-bottom: 4px;
+  }
+
+  .similares-track::-webkit-scrollbar { display: none; }
+
+  @media (max-width: 768px) {
+    .similares-track { grid-auto-columns: 78%; }
+    .sim-arrow { width: 36px; height: 36px; }
+    .sim-arrow--prev { left: -4px; }
+    .sim-arrow--next { right: -4px; }
+  }
+
+  /* La pastilla de medidas solo aparece cuando aun no hay fotos reales. */
+  .main-photo-ph[data-medidas]::after {
     content: attr(data-medidas);
     position: absolute;
     left: 50%;
@@ -1048,7 +1244,7 @@ const STAR_PATH =
     font-size: 4rem;
   }
 
-  .care-photo::after {
+  .care-photo[data-medidas]::after {
     content: attr(data-medidas);
     position: absolute;
     left: 50%;

@@ -27,8 +27,8 @@ const sidebar = sidebarSlugs.map((slug) => collections.find((c) => c.slug === sl
 const popularSlugs = ['faciles', 'pet-friendly', 'florales', 'jardin', 'interior'];
 const popular = popularSlugs.map((slug) => collections.find((c) => c.slug === slug)!);
 
-// Paginacion del diseno: de 8 en 8 con "Ver mas plantas".
-const PAGE_SIZE = 8;
+// Paginacion: 16 visibles (4 filas de 4) antes del "Ver mas plantas".
+const PAGE_SIZE = 16;
 ---
 
 <Base
@@ -231,9 +231,9 @@ const PAGE_SIZE = 8;
   const showMoreWrap = document.querySelector<HTMLElement>('[data-show-more-wrap]');
   const showMoreBtn = document.querySelector<HTMLButtonElement>('[data-show-more]');
 
-  // Paginacion del diseno: 8 visibles, "Ver mas plantas" agrega de a 8 y
-  // cualquier cambio de filtro reinicia a 8.
-  const PAGE_SIZE = 8;
+  // Paginacion: 16 visibles (4 filas de 4), "Ver mas plantas" agrega de a 16
+  // y cualquier cambio de filtro reinicia a 16.
+  const PAGE_SIZE = 16;
   let visibleCount = PAGE_SIZE;
 
   function factsFrom(card: HTMLElement) {
