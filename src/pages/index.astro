@@ -36,23 +36,23 @@ interface HomeTile {
 }
 
 const collectionTiles: HomeTile[] = [
-  { label: 'Fáciles de cuidar', slug: 'faciles', emoji: '🪴' },
-  { label: 'Poca luz', slug: 'poca-luz', emoji: '🌿' },
-  { label: 'Sol pleno', slug: 'jardin', emoji: '☀️' },
-  { label: 'Cercas vivas', slug: 'palmas', emoji: '🌴' },
-  { label: 'Para interiores', slug: 'interior', emoji: '🛋️' },
-  { label: 'Para regalar', slug: 'mas-vendidas', emoji: '🎁' },
+  { label: 'Fáciles de cuidar', slug: 'faciles', emoji: '🪴', image: '/fotos_colecciones/faciles.jpeg' },
+  { label: 'Poca luz', slug: 'poca-luz', emoji: '🌿', image: '/fotos_colecciones/poca-luz.jpeg' },
+  { label: 'Sol pleno', slug: 'jardin', emoji: '☀️', image: '/fotos_colecciones/jardin.jpeg' },
+  { label: 'Aptas para mascotas', slug: 'pet-friendly', emoji: '🐶', image: '/fotos_colecciones/pet-friendly.jpeg' },
+  { label: 'Para interiores', slug: 'interior', emoji: '🛋️', image: '/fotos_colecciones/interior.jpeg' },
+  { label: 'Para regalar', slug: 'regalar', emoji: '🎁', image: '/fotos_colecciones/regalar.jpeg' },
 ];
 
 // Tiles de "Compra por tipo". Veraneras y frutales se quitaron porque el
 // catalogo de Odoo aun no los tiene; reponerlos cuando existan.
 const typeTiles: HomeTile[] = [
   { label: 'Rosales', slug: 'rosales', emoji: '🌹' },
-  { label: 'Palmas', slug: 'palmas', emoji: '🌴' },
-  { label: 'Crotos', slug: 'crotos', emoji: '🍃' },
-  { label: 'Florales', slug: 'florales', emoji: '🌺' },
-  { label: 'Cactus y suculentas', slug: 'suculentas', emoji: '🌵' },
-  { label: 'Hierbas de cocina', slug: 'hierbas', emoji: '🌱' },
+  { label: 'Palmas', slug: 'palmas', emoji: '🌴', image: '/fotos_colecciones/palmas.jpeg' },
+  { label: 'Crotos', slug: 'crotos', emoji: '🍃', image: '/fotos_colecciones/crotos.jpeg' },
+  { label: 'Florales', slug: 'florales', emoji: '🌺', image: '/fotos_colecciones/florales.jpeg' },
+  { label: 'Cactus y suculentas', slug: 'suculentas', emoji: '🌵', image: '/fotos_colecciones/suculentas.jpeg' },
+  { label: 'Hierbas de cocina', slug: 'hierbas', emoji: '🌱', image: '/fotos_colecciones/hierbas.jpeg' },
 ];
 
 const reviews = [
@@ -622,7 +622,7 @@ const paisajismoMessage = whatsappLink('Hola, quiero cotizar un proyecto de pais
     background: #fff;
     box-shadow: 0 18px 40px rgba(27, 42, 31, 0.14);
     transform: rotate(-2deg);
-    animation: quiz-float 6s ease-in-out infinite;
+    animation: quiz-float 4s ease-in-out infinite;
   }
 
   @keyframes quiz-float {
@@ -631,7 +631,7 @@ const paisajismoMessage = whatsappLink('Hola, quiero cotizar un proyecto de pais
       transform: rotate(-2deg) translateY(0);
     }
     50% {
-      transform: rotate(-2deg) translateY(-10px);
+      transform: rotate(-2deg) translateY(-26px);
     }
   }
 

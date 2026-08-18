@@ -50,14 +50,30 @@ const consultaWhatsApp = whatsappLink(
   title="Encuentra tu planta ideal"
   description="Tres preguntas y te decimos qué plantas del vivero encajan con tu espacio, con disponibilidad real."
 >
-  <section class="container quiz-page">
-    <p class="quiz-kicker">Test de la planta ideal</p>
-    <h1 class="quiz-title">Encuentra tu planta ideal</h1>
-    <p class="quiz-sub">
-      Tres preguntas y te mostramos las plantas del vivero que encajan con tu espacio.
-    </p>
+  <!-- Toda la pagina del test va sobre banda verde oscura; las preguntas
+       viven en una tarjeta clara separada, con lluvia de hojas al responder. -->
+  <section class="quiz-band-page">
+    <div class="container quiz-page">
+      <div class="quiz-head">
+        <div>
+          <p class="quiz-kicker">Test de la planta ideal</p>
+          <h1 class="quiz-title">Encuentra tu planta ideal</h1>
+          <p class="quiz-sub">
+            Tres preguntas y te mostramos las plantas del vivero que encajan con tu espacio.
+          </p>
+        </div>
+        <img
+          class="quiz-illustration"
+          src="/fotos_homepage/quiz_foto.jpg"
+          alt=""
+          width="300"
+          height="257"
+          loading="lazy"
+        />
+      </div>
 
-    <div class="quiz-box" data-quiz>
+      <div class="quiz-box" data-quiz>
+        <div class="quiz-lluvia" data-lluvia aria-hidden="true"></div>
       {preguntas.map((q, i) => (
         <section class="quiz-step" data-step={q.id} hidden={i !== 0}>
           <p class="step-count">Pregunta {i + 1} de {preguntas.length}</p>
@@ -108,6 +124,7 @@ const consultaWhatsApp = whatsappLink(
           </a>
         </div>
       </section>
+      </div>
     </div>
   </section>
 </Base>
@@ -209,9 +226,38 @@ const consultaWhatsApp = whatsappLink(
     pasos.forEach((p, i) => (p.hidden = i !== indice));
   }
 
+  // Lluvia de plantas: al responder caen hojas y brotes sobre la tarjeta.
+  const lluvia = document.querySelector<HTMLElement>('[data-lluvia]');
+  const prefiereQuieto = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const HOJAS = [
+    // hoja simple, brote y hojita doble, en los verdes del sitio
+    `<svg viewBox="0 0 40 40" fill="none"><path d="M20 36 C8 30 6 16 12 6 C26 10 30 24 20 36 Z" fill="#5cbf7e"/></svg>`,
+    `<svg viewBox="0 0 40 40" fill="none"><path d="M20 38 C20 28 20 20 20 12" stroke="#4a9e68" stroke-width="3" stroke-linecap="round"/><path d="M20 24 C10 22 6 14 8 6 C18 9 22 16 20 24 Z" fill="#8ce6a8"/><path d="M20 18 C30 16 34 8 32 2 C22 5 18 11 20 18 Z" fill="#5cbf7e"/></svg>`,
+    `<svg viewBox="0 0 40 40" fill="none"><path d="M20 34 C12 28 12 16 20 8 C28 16 28 28 20 34 Z" fill="#a9e6b8"/><path d="M20 34 C20 24 20 16 20 10" stroke="#4a9e68" stroke-width="2" stroke-linecap="round"/></svg>`,
+  ];
+
+  function lluviaDePlantas() {
+    if (!lluvia || prefiereQuieto) return;
+    for (let i = 0; i < 14; i++) {
+      const hoja = document.createElement('span');
+      hoja.className = 'hoja-cayendo';
+      hoja.innerHTML = HOJAS[Math.floor(Math.random() * HOJAS.length)];
+      const tam = 18 + Math.random() * 22;
+      hoja.style.left = `${Math.random() * 96}%`;
+      hoja.style.width = `${tam}px`;
+      hoja.style.height = `${tam}px`;
+      hoja.style.animationDuration = `${1.1 + Math.random() * 0.9}s`;
+      hoja.style.animationDelay = `${Math.random() * 0.35}s`;
+      hoja.style.setProperty('--giro-final', `${180 + Math.random() * 240}deg`);
+      hoja.addEventListener('animationend', () => hoja.remove());
+      lluvia.appendChild(hoja);
+    }
+  }
+
   document.querySelectorAll<HTMLButtonElement>('[data-answer]').forEach((btn) => {
     btn.addEventListener('click', () => {
       respuestas[btn.dataset.answer!] = { valor: btn.dataset.value!, label: btn.dataset.label! };
+      lluviaDePlantas();
       const indice = pasos.findIndex((p) => p.dataset.step === btn.dataset.answer);
       if (indice < pasos.length - 1) irAPaso(indice + 1);
       else mostrarResultados();
@@ -229,16 +275,38 @@ const consultaWhatsApp = whatsappLink(
 </script>
 
 <style>
+  /* Banda verde oscura de toda la pagina del test. */
+  .quiz-band-page {
+    background: var(--card-dark);
+  }
+
   .quiz-page {
     padding-top: 3.4rem;
     padding-bottom: 4.6rem;
+  }
+
+  .quiz-head {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 2.3rem;
+    margin-bottom: 2.3rem;
+  }
+
+  .quiz-illustration {
+    width: min(300px, 30vw);
+    height: auto;
+    border-radius: var(--radius-photo);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.3);
+    transform: rotate(2deg);
   }
 
   .quiz-kicker {
     font-size: 11px;
     letter-spacing: 0.18em;
     text-transform: uppercase;
-    color: var(--green-deep);
+    color: var(--green-light);
     margin: 0 0 0.85rem;
   }
 
@@ -247,13 +315,57 @@ const consultaWhatsApp = whatsappLink(
     font-size: clamp(2rem, 4vw, 2.9rem);
     line-height: 1.08;
     margin: 0 0 0.85rem;
+    color: #ffffff;
   }
 
   .quiz-sub {
     font-size: 1.05rem;
-    color: var(--ink-soft);
+    color: rgba(255, 255, 255, 0.82);
     max-width: 34rem;
-    margin: 0 0 2.3rem;
+    margin: 0;
+  }
+
+  /* Tarjeta clara, bien separada del fondo, donde vive el test. */
+  .quiz-box {
+    position: relative;
+    overflow: hidden;
+    background: var(--bg);
+    border-radius: 20px;
+    padding: 2.3rem;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.28);
+  }
+
+  /* Lluvia de hojas al responder. */
+  .quiz-lluvia {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .quiz-lluvia :global(.hoja-cayendo) {
+    position: absolute;
+    top: -48px;
+    animation: hoja-cae 1.4s ease-in forwards;
+  }
+
+  .quiz-lluvia :global(.hoja-cayendo svg) {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+
+  @keyframes hoja-cae {
+    0% {
+      transform: translateY(0) rotate(0deg);
+      opacity: 1;
+    }
+    80% { opacity: 1; }
+    100% {
+      transform: translateY(680px) rotate(var(--giro-final, 240deg));
+      opacity: 0;
+    }
   }
 
   .quiz-step[hidden],
@@ -339,6 +451,9 @@ const consultaWhatsApp = whatsappLink(
   }
 
   @media (max-width: 768px) {
+    .quiz-head { grid-template-columns: 1fr; }
+    .quiz-illustration { display: none; }
+    .quiz-box { padding: 1.4rem; }
     .step-options { grid-template-columns: 1fr; }
     .results-actions { flex-direction: column; align-items: stretch; }
     .results-actions .btn { justify-content: center; }

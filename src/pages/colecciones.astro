@@ -29,8 +29,12 @@ const tiles = collections.map((c) => {
       <div class="tiles">
         {tiles.map((c) => (
           <a href={`/plantas?c=${c.slug}`} class="tile">
-            <!-- FOTO PENDIENTE: coleccion {c.slug} — cuadrada, minimo 400×400 px -->
-            <div class="tile-photo" data-medidas="Foto 1:1 · 400×400" aria-hidden="true"></div>
+            <div
+              class="tile-photo"
+              style={c.image ? `background-image: url('${c.image}'); background-size: cover; background-position: center;` : undefined}
+              data-medidas={c.image ? undefined : 'Foto 1:1 · 400×400'}
+              aria-hidden="true"
+            ></div>
             <span class="tile-name">{c.name}</span>
             <span class="tile-count">{c.count} {c.count === 1 ? 'planta' : 'plantas'}</span>
           </a>
@@ -91,7 +95,8 @@ const tiles = collections.map((c) => {
     background: var(--surface-2);
   }
 
-  .tile-photo::after {
+  /* La pastilla de medidas solo aparece en tiles que aun no tienen foto. */
+  .tile-photo[data-medidas]::after {
     content: attr(data-medidas);
     position: absolute;
     left: 50%;

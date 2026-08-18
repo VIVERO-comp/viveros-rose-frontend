@@ -36,7 +36,9 @@ const PAGE_SIZE = 8;
   description="Todas nuestras plantas disponibles: interior, exterior y florales, con disponibilidad real del vivero."
 >
   <section class="shop-hero">
-    <div class="shop-hero-photo" style="background-image: url('/fotos_homepage/patio.jpg'); background-size: cover; background-position: center;" aria-hidden="true"></div>
+    <!-- La foto del hero es la de la coleccion activa; el script la cambia
+         cuando se llega con ?c=. Por defecto, la de "Todas las plantas". -->
+    <div class="shop-hero-photo" data-shop-hero-photo style="background-image: url('/fotos_colecciones/all.jpeg'); background-size: cover; background-position: center;" aria-hidden="true"></div>
     <div class="shop-hero-scrim" aria-hidden="true"></div>
     <div class="container shop-hero-inner">
       <p class="shop-crumb"><a href="/">Inicio</a> / Plantas</p>
@@ -198,6 +200,11 @@ const PAGE_SIZE = 8;
   if (collection.slug !== 'all' && titleEl && subEl) {
     titleEl.textContent = collection.name;
     subEl.textContent = collection.blurb;
+  }
+  // Foto del hero segun la coleccion activa (si la coleccion tiene foto).
+  const heroPhoto = document.querySelector<HTMLElement>('[data-shop-hero-photo]');
+  if (heroPhoto && collection.image) {
+    heroPhoto.style.backgroundImage = `url('${collection.image}')`;
   }
   if (query && titleEl) {
     titleEl.textContent = `Resultados para “${query}”`;
