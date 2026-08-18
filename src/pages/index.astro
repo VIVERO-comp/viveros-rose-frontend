@@ -63,6 +63,12 @@ const reviews = [
 const mainGuide = guides[0];
 const otherGuides = guides.slice(1);
 
+// Miniaturas de las guias laterales, por slug del catalogo de guias.
+const guideThumbs: Record<string, string> = {
+  'plantas-para-apartamento': '/fotos_homepage/top_plantas.webp',
+  'preparar-jardin-temporada-lluviosa': '/fotos_homepage/cuidar_de_lluvia.jpeg',
+};
+
 // El "test de la planta ideal" no tiene backend: la promesa del diseno
 // ("te decimos que hay disponible hoy") se cumple por WhatsApp.
 const quizMessage = whatsappLink(
@@ -130,8 +136,7 @@ const paisajismoMessage = whatsappLink('Hola, quiero cotizar un proyecto de pais
   <section class="container home-section--tight">
     <div class="duo-grid">
       <a href="/plantas/interior" class="duo-card">
-        <!-- FOTO PENDIENTE: banda interior — 16:10, minimo 1200×750 px -->
-        <div class="duo-photo" style="background-image: url('/fotos_homepage/demo.jpg'); background-size: cover; background-position: center;" aria-hidden="true"></div>
+        <div class="duo-photo" style="background-image: url('/fotos_homepage/interior.webp'); background-size: cover; background-position: center;" aria-hidden="true"></div>
         <div class="duo-overlay" aria-hidden="true"></div>
         <div class="duo-copy">
           <p class="duo-kicker">Conoce más</p>
@@ -140,8 +145,7 @@ const paisajismoMessage = whatsappLink('Hola, quiero cotizar un proyecto de pais
         </div>
       </a>
       <a href="/plantas/exterior" class="duo-card">
-        <!-- FOTO PENDIENTE: banda patio y jardin — 16:10, minimo 1200×750 px -->
-        <div class="duo-photo" style="background-image: url('/fotos_homepage/demo.jpg'); background-size: cover; background-position: center;" aria-hidden="true"></div>
+        <div class="duo-photo" style="background-image: url('/fotos_homepage/patio.jpg'); background-size: cover; background-position: center;" aria-hidden="true"></div>
         <div class="duo-overlay" aria-hidden="true"></div>
         <div class="duo-copy">
           <p class="duo-kicker">Conoce más</p>
@@ -168,8 +172,11 @@ const paisajismoMessage = whatsappLink('Hola, quiero cotizar un proyecto de pais
   </section>
 
   <section class="quiz-band">
-    <!-- FOTO PENDIENTE: banda del quiz (acuarela) — a lo ancho, minimo 1920×460 px -->
-    <div class="quiz-photo" data-medidas="Foto banda · 1920×460" aria-hidden="true"></div>
+    <!-- La foto del quiz mide 400x342: se muestra a tamano natural como
+         figura sobre el fondo verde en vez de estirarla (se pixelaba). -->
+    <div class="quiz-photo" aria-hidden="true">
+      <img src="/fotos_homepage/quiz_foto.jpg" alt="" width="400" height="342" loading="lazy" />
+    </div>
     <div class="quiz-content">
       <div class="container quiz-align">
         <div class="quiz-card">
@@ -197,8 +204,7 @@ const paisajismoMessage = whatsappLink('Hola, quiero cotizar un proyecto de pais
   <section class="container home-section">
     <hr class="section-rule" />
     <div class="club-grid">
-      <!-- FOTO PENDIENTE:(/Users/abrahamkortovich/proyectos/viveros-rose-frontend/public/fotos_homepage/club.jpg) club vivero rose — apaisada, minimo 800×560 px -->
-      <div class="club-photo" data-medidas="Foto · 800×560" aria-hidden="true"></div>
+      <div class="club-photo" style="background-image: url('/fotos_homepage/club.jpg'); background-size: cover; background-position: center;" aria-hidden="true"></div>
       <div>
         <p class="kicker">Programa de lealtad</p>
         <h2>Club Vivero Rose</h2>
@@ -248,8 +254,7 @@ const paisajismoMessage = whatsappLink('Hola, quiero cotizar un proyecto de pais
     </div>
     <div class="guides-grid">
       <a href={`/guia/${mainGuide.slug}`} class="guide-main">
-        <!-- FOTO PENDIENTE: guia principal — apaisada, minimo 1000×560 px (public/fotos_homepage/guia_de_cuidado.jpg) -->
-        <div class="guide-photo" data-medidas="Foto · 1000×560" aria-hidden="true"></div>
+        <div class="guide-photo" style="background-image: url('/fotos_homepage/guia_de_cuidado.jpg'); background-size: cover; background-position: center;" aria-hidden="true"></div>
         <h3>{mainGuide.title}</h3>
         <p>{mainGuide.excerpt}</p>
       </a>
@@ -258,8 +263,15 @@ const paisajismoMessage = whatsappLink('Hola, quiero cotizar un proyecto de pais
         {
           otherGuides.map((g) => (
             <a href={`/guia/${g.slug}`} class="guide-row">
-              <!-- FOTO PENDIENTE: miniatura de guia — cuadrada, minimo 200×200 px public/fotos_homepage/top_plantas.webp y la otra public/fotos_homepage/cuidar_de_lluvia.jpeg -->
-              <div class="guide-thumb" data-medidas="200×200" aria-hidden="true" />
+              <div
+                class="guide-thumb"
+                style={
+                  guideThumbs[g.slug]
+                    ? `background-image: url('${guideThumbs[g.slug]}'); background-size: cover; background-position: center;`
+                    : undefined
+                }
+                aria-hidden="true"
+              />
               <div>
                 <h4>{g.title}</h4>
                 <p class="guide-row-excerpt">{g.excerpt}</p>
@@ -288,20 +300,6 @@ const paisajismoMessage = whatsappLink('Hola, quiero cotizar un proyecto de pais
     position: absolute;
     inset: 0;
     background: linear-gradient(150deg, #2a4432, var(--card-dark) 70%);
-  }
-
-  .hero-photo::after {
-    content: attr(data-medidas);
-    position: absolute;
-    right: 14px;
-    top: 14px;
-    font-size: 0.62rem;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: rgba(238, 245, 240, 0.65);
-    background: rgba(27, 42, 31, 0.55);
-    padding: 2px 8px;
-    border-radius: 999px;
   }
 
   .hero-scrim {
@@ -460,20 +458,6 @@ const paisajismoMessage = whatsappLink('Hola, quiero cotizar un proyecto de pais
 
   .duo-photo { position: absolute; inset: 0; background: var(--surface-2); }
 
-  .duo-photo::after {
-    content: attr(data-medidas);
-    position: absolute;
-    right: 12px;
-    top: 12px;
-    font-size: 0.62rem;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: rgba(27, 42, 31, 0.5);
-    background: rgba(238, 245, 240, 0.85);
-    padding: 2px 8px;
-    border-radius: 999px;
-  }
-
   .duo-overlay {
     position: absolute;
     inset: 0;
@@ -562,20 +546,21 @@ const paisajismoMessage = whatsappLink('Hola, quiero cotizar un proyecto de pais
     background: #f4f7f1;
   }
 
-  .quiz-photo { position: absolute; inset: 0; background: var(--green-tint); }
-
-  .quiz-photo::after {
-    content: attr(data-medidas);
+  .quiz-photo {
     position: absolute;
-    left: 14px;
-    top: 14px;
-    font-size: 0.62rem;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: rgba(27, 42, 31, 0.5);
-    background: rgba(238, 245, 240, 0.85);
-    padding: 2px 8px;
-    border-radius: 999px;
+    inset: 0;
+    background: var(--green-tint);
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    padding-left: clamp(24px, 12vw, 220px);
+  }
+
+  .quiz-photo img {
+    width: min(400px, 38vw);
+    height: auto;
+    border: 1px solid var(--line);
+    background: #fff;
   }
 
   .quiz-content {
@@ -622,21 +607,6 @@ const paisajismoMessage = whatsappLink('Hola, quiero cotizar un proyecto de pais
     outline: 1px solid rgba(27, 42, 31, 0.12);
     background: var(--surface-2);
     min-height: 280px;
-  }
-
-  .club-photo::after {
-    content: attr(data-medidas);
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
-    font-size: 0.62rem;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: rgba(27, 42, 31, 0.5);
-    background: rgba(238, 245, 240, 0.85);
-    padding: 2px 8px;
-    border-radius: 999px;
   }
 
   .kicker {
@@ -737,23 +707,6 @@ const paisajismoMessage = whatsappLink('Hola, quiero cotizar un proyecto de pais
     min-height: 280px;
   }
 
-  .guide-photo::after,
-  .guide-thumb::after {
-    content: attr(data-medidas);
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
-    font-size: 0.6rem;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: rgba(27, 42, 31, 0.5);
-    background: rgba(238, 245, 240, 0.85);
-    padding: 2px 7px;
-    border-radius: 999px;
-    white-space: nowrap;
-  }
-
   .guide-main h3 {
     font-weight: 600;
     font-size: 27px;
@@ -839,6 +792,7 @@ const paisajismoMessage = whatsappLink('Hola, quiero cotizar un proyecto de pais
     .club-grid h2 { font-size: 25px; }
 
     .quiz-band { height: auto; }
+    .quiz-photo { display: none; }
     .quiz-content { position: relative; padding: 36.8px 0; }
     .quiz-align { justify-content: stretch; }
     .quiz-card { max-width: none; width: 100%; }
