@@ -8,6 +8,7 @@ import Icon from '../../../components/Icon.astro';
 import ProductCard from '../../../components/ProductCard.astro';
 import StockBadge from '../../../components/StockBadge.astro';
 import { compareAtPrice, formatPrice, getCategory, products } from '../../../data/products';
+import { collections, factsOf } from '../../../data/collections';
 import { SITE } from '../../../lib/site';
 
 export function getStaticPaths() {
@@ -44,12 +45,26 @@ const fotosResenas = [...(product.gallery ?? []), product.image, product.imageHo
   .filter((f): f is string => Boolean(f))
   .slice(0, 6);
 
-// Similares del carrusel "Te podrian gustar": SOLO de la misma coleccion
-// (categoria) del producto. No se filtra por available porque en los datos
-// estaticos siempre es 0: el stock real lo pinta el proxy en el navegador.
+// Similares del carrusel "Te podrian gustar": solo productos que comparten
+// coleccion con este ('all' no cuenta porque abarca todo el catalogo),
+// ordenados por cuantas colecciones comparten. El desempate usa una semilla
+// del SKU para no quedar en orden alfabetico. No se filtra por available:
+// en los datos estaticos siempre es 0 y el stock real lo pinta el proxy.
+const coleccionesDe = (p: (typeof products)[number]) =>
+  collections.filter((c) => c.slug !== 'all' && c.test(factsOf(p)));
+const coleccionesDelProducto = new Set(coleccionesDe(product).map((c) => c.slug));
+const semillaSku = (sku: string) =>
+  [...sku].reduce((suma, letra) => (suma * 31 + letra.charCodeAt(0)) % 997, 7);
 const similares = products
-  .filter((p) => p.slug !== product.slug && p.category === product.category)
-  .slice(0, 9);
+  .filter((p) => p.slug !== product.slug)
+  .map((p) => ({
+    p,
+    comunes: coleccionesDe(p).filter((c) => coleccionesDelProducto.has(c.slug)).length,
+  }))
+  .filter((x) => x.comunes > 0)
+  .sort((a, b) => b.comunes - a.comunes || semillaSku(a.p.sku) - semillaSku(b.p.sku))
+  .slice(0, 9)
+  .map((x) => x.p);
 
 const SIZES = [
   { key: 'S', label: 'Pequeña — matera 6"' },
