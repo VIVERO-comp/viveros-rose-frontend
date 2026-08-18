@@ -507,12 +507,20 @@ const STAR_PATH =
     </div>
   </section>
 
-  <section class="container related-section">
-    <h2>Va bien con…</h2>
-    <div class="related-grid">
-      {related.map((p) => <ProductCard product={p} />)}
-    </div>
-  </section>
+  <!-- Solo se pinta si hay disponibles: hoy el catalogo estatico tiene todo
+       en 0, pero al conectar el stock-proxy volvera a traer resultados. -->
+  {
+    related.length > 0 && (
+      <section class="container related-section">
+        <h2>Va bien con…</h2>
+        <div class="related-grid">
+          {related.map((p) => (
+            <ProductCard product={p} />
+          ))}
+        </div>
+      </section>
+    )
+  }
 
   <section id="resenas" class="container reviews-section">
     <h2>Reseñas de clientes</h2>

@@ -29,7 +29,6 @@
   --terracotta: #c07b62; /* estrellas y barras de resenas */
 
   --red: #a83232;
-  --red-tint: #fbeaea;
 
   --whatsapp: #16a34a;
 
@@ -47,7 +46,6 @@
   /* Alias de compatibilidad para paginas aun no reconstruidas con el handoff. */
   --amber: var(--amber-note);
   --amber-tint: var(--amber-bg);
-  --shadow: var(--shadow-wa);
 }
 
 * {
