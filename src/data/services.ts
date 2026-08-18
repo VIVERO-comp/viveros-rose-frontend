@@ -19,6 +19,9 @@ export interface Service {
   cards: { icon: string; title: string; body: string }[];
   // Fotos de la galeria "Proyectos recientes" (rutas bajo /public).
   gallery: string[];
+  // Fotos de la mini pagina: banda del hero y bloque vertical del detalle.
+  heroPhoto?: string;
+  blockPhoto?: string;
   whatsappMessage: string;
   metaTitle: string;
   metaDescription: string;
@@ -71,6 +74,8 @@ export const services: Service[] = [
   },
   {
     slug: 'mantenimiento',
+    heroPhoto: '/fotos_servicios/mantenimiento_trabajo.jpeg',
+    blockPhoto: '/fotos_servicios/mantenimiento_trabajo.jpeg',
     name: 'Mantenimiento',
     heroKicker: 'Planes semanales · Quincenales · Mensuales',
     heroTitle: 'Mantenimiento que mantiene todo próspero',

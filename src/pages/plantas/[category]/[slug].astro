@@ -149,13 +149,11 @@ const careRows = [
   },
 ] as const;
 
+// La descripcion va bajo la foto del producto (columna izquierda del hero),
+// no en un acordeon.
+const descripcion = `${product.description} Cultivada en nuestro vivero de Juan Díaz y entregada en matera de vivero, lista para sembrar o pasar a una matera decorativa. La despachamos con el cepellón húmedo y protegido para que llegue igual que salió del vivero.`;
+
 const accordions = [
-  {
-    key: 'desc',
-    title: 'Descripción',
-    open: true,
-    body: `${product.description} Cultivada en nuestro vivero de Juan Díaz y entregada en matera de vivero, lista para sembrar o pasar a una matera decorativa. La despachamos con el cepellón húmedo y protegido para que llegue igual que salió del vivero.`,
-  },
   {
     key: 'cuidado',
     title: 'Guía de cuidado',
@@ -409,6 +407,13 @@ const STAR_PATH =
         <Icon name="truck" size={18} class="assure-icon" />
         {soldOut ? 'Sembramos tandas nuevas cada mes' : 'Entrega en Ciudad de Panamá en 24–48 h'}
       </div>
+    </div>
+
+    <!-- Descripcion bajo la foto (columna izquierda); en movil las columnas
+         se apilan y queda despues del panel de compra por orden natural. -->
+    <div class="panel-desc">
+      <h2>Descripción</h2>
+      <p>{descripcion}</p>
     </div>
   </div>
 
@@ -787,10 +792,14 @@ const STAR_PATH =
   .product-hero {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(0, 460px);
+    /* La fila 1 mide lo que mide la galeria; el resto del panel derecho cae
+       en la fila 2, donde la descripcion arranca pegada a la foto. */
+    grid-template-rows: auto 1fr;
     gap: 46px;
     align-items: start;
     padding-top: 27.6px;
-    padding-bottom: 55px;
+    /* poco aire abajo: "Te podrian gustar" va pegado al bloque del producto */
+    padding-bottom: 18.4px;
   }
 
   .gallery {
@@ -854,7 +863,7 @@ const STAR_PATH =
 
   /* Carrusel "center mode" de similares: la tarjeta central grande, las de
      los lados pequenas y recortadas por el borde, bolitas debajo. */
-  .similares-section { padding-top: 2.3rem; }
+  .similares-section { padding-top: 0; }
 
   .similares-title { font-size: 27px; margin: 0 0 1.15rem; }
 
@@ -863,6 +872,8 @@ const STAR_PATH =
     --escala-lateral: 0.62;
     --opacidad-lateral: 0.55;
     position: relative;
+    max-width: 760px; /* carrusel compacto, centrado en la pagina */
+    margin-inline: auto;
     padding-bottom: 2.5rem;
     user-select: none;
     touch-action: pan-y;
@@ -1266,6 +1277,33 @@ const STAR_PATH =
   .soldout-box button:hover { background: var(--green-dark); }
   .soldout-link { display: inline-block; margin-top: 14px; font-size: 14px; }
 
+  /* Descripcion pegada al final de la foto: el panel derecho ocupa las dos
+     filas del grid, asi la primera fila mide lo que mide la galeria y la
+     descripcion arranca justo debajo, sin hueco. */
+  .panel-col {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+  }
+
+  .panel-desc {
+    grid-column: 1;
+    grid-row: 2;
+    align-self: start;
+  }
+
+  .panel-desc h2 {
+    font-size: 1.15rem;
+    font-weight: 600;
+    margin: 0 0 0.55rem;
+  }
+
+  .panel-desc p {
+    font-size: 0.95rem;
+    line-height: 1.65;
+    color: var(--ink-soft);
+    margin: 0;
+  }
+
   .shipping-line {
     display: flex;
     align-items: center;
@@ -1606,6 +1644,11 @@ const STAR_PATH =
       gap: 27.6px;
       padding-top: 18.4px;
     }
+
+    /* En movil se apilan en orden natural: foto, panel, descripcion. */
+    .product-hero { grid-template-rows: auto; }
+    .panel-col { grid-column: auto; grid-row: auto; }
+    .panel-desc { grid-column: auto; grid-row: auto; }
 
     .gallery { grid-template-columns: minmax(0, 1fr); }
 

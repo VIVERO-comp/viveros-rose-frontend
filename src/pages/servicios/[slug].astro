@@ -31,8 +31,16 @@ const { service } = Astro.props;
   <BackArrow href="/servicios" />
 
   <section class="ev-hero">
-    <!-- FOTO PENDIENTE: hero de {service.slug} — banda a lo ancho, minimo 1920×600 px -->
-    <div class="ev-hero-photo" data-medidas="Foto hero · 1920×600" aria-hidden="true"></div>
+    <div
+      class="ev-hero-photo"
+      data-medidas={service.heroPhoto ? undefined : 'Foto hero · 1920×600'}
+      style={
+        service.heroPhoto
+          ? `background-image: url('${service.heroPhoto}'); background-size: cover; background-position: center;`
+          : undefined
+      }
+      aria-hidden="true"
+    ></div>
     <div class="ev-hero-scrim" aria-hidden="true"></div>
     <div class="ev-hero-copy">
       <span class="hero-pill">{service.heroKicker}</span>
@@ -74,8 +82,16 @@ const { service } = Astro.props;
           Cotizar por WhatsApp
         </a>
       </div>
-      <!-- FOTO PENDIENTE: foto del bloque ({service.slug}) — vertical, minimo 640×760 px -->
-      <div class="ev-photo" data-medidas="Foto · 640×760" aria-hidden="true"></div>
+      <div
+        class="ev-photo"
+        data-medidas={service.blockPhoto ? undefined : 'Foto · 640×760'}
+        style={
+          service.blockPhoto
+            ? `background-image: url('${service.blockPhoto}'); background-size: cover; background-position: center;`
+            : undefined
+        }
+        aria-hidden="true"
+      ></div>
     </div>
   </section>
 
@@ -137,9 +153,9 @@ const { service } = Astro.props;
     background: linear-gradient(150deg, #2a4432, var(--card-dark) 70%);
   }
 
-  .ev-hero-photo::after,
-  .ev-photo::after,
-  .contact-photo::after {
+  .ev-hero-photo[data-medidas]::after,
+  .ev-photo[data-medidas]::after,
+  .contact-photo[data-medidas]::after {
     content: attr(data-medidas);
     position: absolute;
     right: 12px;

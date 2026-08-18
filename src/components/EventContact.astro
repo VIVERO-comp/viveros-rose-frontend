@@ -12,6 +12,23 @@ interface Props {
 }
 
 const { selectedType, whatsappMessage = 'Hola, quiero cotizar plantas para un evento.' } = Astro.props;
+
+// Lluvia de petalos rosados de boda al hacer hover: 22 petalos con posicion,
+// tamano, ritmo y vaiven pseudoaleatorios pero deterministas (misma lluvia
+// en cada build). Tonos rosados del ramo de novia.
+const TONOS_PETALO = ['#e88bb1', '#f3b3cc', '#f7d0de', '#e06a9f', '#fbe4ec'];
+const petalos = Array.from({ length: 22 }, (_, i) => {
+  const semilla = (i * 37 + 11) % 100;
+  return {
+    left: `${(i * 17 + semilla) % 96}%`,
+    tam: 12 + (semilla % 14),
+    dur: (2.8 + (semilla % 25) / 10).toFixed(1),
+    delay: ((i * 53) % 40) / 10,
+    vaiven: (semilla % 2 === 0 ? 1 : -1) * (18 + (semilla % 34)),
+    giro: 160 + ((i * 71) % 260),
+    tono: TONOS_PETALO[i % TONOS_PETALO.length],
+  };
+});
 ---
 
 <section class="container contact-split-wrap">
@@ -19,6 +36,18 @@ const { selectedType, whatsappMessage = 'Hola, quiero cotizar plantas para un ev
     <div class="contact-photo-col">
       <div class="contact-photo" style="background-image: url('/fotos_eventos/evento.jpeg'); background-size: cover; background-position: center;" aria-hidden="true"></div>
       <div class="contact-scrim" aria-hidden="true"></div>
+      <!-- Lluvia de petalos rosados (boda) mientras el mouse esta encima. -->
+      <div class="petalos" aria-hidden="true">
+        {petalos.map((p) => (
+          <svg
+            class="petalo"
+            viewBox="0 0 24 32"
+            style={`left: ${p.left}; width: ${p.tam}px; height: ${Math.round(p.tam * 1.33)}px; animation-duration: ${p.dur}s; animation-delay: ${p.delay}s; --vaiven: ${p.vaiven}px; --giro: ${p.giro}deg;`}
+          >
+            <path d="M12 2 C20 7 22 17 12 30 C2 17 4 7 12 2 Z" fill={p.tono} />
+          </svg>
+        ))}
+      </div>
       <div class="contact-copy">
         <h2>Cuéntanos de tu evento</h2>
         <p>Fecha, lugar y cantidad de invitados. Con eso te armamos la propuesta y el presupuesto.</p>
@@ -109,6 +138,45 @@ const { selectedType, whatsappMessage = 'Hola, quiero cotizar plantas para un ev
     position: absolute;
     inset: 0;
     background: linear-gradient(150deg, #2a4432, var(--card-dark) 70%);
+  }
+
+  /* Lluvia de petalos de boda sobre el panel izquierdo (solo en hover). */
+  .petalos {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .petalo {
+    position: absolute;
+    top: -36px;
+    opacity: 0;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
+  }
+
+  .contact-split:hover .petalo {
+    animation-name: petalo-cae;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+  }
+
+  @keyframes petalo-cae {
+    0% {
+      transform: translateY(0) translateX(0) rotate(0deg);
+      opacity: 0;
+    }
+    6% { opacity: 1; }
+    85% { opacity: 1; }
+    100% {
+      transform: translateY(640px) translateX(var(--vaiven, 20px)) rotate(var(--giro, 240deg));
+      opacity: 0;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .contact-split:hover .petalo { animation: none; }
   }
 
   .contact-scrim {
