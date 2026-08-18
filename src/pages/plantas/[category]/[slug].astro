@@ -227,7 +227,7 @@ const STAR_PATH =
       </nav>
 
       <h1>{product.name}</h1>
-      <div class="scientific">{product.scientificName}</div>
+      {product.scientificName && <div class="scientific">{product.scientificName}</div>}
 
       <div class="price-row">
         <div class="price-group">

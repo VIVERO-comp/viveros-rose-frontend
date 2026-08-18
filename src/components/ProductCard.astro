@@ -30,7 +30,7 @@ const outOfStock = product.available <= 0;
     <div class="tile-info">
       <StockBadge sku={product.sku} available={product.available} />
       <h3>{product.name}</h3>
-      <p class="scientific">{product.scientificName}</p>
+      {product.scientificName && <p class="scientific">{product.scientificName}</p>}
       <p class="price">{formatPrice(product.price)}</p>
     </div>
   </a>

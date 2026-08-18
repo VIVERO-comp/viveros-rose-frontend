@@ -19,14 +19,12 @@ const sidebarSlugs = [
   'interior',
   'exterior',
   'florales',
-  'frutales',
   'pet-friendly',
   'faciles',
-  'oferta',
 ];
 const sidebar = sidebarSlugs.map((slug) => collections.find((c) => c.slug === slug)!);
 
-const popularSlugs = ['faciles', 'pet-friendly', 'frutales', 'jardin', 'interior'];
+const popularSlugs = ['faciles', 'pet-friendly', 'florales', 'jardin', 'interior'];
 const popular = popularSlugs.map((slug) => collections.find((c) => c.slug === slug)!);
 
 // Paginacion del diseno: de 8 en 8 con "Ver mas plantas".
@@ -35,7 +33,7 @@ const PAGE_SIZE = 8;
 
 <Base
   title="Catálogo de plantas"
-  description="Todas nuestras plantas disponibles: interior, exterior, florales y frutales, con disponibilidad real del vivero."
+  description="Todas nuestras plantas disponibles: interior, exterior y florales, con disponibilidad real del vivero."
 >
   <section class="shop-hero">
     <!-- FOTO PENDIENTE: banda del catalogo — a lo ancho, minimo 1920×300 px -->

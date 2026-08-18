@@ -13,11 +13,14 @@ import { collections } from '../data/collections';
 import { guides } from '../data/guides';
 import { whatsappLink } from '../lib/site';
 
-const bySlug = (slug: string) => products.find((p) => p.slug === slug)!;
+// Si un slug curado desaparece del catalogo (p.ej. al re-importar de Odoo),
+// se omite en vez de romper el build.
+const bySlugs = (slugs: string[]) =>
+  slugs.map((slug) => products.find((p) => p.slug === slug)).filter((p) => p !== undefined);
 
 // Selecciones curadas del diseno (productos reales del catalogo).
-const featured = ['rosa-roja', 'veranera-fucsia', 'aglaonema-silver-bay', 'monstera-deliciosa'].map(bySlug);
-const bestsellers = ['ixora-roja', 'palma-areca', 'ficus-lyrata', 'mango-calidad'].map(bySlug);
+const featured = bySlugs(['monstera-deliciosa', 'rosa', 'lavanda', 'ficus-lyrata']);
+const bestsellers = bySlugs(['ixora', 'palma-abanico', 'cactus-mediano', 'jazmin-blanco-enano']);
 
 const colName = (slug: string) => collections.find((c) => c.slug === slug)!.name;
 
@@ -27,19 +30,19 @@ const collectionTiles = [
   { label: 'Poca luz', slug: 'poca-luz' },
   { label: 'Sol pleno', slug: 'jardin' },
   { label: 'Cercas vivas', slug: 'palmas' },
-  { label: 'Frutales de patio', slug: 'frutales' },
+  { label: 'Para interiores', slug: 'interior' },
   { label: 'Para regalar', slug: 'mas-vendidas' },
 ];
 
-// Tiles de "Compra por tipo" (el diseno lista suculentas, pero el catalogo
-// actual no tiene: se muestra Florales en su lugar).
+// Tiles de "Compra por tipo". Veraneras y frutales se quitaron porque el
+// catalogo de Odoo aun no los tiene; reponerlos cuando existan.
 const typeTiles = [
   { label: 'Rosales', slug: 'rosales' },
-  { label: 'Veraneras', slug: 'veraneras' },
   { label: 'Palmas', slug: 'palmas' },
   { label: 'Crotos', slug: 'crotos' },
-  { label: 'Frutales', slug: 'frutales' },
   { label: 'Florales', slug: 'florales' },
+  { label: 'Cactus y suculentas', slug: 'suculentas' },
+  { label: 'Hierbas de cocina', slug: 'hierbas' },
 ];
 
 const reviews = [
@@ -74,15 +77,14 @@ const paisajismoMessage = whatsappLink('Hola, quiero cotizar un proyecto de pais
   description="Vivero real en Panamá. Compra plantas online con inventario actualizado, entrega en la ciudad de Panamá y asesoría por WhatsApp."
 >
   <section class="hero">
-    <!-- FOTO PENDIENTE: hero acuarela — a lo ancho, minimo 1920×620 px -->
-    <div class="hero-photo" data-medidas="Foto hero · 1920×620" aria-hidden="true"></div>
+    <div class="hero-photo" style="background-image: url('/fotos_homepage/primerafoto.jpg'); background-size: cover; background-position: center;" aria-hidden="true"></div>
     <div class="hero-scrim" aria-hidden="true"></div>
     <div class="hero-content">
       <div class="container">
         <div class="hero-copy">
           <p class="hero-kicker">Vivero propio en Panamá</p>
           <h1>
-            Plantas del vivero, <span class="hero-underline">entregadas</span> en tu casa
+            Plantas para tu hogar, <span class="hero-underline"> enviadas </span> hasta tu puerta!
           </h1>
           <p class="hero-sub">
             Inventario real actualizado cada día, entrega en la ciudad de Panamá y asesoría por
@@ -129,7 +131,7 @@ const paisajismoMessage = whatsappLink('Hola, quiero cotizar un proyecto de pais
     <div class="duo-grid">
       <a href="/plantas/interior" class="duo-card">
         <!-- FOTO PENDIENTE: banda interior — 16:10, minimo 1200×750 px -->
-        <div class="duo-photo" data-medidas="Foto 16:10 · 1200×750" aria-hidden="true"></div>
+        <div class="duo-photo" style="background-image: url('/fotos_homepage/demo.jpg'); background-size: cover; background-position: center;" aria-hidden="true"></div>
         <div class="duo-overlay" aria-hidden="true"></div>
         <div class="duo-copy">
           <p class="duo-kicker">Conoce más</p>
@@ -139,7 +141,7 @@ const paisajismoMessage = whatsappLink('Hola, quiero cotizar un proyecto de pais
       </a>
       <a href="/plantas/exterior" class="duo-card">
         <!-- FOTO PENDIENTE: banda patio y jardin — 16:10, minimo 1200×750 px -->
-        <div class="duo-photo" data-medidas="Foto 16:10 · 1200×750" aria-hidden="true"></div>
+        <div class="duo-photo" style="background-image: url('/fotos_homepage/demo.jpg'); background-size: cover; background-position: center;" aria-hidden="true"></div>
         <div class="duo-overlay" aria-hidden="true"></div>
         <div class="duo-copy">
           <p class="duo-kicker">Conoce más</p>
@@ -195,7 +197,7 @@ const paisajismoMessage = whatsappLink('Hola, quiero cotizar un proyecto de pais
   <section class="container home-section">
     <hr class="section-rule" />
     <div class="club-grid">
-      <!-- FOTO PENDIENTE: club vivero rose — apaisada, minimo 800×560 px -->
+      <!-- FOTO PENDIENTE:(/Users/abrahamkortovich/proyectos/viveros-rose-frontend/public/fotos_homepage/club.jpg) club vivero rose — apaisada, minimo 800×560 px -->
       <div class="club-photo" data-medidas="Foto · 800×560" aria-hidden="true"></div>
       <div>
         <p class="kicker">Programa de lealtad</p>
@@ -246,7 +248,7 @@ const paisajismoMessage = whatsappLink('Hola, quiero cotizar un proyecto de pais
     </div>
     <div class="guides-grid">
       <a href={`/guia/${mainGuide.slug}`} class="guide-main">
-        <!-- FOTO PENDIENTE: guia principal — apaisada, minimo 1000×560 px -->
+        <!-- FOTO PENDIENTE: guia principal — apaisada, minimo 1000×560 px (public/fotos_homepage/guia_de_cuidado.jpg) -->
         <div class="guide-photo" data-medidas="Foto · 1000×560" aria-hidden="true"></div>
         <h3>{mainGuide.title}</h3>
         <p>{mainGuide.excerpt}</p>
@@ -256,7 +258,7 @@ const paisajismoMessage = whatsappLink('Hola, quiero cotizar un proyecto de pais
         {
           otherGuides.map((g) => (
             <a href={`/guia/${g.slug}`} class="guide-row">
-              <!-- FOTO PENDIENTE: miniatura de guia — cuadrada, minimo 200×200 px -->
+              <!-- FOTO PENDIENTE: miniatura de guia — cuadrada, minimo 200×200 px public/fotos_homepage/top_plantas.webp y la otra public/fotos_homepage/cuidar_de_lluvia.jpeg -->
               <div class="guide-thumb" data-medidas="200×200" aria-hidden="true" />
               <div>
                 <h4>{g.title}</h4>

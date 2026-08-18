@@ -31,14 +31,13 @@ const megaColumns = [
     ],
   },
   {
-    title: 'Ofertas',
-    links: ['oferta', 'poca-luz', 'jardin', 'ultimas'].map(col),
+    title: 'Por luz y disponibilidad',
+    links: ['poca-luz', 'jardin', 'ultimas'].map(col),
   },
   {
     title: 'Tipo de planta',
     links: [
-      ...['rosales', 'veraneras', 'palmas', 'crotos'].map(col),
-      { href: '/plantas/frutales', label: 'Frutales injertados' },
+      ...['rosales', 'palmas', 'crotos', 'suculentas', 'hierbas'].map(col),
       { href: '/plantas/florales', label: 'Florales' },
     ],
   },
@@ -70,7 +69,7 @@ const emptyCartCollections = ['mas-vendidas', 'interior', 'jardin', 'faciles'].m
 ---
 
 <div class="announce">
-  <a href="/plantas?c=exterior">Temporada de lluvias: 15% de descuento en plantas de exterior</a>
+  <a href="/plantas">Entrega en la ciudad de Panamá en 24–48 h · Asesoría por WhatsApp</a>
 </div>
 
 <header class="site-header">
@@ -84,7 +83,7 @@ const emptyCartCollections = ['mas-vendidas', 'interior', 'jardin', 'faciles'].m
       <input
         type="search"
         name="q"
-        placeholder="Buscar plantas, macetas, frutales…"
+        placeholder="Buscar plantas…"
         aria-label="Buscar plantas"
       />
       <button type="submit" aria-label="Buscar"><Icon name="search" size={16} /></button>
@@ -404,7 +403,6 @@ const emptyCartCollections = ['mas-vendidas', 'interior', 'jardin', 'faciles'].m
     interior: 'Planta de interior',
     exterior: 'Planta de exterior',
     florales: 'Floral',
-    frutales: 'Frutal',
   };
 
   const money = (n: number) => `$${n.toFixed(2)}`;

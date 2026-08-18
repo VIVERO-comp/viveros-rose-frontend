@@ -76,12 +76,6 @@ export const collections: CollectionDef[] = [
     test: (p) => p.category === 'florales',
   },
   {
-    slug: 'frutales',
-    name: 'Frutales injertados',
-    blurb: 'Árboles y arbustos que producen en dos o tres años.',
-    test: (p) => p.category === 'frutales',
-  },
-  {
     slug: 'faciles',
     name: 'Fáciles de cuidar',
     blurb: 'Riego semanal y poca atención: perdonan el olvido.',
@@ -112,24 +106,14 @@ export const collections: CollectionDef[] = [
     // Solo cuenta el "si" explicito del catalogo; sin dato no se asume nada.
     test: (p) => p.pet === 'si',
   },
-  {
-    slug: 'oferta',
-    name: 'En oferta',
-    blurb: '15% de descuento en plantas de exterior durante la temporada de lluvias.',
-    test: (p) => p.category === 'exterior',
-  },
+  // La coleccion "En oferta" se quito junto con la promo del 15% (los precios
+  // actuales son placeholder). Reponerla cuando haya una oferta real.
   // Tipos de planta del diseno (filtros por nombre sobre el catalogo real).
   {
     slug: 'rosales',
     name: 'Rosales',
     blurb: 'Rosales de vivero para jardineras con sol de mañana.',
     test: (p) => /rosa/i.test(p.name),
-  },
-  {
-    slug: 'veraneras',
-    name: 'Veraneras',
-    blurb: 'Buganvillas de floración intensa, la reina del jardín panameño.',
-    test: (p) => /veranera/i.test(p.name),
   },
   {
     slug: 'palmas',
@@ -142,6 +126,18 @@ export const collections: CollectionDef[] = [
     name: 'Crotos y follaje',
     blurb: 'Color permanente y bajo mantenimiento.',
     test: (p) => /croto/i.test(p.name),
+  },
+  {
+    slug: 'suculentas',
+    name: 'Cactus y suculentas',
+    blurb: 'Poca agua y mucho sol: cactus, suculentas, aloe y jade.',
+    test: (p) => /cactus|suculenta|haworthia|jade|sabila/i.test(p.name),
+  },
+  {
+    slug: 'hierbas',
+    name: 'Hierbas de cocina',
+    blurb: 'Albahaca, menta, romero y más, listas para tu huerto casero.',
+    test: (p) => /albahaca|menta|oregano|romero|tomillo|hierba|apio|ruda/i.test(p.name),
   },
 ];
 
