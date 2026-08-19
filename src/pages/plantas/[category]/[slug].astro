@@ -690,13 +690,21 @@ const STAR_PATH =
     };
 
     const pintar = () => {
+      // Cinco visibles: central grande, un par a cada lado cada vez mas
+      // chico y tenue; del tercero en adelante quedan fuera.
+      const POSICIONES = [
+        { x: 0, s: 1, o: 1 },
+        { x: 104, s: 0.8, o: 0.85 },
+        { x: 192, s: 0.62, o: 0.55 },
+      ];
       laminas.forEach((lamina, i) => {
         const d = distancia(i);
         const lado = Math.sign(d);
-        const lejos = Math.abs(d) > 1;
-        lamina.style.setProperty('--x', `${lado * (lejos ? 110 : 88) * Math.min(Math.abs(d), 1)}%`);
-        lamina.style.setProperty('--s', d === 0 ? '1' : lejos ? '0.45' : 'var(--escala-lateral)');
-        lamina.style.setProperty('--o', d === 0 ? '1' : lejos ? '0' : 'var(--opacidad-lateral)');
+        const abs = Math.min(Math.abs(d), 3);
+        const p = POSICIONES[abs] ?? { x: 250, s: 0.5, o: 0 };
+        lamina.style.setProperty('--x', `${lado * p.x}%`);
+        lamina.style.setProperty('--s', String(p.s));
+        lamina.style.setProperty('--o', String(p.o));
         lamina.style.setProperty('--z', String(30 - Math.abs(d) * 10));
         lamina.classList.toggle('lamina--activa', d === 0);
         lamina.setAttribute('aria-hidden', d === 0 ? 'false' : 'true');
@@ -876,22 +884,20 @@ const STAR_PATH =
   .similares-title { font-size: 27px; margin: 0 0 1.15rem; }
 
   .carrusel {
-    --ancho-central: 34%; /* ancho de la tarjeta grande respecto al escenario */
-    --escala-lateral: 0.62;
-    --opacidad-lateral: 0.55;
+    /* Tarjeta central del tamano de las del catalogo (4 por fila): se ven
+       cinco a la vez, la central y dos a cada lado. */
+    --ancho-central: 24%;
     position: relative;
-    max-width: 760px; /* carrusel compacto, centrado en la pagina */
-    margin-inline: auto;
     padding-bottom: 2.5rem;
     user-select: none;
     touch-action: pan-y;
   }
 
-  /* La altura sale del ancho (la tarjeta central mide 34% del escenario y
+  /* La altura sale del ancho (la tarjeta central mide 24% del escenario y
      es 4:5 + su texto), asi nunca se recorta abajo. */
   .carrusel-escenario {
     position: relative;
-    aspect-ratio: 1.72;
+    aspect-ratio: 2.35;
     overflow: hidden;
   }
 
@@ -964,11 +970,7 @@ const STAR_PATH =
 
 
   @media (max-width: 768px) {
-    .carrusel {
-      --ancho-central: 68%;
-      --escala-lateral: 0.55;
-      --opacidad-lateral: 0.4;
-    }
+    .carrusel { --ancho-central: 68%; }
     .carrusel-escenario { aspect-ratio: 0.85; }
     .sim-arrow { width: 36px; height: 36px; }
   }
