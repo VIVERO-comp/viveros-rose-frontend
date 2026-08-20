@@ -1,12 +1,24 @@
 // Datos compartidos del sitio.
 
+// Sin fallback: publicar con un numero de WhatsApp falso rompe el checkout
+// entero (los pedidos se confirman por WhatsApp), asi que sin la variable el
+// build debe fallar aqui mismo.
+const whatsappNumber = import.meta.env.PUBLIC_WHATSAPP_NUMBER as string | undefined;
+if (!whatsappNumber) {
+  throw new Error(
+    'Falta PUBLIC_WHATSAPP_NUMBER en el entorno (.env). Es el numero de WhatsApp ' +
+      'del negocio en formato internacional sin "+", p. ej. 50765673062. ' +
+      'Sin el, todos los enlaces de pedido apuntarian a un numero falso.',
+  );
+}
+
 export const SITE = {
   name: 'Plantas Panama',
   byline: 'by Vivero Rose',
   domain: 'plantaspanama.com',
   address: 'Calle 11, Juan Díaz, Ciudad Radial, Panamá',
   hours: 'Lunes a viernes, 9:00 a.m. – 5:00 p.m.',
-  whatsappNumber: (import.meta.env.PUBLIC_WHATSAPP_NUMBER as string | undefined) ?? '50760000000',
+  whatsappNumber,
 };
 
 export function whatsappLink(message: string): string {
