@@ -1,0 +1,94 @@
+---
+// BORRADOR LEGAL: este texto es un punto de partida redactado para el
+// lanzamiento, NO es asesoría legal. Revisarlo con un abogado (Ley 81 de 2019
+// de protección de datos personales de Panamá) antes de darlo por definitivo.
+import Base from '../layouts/Base.astro';
+import { SITE, whatsappLink } from '../lib/site';
+---
+
+<Base
+  title="Política de privacidad"
+  description="Qué datos personales recogemos en plantaspanama.com, para qué los usamos y cómo pedir su eliminación."
+>
+  <section class="section">
+    <div class="container legal-container">
+      <span class="eyebrow">Legal</span>
+      <h1>Política de privacidad</h1>
+      <p class="legal-updated">Última actualización: 20 de agosto de 2026</p>
+
+      <p class="lead">
+        Esta tienda es operada por Vivero Rose ({SITE.address}). Aquí explicamos
+        qué datos personales recogemos cuando compras en {SITE.domain}, para qué
+        los usamos y cómo puedes pedir que los eliminemos.
+      </p>
+
+      <h2>Qué datos recogemos</h2>
+      <p>
+        Solo pedimos los datos necesarios para procesar y entregar tu pedido:
+        nombre y apellido, correo electrónico, número de WhatsApp y dirección de
+        entrega (provincia, corregimiento y referencia). La tienda funciona sin
+        cuentas de usuario: no guardamos contraseñas ni perfiles.
+      </p>
+      <p>
+        El carrito de compras se guarda únicamente en tu propio navegador
+        (almacenamiento local); no lo enviamos a ningún servidor mientras no
+        confirmes un pedido.
+      </p>
+
+      <h2>Para qué los usamos</h2>
+      <p>
+        Usamos tus datos exclusivamente para procesar tu pedido, coordinar la
+        entrega contigo por WhatsApp y responder tus consultas. No te enviaremos
+        publicidad sin que la hayas pedido.
+      </p>
+
+      <h2>Con quién los compartimos</h2>
+      <p>
+        No vendemos ni alquilamos tus datos personales a terceros. Solo los
+        compartimos cuando es indispensable para completar tu pedido (por
+        ejemplo, con quien realiza la entrega) o si una autoridad competente lo
+        exige por ley.
+      </p>
+
+      <h2>Cuánto tiempo los conservamos</h2>
+      <p>
+        Conservamos los datos de tus pedidos el tiempo necesario para atender la
+        garantía, cumplir obligaciones contables y resolver reclamos. Después,
+        los eliminamos.
+      </p>
+
+      <h2>Cómo pedir la eliminación de tus datos</h2>
+      <p>
+        Puedes pedirnos en cualquier momento acceder, corregir o eliminar tus
+        datos personales. Escríbenos por
+        <a href={whatsappLink('Hola, quiero hacer una solicitud sobre mis datos personales.')} target="_blank" rel="noopener">WhatsApp</a>
+        o desde la <a href="/contacto">página de contacto</a>, indicando el
+        correo que usaste al comprar, y lo gestionamos.
+      </p>
+
+      <h2>Contacto</h2>
+      <p>
+        Vivero Rose — {SITE.address}.<br />
+        Horario: {SITE.hours}.<br />
+        <a href={whatsappLink('Hola, tengo una consulta sobre la política de privacidad.')} target="_blank" rel="noopener">Escríbenos por WhatsApp</a>.
+      </p>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .legal-container { max-width: 46rem; }
+
+  .legal-updated {
+    font-size: 0.82rem;
+    color: var(--ink-faint);
+    margin: 0 0 1.8rem;
+  }
+
+  h2 {
+    font-size: 1.25rem;
+    margin: 2.1rem 0 0.6rem;
+  }
+
+  p { line-height: 1.7; }
+</style>

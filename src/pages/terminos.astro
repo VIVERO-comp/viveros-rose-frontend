@@ -1,0 +1,107 @@
+---
+// BORRADOR LEGAL: este texto es un punto de partida redactado para el
+// lanzamiento, NO es asesoría legal. Revisarlo con un abogado antes de darlo
+// por definitivo.
+import Base from '../layouts/Base.astro';
+import { SITE, whatsappLink } from '../lib/site';
+---
+
+<Base
+  title="Términos y condiciones"
+  description="Condiciones de compra en plantaspanama.com: pedidos, pagos, entrega y garantía."
+>
+  <section class="section">
+    <div class="container legal-container">
+      <span class="eyebrow">Legal</span>
+      <h1>Términos y condiciones</h1>
+      <p class="legal-updated">Última actualización: 20 de agosto de 2026</p>
+
+      <p class="lead">
+        Estos términos regulan las compras en {SITE.domain}, tienda en línea
+        operada por Vivero Rose ({SITE.address}). Al hacer un pedido aceptas
+        estas condiciones.
+      </p>
+
+      <h2>Pedidos y confirmación</h2>
+      <p>
+        Los pedidos se confirman por WhatsApp: al finalizar la compra se abre
+        una conversación con el detalle de tu pedido y nosotros lo confirmamos
+        contigo por ese medio, junto con la disponibilidad y la fecha de
+        entrega. El pedido queda en firme cuando lo confirmamos y acordamos el
+        pago.
+      </p>
+
+      <h2>Precios y pago</h2>
+      <p>
+        Los precios están en dólares estadounidenses (USD) e incluyen lo que se
+        indica en cada producto; el costo de envío se muestra por separado al
+        pagar. Aceptamos Yappy, transferencia bancaria y efectivo contra entrega
+        (solo ciudad de Panamá). Podemos corregir errores evidentes de precio
+        antes de confirmar un pedido.
+      </p>
+
+      <h2>Entrega</h2>
+      <p>
+        Entregamos en la ciudad de Panamá con entrega estándar (2–4 días
+        hábiles) o express (24 horas), y también puedes retirar sin costo en el
+        vivero ({SITE.address}). Para otras zonas coordinamos disponibilidad y
+        tarifa por WhatsApp. Los tiempos cuentan desde que confirmamos el
+        pedido y el pago.
+      </p>
+
+      <h2>Plantas y disponibilidad</h2>
+      <p>
+        Vendemos plantas vivas cultivadas en nuestro vivero: cada ejemplar puede
+        variar en tamaño y forma respecto a las fotos. La disponibilidad puede
+        cambiar entre que haces el pedido y lo confirmamos; si algo se agotó, te
+        ofrecemos un reemplazo o la devolución de lo pagado.
+      </p>
+
+      <h2>Garantía y reclamos</h2>
+      <p>
+        Si tu planta llega dañada, escríbenos por WhatsApp con una foto dentro
+        de los primeros 30 días después de la entrega y la reponemos. La
+        garantía no cubre daños por falta de riego, exceso de sol u otras
+        condiciones de cuidado fuera de nuestro control.
+      </p>
+
+      <h2>Uso del sitio</h2>
+      <p>
+        El contenido de {SITE.domain} (textos, fotos y marca) pertenece a
+        Vivero Rose y no puede reproducirse con fines comerciales sin permiso.
+      </p>
+
+      <h2>Ley aplicable</h2>
+      <p>
+        Estos términos se rigen por las leyes de la República de Panamá.
+        Cualquier controversia se atenderá primero de forma directa; nos
+        comprometemos a buscar una solución razonable contigo.
+      </p>
+
+      <h2>Cambios y contacto</h2>
+      <p>
+        Podemos actualizar estos términos; la versión vigente es la publicada en
+        esta página con su fecha. Para cualquier consulta:
+        <a href={whatsappLink('Hola, tengo una consulta sobre los términos y condiciones.')} target="_blank" rel="noopener">WhatsApp</a>
+        o la <a href="/contacto">página de contacto</a>. Horario: {SITE.hours}.
+      </p>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .legal-container { max-width: 46rem; }
+
+  .legal-updated {
+    font-size: 0.82rem;
+    color: var(--ink-faint);
+    margin: 0 0 1.8rem;
+  }
+
+  h2 {
+    font-size: 1.25rem;
+    margin: 2.1rem 0 0.6rem;
+  }
+
+  p { line-height: 1.7; }
+</style>
