@@ -649,6 +649,11 @@ const PAGE_SIZE = 16;
     cursor: pointer;
   }
 
+  /* El envoltorio de datos se estira a la altura de la fila, y como celda
+     unica de grid obliga a la tarjeta a llenarlo: sin esto cada tarjeta
+     termina donde su contenido y la fila queda como una escalera. */
+  .shop-grid [data-card] { display: grid; }
+
   .shop-grid [data-card][hidden] { display: none; }
 
   .no-results {

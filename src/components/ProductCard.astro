@@ -19,11 +19,6 @@ const outOfStock = product.available <= 0;
 // "Mas vendida" usa la misma regla que la coleccion mas-vendidas.
 const esMasVendida = product.available >= 40;
 
-// El nombre ocupa siempre UNA linea para que las filas queden niveladas: la
-// ultima palabra sale mas chica y, si aun asi no cabe, se corta con "…".
-const palabras = product.name.split(' ');
-const nombreBase = palabras.slice(0, -1).join(' ');
-const ultimaPalabra = palabras.length > 1 ? palabras[palabras.length - 1] : '';
 ---
 
 <article class="product-tile">
@@ -51,18 +46,12 @@ const ultimaPalabra = palabras.length > 1 ? palabras[palabras.length - 1] : '';
       {esMasVendida && <span class="tile-flag">Más vendida</span>}
     </div>
     <div class="tile-info">
-      <StockBadge sku={product.sku} available={product.available} />
-      <h3>
-        {ultimaPalabra ? (
-          <>
-            {`${nombreBase} `}<span class="name-tail">{ultimaPalabra}</span>
-          </>
-        ) : (
-          product.name
-        )}
-      </h3>
+      <h3>{product.name}</h3>
       {product.scientificName && <p class="scientific">{product.scientificName}</p>}
-      <p class="price">Desde {formatPrice(product.price)}</p>
+      <div class="tile-bottom">
+        <StockBadge sku={product.sku} available={product.available} />
+        <p class="price">Desde {formatPrice(product.price)}</p>
+      </div>
     </div>
   </a>
   <!-- El boton se renderiza siempre y se muestra u oculta con el stock REAL
@@ -122,6 +111,7 @@ const ultimaPalabra = palabras.length > 1 ? palabras[palabras.length - 1] : '';
 <style>
   .product-tile {
     position: relative;
+    height: 100%;
     display: flex;
     flex-direction: column;
     border-radius: var(--radius-lg);
@@ -221,21 +211,21 @@ const ultimaPalabra = palabras.length > 1 ? palabras[palabras.length - 1] : '';
   .tile-info :global(.badge--low) { color: #b07908; }
   .tile-info :global(.badge--out) { color: var(--ink-faint); }
 
-  /* Nombre en UNA sola linea (la ultima palabra mas chica) para que todas
-     las filas de texto de la grilla queden alineadas. */
+  /* Nombre con altura reservada para DOS lineas (y elipsis si necesita mas):
+     ocupe una o dos, todas las tarjetas de la fila miden lo mismo. */
   h3 {
     font-size: 15px;
     font-weight: 600;
-    line-height: 1.2;
+    line-height: 1.25;
     margin: 0;
     color: var(--ink);
     max-width: 100%;
-    white-space: nowrap;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
     overflow: hidden;
-    text-overflow: ellipsis;
+    min-height: 2.5em;
   }
-
-  .name-tail { font-size: 12px; }
 
   .scientific {
     font-size: 12px;
@@ -244,13 +234,23 @@ const ultimaPalabra = palabras.length > 1 ? palabras[palabras.length - 1] : '';
     margin: 0;
   }
 
+  /* Badge de stock + precio anclados al fondo de la tarjeta, para que queden
+     a la misma altura en toda la fila aunque falte el nombre cientifico. */
+  .tile-bottom {
+    margin-top: auto;
+    padding-top: 4px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
   .price {
     font-size: 15px;
     font-weight: 600;
     font-variant-numeric: tabular-nums;
     color: var(--ink);
-    margin: 2px 0 0;
-    margin-top: auto;
+    margin: 0;
   }
 
   .tile-add {
@@ -289,9 +289,11 @@ const ultimaPalabra = palabras.length > 1 ? palabras[palabras.length - 1] : '';
       background: transparent;
     }
 
+    /* Sigue siendo columna a toda altura: asi el bloque badge+precio queda
+       anclado abajo tambien en la grilla de 2 columnas del movil. */
     .tile-link {
       position: static;
-      display: block;
+      height: 100%;
       color: var(--ink);
     }
 

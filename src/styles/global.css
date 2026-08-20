@@ -215,20 +215,24 @@ input::placeholder { color: rgba(27, 42, 31, 0.45); }
   gap: 1.15rem;
 }
 
-.grid--2 { grid-template-columns: repeat(2, 1fr); }
-.grid--3 { grid-template-columns: repeat(3, 1fr); }
-.grid--4 { grid-template-columns: repeat(4, 1fr); }
+/* minmax(0, 1fr) y no 1fr a secas: una palabra larga en el nombre no puede
+   encogerse y ensancharia su columna (y con la foto 4:5 la haria mas alta,
+   desnivelando la fila); asi la columna mantiene el ancho parejo y el nombre
+   se recorta con su clamp de dos lineas. */
+.grid--2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.grid--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.grid--4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 
 @media (max-width: 900px) {
-  .grid--4 { grid-template-columns: repeat(2, 1fr); }
-  .grid--3 { grid-template-columns: repeat(2, 1fr); }
+  .grid--4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .grid--3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 @media (max-width: 560px) {
   /* Los productos se quedan en 2 columnas en celular (referencia Lively Root
      movil); solo las grillas de contenido caen a 1 columna. */
-  .grid--4 { grid-template-columns: repeat(2, 1fr); gap: 0.7rem; }
-  .grid--3, .grid--2 { grid-template-columns: 1fr; }
+  .grid--4 { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.7rem; }
+  .grid--3, .grid--2 { grid-template-columns: minmax(0, 1fr); }
 }
 
 /* Badges de stock (colores del handoff; las clases y data-attrs no cambian
