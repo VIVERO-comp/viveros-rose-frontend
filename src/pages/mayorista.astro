@@ -42,7 +42,12 @@ const clientTypes = [
 >
   <BackArrow />
   <section class="may-hero">
-    <div class="may-hero-photo" style="background-image: url('/fotos_mayorista/hero.jpeg'); background-size: cover; background-position: center;" aria-hidden="true"></div>
+    <img
+      class="may-hero-photo"
+      src="/fotos_mayorista/carrito_obra.jpg"
+      alt="Trabajador del vivero transportando plantas en flor con un carrito entre las hileras de cultivo"
+      loading="eager"
+    />
     <div class="may-hero-scrim" aria-hidden="true"></div>
     <div class="may-hero-copy">
       <span class="hero-pill">Constructoras · Empresas · Revendedores</span>
@@ -157,6 +162,10 @@ const clientTypes = [
   .may-hero-photo {
     position: absolute;
     inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
     background: linear-gradient(150deg, #2a4432, var(--card-dark) 70%);
   }
 

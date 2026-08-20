@@ -7,7 +7,13 @@ import Icon from './Icon.astro';
 
 <section class="container obra-wrap">
   <div class="obra-band">
-    <div class="obra-photo" style="background-image: url('/fotos_mayorista/hero.jpeg'); background-size: cover; background-position: center;" aria-hidden="true"></div>
+    <div class="obra-photo">
+      <img
+        src="/fotos_mayorista/carrito_obra.jpg"
+        alt="Trabajador del vivero transportando plantas en flor con un carrito entre las hileras de cultivo"
+        loading="lazy"
+      />
+    </div>
     <div class="obra-copy">
       <p class="obra-kicker">Mayoristas y proyectos</p>
       <h2>¿Compras por volumen o planeas un proyecto comercial?</h2>
@@ -54,10 +60,20 @@ import Icon from './Icon.astro';
 
   .obra-band:hover .obra-photo { width: 58%; }
 
+  .obra-photo img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+  }
+
   .obra-photo::before {
     content: '';
     position: absolute;
     inset: 0;
+    z-index: 1;
     background: linear-gradient(
       to right,
       rgba(30, 51, 36, 0.92) 0%,
