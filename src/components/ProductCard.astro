@@ -16,12 +16,6 @@ const { product } = Astro.props;
 const url = `/plantas/${product.category}/${product.slug}`;
 const outOfStock = product.available <= 0;
 
-// Prueba social provisional: las "vistas" no existen en Odoo todavia, asi
-// que se inventan de forma determinista a partir del SKU (mismo numero en
-// cada build). Sustituir por datos reales cuando existan.
-const semilla = [...product.sku].reduce((suma, letra) => suma + letra.charCodeAt(0), 0);
-const vistas = 60 + (semilla % 340);
-
 // "Mas vendida" usa la misma regla que la coleccion mas-vendidas.
 const esMasVendida = product.available >= 40;
 
@@ -68,7 +62,6 @@ const ultimaPalabra = palabras.length > 1 ? palabras[palabras.length - 1] : '';
         )}
       </h3>
       {product.scientificName && <p class="scientific">{product.scientificName}</p>}
-      <p class="tile-views">{vistas} vistas esta semana</p>
       <p class="price">Desde {formatPrice(product.price)}</p>
     </div>
   </a>
@@ -235,12 +228,6 @@ const ultimaPalabra = palabras.length > 1 ? palabras[palabras.length - 1] : '';
   .scientific {
     font-size: 12px;
     font-style: italic;
-    color: var(--ink-faint);
-    margin: 0;
-  }
-
-  .tile-views {
-    font-size: 11.5px;
     color: var(--ink-faint);
     margin: 0;
   }

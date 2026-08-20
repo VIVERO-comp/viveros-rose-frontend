@@ -1,6 +1,6 @@
 ---
 // Pagina de producto del handoff (Producto.dc.html): galeria con miniaturas,
-// panel con variantes, acordeones, guia de cuidado, "Va bien con…" y resenas.
+// panel con variantes, acordeones, guia de cuidado y "Va bien con…".
 // La logica integrada se conserva: StockBadge con data-sku (stock proxy),
 // catalogo en src/data/products.ts y carrito en src/lib/cart.
 import Base from '../../../layouts/Base.astro';
@@ -38,12 +38,6 @@ const GALLERY_SIZE = 5;
 const fotosGaleria = [product.image, product.imageHover, ...(product.gallery ?? [])].filter(
   (f): f is string => Boolean(f),
 );
-
-// Fotos "de clientes" del bloque de resenas: primero las adicionales (tomas
-// de ambiente) y luego el resto de la galeria, hasta seis.
-const fotosResenas = [...(product.gallery ?? []), product.image, product.imageHover]
-  .filter((f): f is string => Boolean(f))
-  .slice(0, 6);
 
 // Similares del carrusel "Te podrian gustar": solo productos que comparten
 // coleccion con este ('all' no cuenta porque abarca todo el catalogo),
@@ -166,56 +160,9 @@ const accordions = [
     open: false,
     body: 'Entregamos en Ciudad de Panamá en 24 a 48 horas (envío estándar $3.00; también hay entrega express y retiro gratis en el vivero). Fuera de la ciudad coordinamos por WhatsApp. Si la planta llega dañada, mándanos una foto dentro de los primeros 30 días y la reponemos.',
   },
-  {
-    key: 'resenas',
-    title: 'Reseñas y fotos de clientes (4.8 de 128 reseñas)',
-    open: false,
-    body: 'Las reseñas verificadas y las fotos que nos envían los clientes están al final de la página.',
-  },
 ];
 
 const careTitle = `Cuidado de ${product.name.replace(/\s*\(.*\)$/, '').toLowerCase()}`;
-
-const ratingBars = [
-  { stars: '5★', pct: 88 },
-  { stars: '4★', pct: 7 },
-  { stars: '3★', pct: 3 },
-  { stars: '2★', pct: 1 },
-  { stars: '1★', pct: 1 },
-];
-
-const reviews = [
-  {
-    n: 5,
-    date: 'hace 4 días',
-    name: 'Marielena C.',
-    text: 'Llegó impecable a Costa del Este, bien empacada y en muy buen estado. Se ve exactamente como en las fotos.',
-    gift: 'No',
-    level: 'Principiante',
-    place: 'Terraza',
-  },
-  {
-    n: 5,
-    date: 'hace 2 semanas',
-    name: 'José R.',
-    text: 'Compré seis para la jardinera del frente y todas pegaron. El equipo me explicó por WhatsApp cómo prepararle el suelo, buenísima atención.',
-    gift: 'No',
-    level: 'Jardinera',
-    place: 'Jardín',
-  },
-  {
-    n: 4,
-    date: 'hace 1 mes',
-    name: 'Ana P.',
-    text: 'La regalé para el cumpleaños de mi mamá con la tarjeta personalizada. Le encantó. Le quito una estrella porque llegó al final de la ventana de entrega.',
-    gift: 'Sí',
-    level: 'Intermedia',
-    place: 'Balcón',
-  },
-];
-
-const STAR_PATH =
-  'M12 2.6l2.9 5.9 6.5.95-4.7 4.58 1.11 6.47L12 17.45 6.19 20.5l1.11-6.47-4.7-4.58 6.5-.95z';
 ---
 
 <Base title={product.name} description={product.description} whatsappMessage={whatsappMessage}>
@@ -284,14 +231,6 @@ const STAR_PATH =
           {compareAt && <span class="compare">{formatPrice(compareAt)}</span>}
           <span class="price">{formatPrice(product.price)}</span>
         </div>
-        <a href="#resenas" class="rating-link">
-          <span class="stars stars--sm" aria-hidden="true">
-            {Array.from({ length: 5 }, () => (
-              <svg viewBox="0 0 24 24" width="15" height="15"><path d={STAR_PATH} /></svg>
-            ))}
-          </span>
-          <span>128 reseñas</span>
-        </a>
       </div>
 
       {
@@ -522,131 +461,6 @@ const STAR_PATH =
     )
   }
 
-  <section id="resenas" class="container reviews-section">
-    <h2>Reseñas de clientes</h2>
-    <hr class="rule rule--flush reviews-rule" />
-
-    <div class="reviews-top">
-      <div>
-        <div class="score-row">
-          <div class="score">4.8</div>
-          <div class="score-of">/ 5</div>
-          <div>
-            <span class="stars stars--lg" aria-hidden="true">
-              {Array.from({ length: 5 }, () => (
-                <svg viewBox="0 0 24 24" width="20" height="20"><path d={STAR_PATH} /></svg>
-              ))}
-            </span>
-            <div class="score-count">128 reseñas</div>
-          </div>
-        </div>
-        <div class="bars">
-          {
-            ratingBars.map((bar) => (
-              <div class="bar-row">
-                <span>{bar.stars}</span>
-                <span class="bar-track">
-                  <span class="bar-fill" style={`width: ${bar.pct}%`} />
-                </span>
-                <span class="bar-pct">{bar.pct}%</span>
-              </div>
-            ))
-          }
-        </div>
-      </div>
-      <div class="review-photos">
-        {
-          fotosResenas.length
-            ? fotosResenas.map((foto) => (
-                <div
-                  class="review-photo"
-                  style={`background-image: url('${foto}'); background-size: cover; background-position: center;`}
-                />
-              ))
-            : Array.from({ length: 6 }, (_, i) => <div class="review-photo" data-n={i + 1} />)
-        }
-      </div>
-    </div>
-
-    <div class="review-questions">
-      <div>
-        <div class="rq-title">¿Fue un regalo?</div>
-        <div class="rq-body">Sí (31) · No (18)</div>
-      </div>
-      <div>
-        <div class="rq-title">¿Cuánta experiencia tienes con plantas?</div>
-        <div class="rq-body">Principiante (22) · Intermedia (14) · Jardinera (9)</div>
-      </div>
-      <div>
-        <div class="rq-title">¿Dónde vive tu planta?</div>
-        <div class="rq-body">Jardín (19) · Terraza (12) · Balcón (7) · Oficina (4)</div>
-      </div>
-    </div>
-
-    <div class="reviews-tabbar">
-      <div class="reviews-tab">
-        <span class="reviews-tab-name">Reseñas</span>
-        <span class="reviews-tab-count">128</span>
-      </div>
-      <a
-        href={`https://wa.me/${SITE.whatsappNumber}?text=${encodeURIComponent(`Hola, quiero dejar una reseña de "${product.name}".`)}`}
-        class="write-review"
-        target="_blank"
-        rel="noopener">Escribir una reseña</a
-      >
-    </div>
-
-    <div class="review-filters">
-      <form class="review-search" onsubmit="return false">
-        <Icon name="search" size={15} class="review-search-icon" />
-        <input type="search" placeholder="Buscar reseñas" aria-label="Buscar reseñas" />
-      </form>
-      <button class="review-chip" type="button" disabled title="No disponible por ahora">Más relevantes</button>
-      <button class="review-chip" type="button" disabled title="No disponible por ahora">Todas las estrellas</button>
-      <button class="review-chip" type="button" disabled title="No disponible por ahora">Con fotos</button>
-      <button class="review-chip" type="button" disabled title="No disponible por ahora">Más filtros</button>
-    </div>
-
-    <div class="review-list">
-      {
-        reviews.map((review) => (
-          <div class="review">
-            <div class="review-head">
-              <span class="stars stars--md" aria-hidden="true">
-                {Array.from({ length: 5 }, (_, i) => (
-                  <svg viewBox="0 0 24 24" width="16" height="16" style={i < review.n ? '' : 'opacity:0.25'}>
-                    <path d={STAR_PATH} />
-                  </svg>
-                ))}
-              </span>
-              <span class="review-date">{review.date}</span>
-            </div>
-            <div class="review-byline">
-              <span class="review-name">{review.name}</span>
-              <span class="verified">
-                <Icon name="badge-check" size={15} class="verified-icon" /> Compra verificada
-              </span>
-            </div>
-            <p class="review-text">{review.text}</p>
-            <div class="review-meta">
-              <div>
-                <div class="rq-title">¿Fue un regalo?</div>
-                <div class="rq-body">{review.gift}</div>
-              </div>
-              <div>
-                <div class="rq-title">Experiencia</div>
-                <div class="rq-body">{review.level}</div>
-              </div>
-              <div>
-                <div class="rq-title">¿Dónde vive?</div>
-                <div class="rq-body">{review.place}</div>
-              </div>
-            </div>
-          </div>
-        ))
-      }
-    </div>
-  </section>
 </Base>
 
 <script>
@@ -1089,17 +903,6 @@ const STAR_PATH =
 
   .price { font-size: 26px; font-weight: 600; font-variant-numeric: tabular-nums; }
 
-  .rating-link {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    color: rgba(27, 42, 31, 0.7);
-    font-size: 13px;
-  }
-
-  .stars { display: inline-flex; gap: 2px; color: var(--terracotta); }
-  .stars svg { display: block; fill: currentColor; }
-
   .low-stock {
     display: flex;
     align-items: center;
@@ -1441,212 +1244,6 @@ const STAR_PATH =
     gap: 18.4px;
   }
 
-  /* Resenas */
-  .reviews-section { padding-bottom: 73.6px; }
-  .reviews-section h2 { margin: 0 0 27.6px; }
-  .reviews-rule { margin-bottom: 36.8px; }
-
-  .reviews-top {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    gap: 46px;
-    align-items: start;
-  }
-
-  .score-row { display: flex; align-items: baseline; gap: 18px; flex-wrap: wrap; }
-  .score { font-size: 52px; font-weight: 600; line-height: 1; font-variant-numeric: tabular-nums; }
-  .score-of { font-size: 19px; color: var(--ink-faint); }
-  .score-count { font-size: 13px; color: rgba(27, 42, 31, 0.6); margin-top: 4px; }
-
-  .bars {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    margin-top: 27.6px;
-    max-width: 26rem;
-  }
-
-  .bar-row {
-    display: grid;
-    grid-template-columns: 34px minmax(0, 1fr) 44px;
-    align-items: center;
-    gap: 12px;
-    font-size: 13px;
-    font-variant-numeric: tabular-nums;
-  }
-
-  .bar-track {
-    height: 5px;
-    border-radius: 999px;
-    background: rgba(27, 42, 31, 0.12);
-    display: block;
-    overflow: hidden;
-  }
-
-  .bar-fill {
-    display: block;
-    height: 100%;
-    background: var(--terracotta);
-    border-radius: 999px;
-  }
-
-  .bar-pct { text-align: right; color: rgba(27, 42, 31, 0.7); }
-
-  .review-photos {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 8px;
-  }
-
-  .review-photo {
-    aspect-ratio: 1 / 1;
-    overflow: hidden;
-    background: var(--surface-2);
-    border-radius: 8px;
-  }
-
-  .review-questions {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 27.6px;
-    margin-top: 36.8px;
-    text-align: center;
-  }
-
-  .rq-title { font-size: 14px; font-weight: 600; }
-  .rq-body { font-size: 14px; color: rgba(27, 42, 31, 0.7); margin-top: 6px; }
-
-  .reviews-tabbar {
-    display: flex;
-    align-items: flex-end;
-    justify-content: space-between;
-    gap: 18px;
-    flex-wrap: wrap;
-    margin-top: 46px;
-    border-bottom: 1px solid var(--line);
-  }
-
-  .reviews-tab {
-    display: flex;
-    align-items: baseline;
-    gap: 10px;
-    padding-bottom: 12px;
-    border-bottom: 2px solid var(--green);
-    margin-bottom: -1px;
-  }
-
-  .reviews-tab-name { font-size: 22px; font-weight: 600; }
-  .reviews-tab-count { font-size: 14px; color: rgba(27, 42, 31, 0.6); font-variant-numeric: tabular-nums; }
-
-  .write-review {
-    margin-bottom: 12px;
-    font-size: 14px;
-    font-weight: 600;
-    padding: 10px 20px;
-    border-radius: 999px;
-    border: 1px solid var(--green);
-    background: var(--green);
-    color: #ffffff;
-  }
-
-  .write-review:hover { background: var(--green-dark); color: #ffffff; text-decoration: none; }
-
-  .review-filters { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 22px; }
-
-  .review-search {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 0 16px;
-    border-radius: 999px;
-    background: #ffffff;
-    border: 1px solid var(--line);
-  }
-
-  .review-search-icon { color: rgba(27, 42, 31, 0.5); flex: none; }
-
-  .review-search input {
-    min-height: 44px;
-    min-width: 160px;
-    border: 0;
-    background: transparent;
-    font-size: 14px;
-    color: var(--ink);
-    outline: none;
-    padding: 0;
-    width: auto;
-  }
-
-  .review-search input:focus { outline: none; }
-
-  .review-chip {
-    font-family: var(--font-ui);
-    font-size: 14px;
-    padding: 11px 18px;
-    border-radius: 999px;
-    border: 1px solid var(--line);
-    background: #ffffff;
-    color: var(--ink);
-  }
-
-  .review-chip:disabled { cursor: not-allowed; opacity: 0.55; }
-
-  .review-list {
-    display: flex;
-    flex-direction: column;
-    gap: 36.8px;
-    margin-top: 36.8px;
-  }
-
-  .review-head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 18px;
-  }
-
-  .review-date { font-size: 13px; color: var(--ink-faint); }
-
-  .review-byline {
-    display: flex;
-    align-items: center;
-    gap: 9px;
-    margin-top: 12px;
-    font-size: 14px;
-    flex-wrap: wrap;
-  }
-
-  .review-name { font-weight: 600; }
-
-  .verified {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    color: rgba(27, 42, 31, 0.6);
-    font-size: 13px;
-  }
-
-  .verified-icon { color: var(--green-deep); }
-
-  .review-text {
-    margin: 10px 0 0;
-    font-size: 15px;
-    line-height: 1.7;
-    max-width: 56rem;
-  }
-
-  .review-meta {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 14px;
-    margin-top: 18px;
-    font-size: 13px;
-    max-width: 44rem;
-    text-align: left;
-  }
-
-  .review-meta .rq-body { margin-top: 4px; }
-
   /* Movil (punto de quiebre unificado del handoff: 768px) */
   @media (max-width: 768px) {
     .product-hero {
@@ -1669,13 +1266,10 @@ const STAR_PATH =
 
     .acc-toggle { font-size: 19px; }
 
-    .care-grid,
-    .reviews-top { grid-template-columns: minmax(0, 1fr); gap: 27.6px; }
+    .care-grid { grid-template-columns: minmax(0, 1fr); gap: 27.6px; }
 
     .care-photo { max-width: 280px; }
 
     .related-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-
-    .review-questions { grid-template-columns: minmax(0, 1fr); gap: 18.4px; }
   }
 </style>

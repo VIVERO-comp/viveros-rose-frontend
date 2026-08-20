@@ -2,7 +2,7 @@
 // Home del handoff (Home Plantas Panama.dc.html): hero con acuarela, franja
 // de garantias, "Recien del vivero", tarjetas de interior/patio, colecciones
 // y tipos, banda del quiz, "Las mas vendidas", Club Vivero Rose, paisajismo,
-// resenas, guias y newsletter. El catalogo sigue siendo src/data/products.ts
+// guias y newsletter. El catalogo sigue siendo src/data/products.ts
 // y las tarjetas conservan su StockBadge conectado al stock proxy.
 import Base from '../layouts/Base.astro';
 import Icon from '../components/Icon.astro';
@@ -55,21 +55,6 @@ const typeTiles: HomeTile[] = [
   { label: 'Hierbas de cocina', slug: 'hierbas', emoji: '🌱', image: '/fotos_colecciones/hierbas.jpeg' },
 ];
 
-const reviews = [
-  {
-    text: 'Pedí seis chavelitas para la entrada y llegaron al día siguiente, con la tierra húmeda y sin una hoja rota. Me escribieron por WhatsApp para coordinar la hora.',
-    author: 'Marisol A. — Costa del Este',
-  },
-  {
-    text: 'Compré un ficus mediano para la oficina. Venía con la guía de riego pegada a la maceta, que es justo lo que necesitaba porque nunca sé cuánta agua ponerle.',
-    author: 'Javier R. — Bella Vista',
-  },
-  {
-    text: 'Hicieron el diseño de la bordura del jardín y volvieron al mes a revisar. Es la primera vez que las plantas que compro sobreviven la temporada seca.',
-    author: 'Ana L. — Clayton',
-  },
-];
-
 const mainGuide = guides[0];
 const otherGuides = guides.slice(1);
 
@@ -85,7 +70,7 @@ const paisajismoMessage = whatsappLink('Hola, quiero cotizar un proyecto de pais
 
 <Base
   title="Plantas del vivero, entregadas en tu casa"
-  description="Vivero real en Panamá. Compra plantas online con inventario actualizado, entrega en la ciudad de Panamá y asesoría por WhatsApp."
+  description="Vivero propio en Panamá. Compra plantas cultivadas por nosotros, con entrega en la ciudad de Panamá y asesoría por WhatsApp."
 >
   <section class="hero">
     <div class="hero-photo" style="background-image: url('/fotos_homepage/primerafoto.jpg'); background-size: cover; background-position: center;" aria-hidden="true"></div>
@@ -98,8 +83,8 @@ const paisajismoMessage = whatsappLink('Hola, quiero cotizar un proyecto de pais
             Plantas para tu hogar, <span class="hero-underline"> enviadas </span> hasta tu puerta!
           </h1>
           <p class="hero-sub">
-            Inventario real actualizado cada día, entrega en la ciudad de Panamá y asesoría por
-            WhatsApp con la gente que siembra las plantas.
+            Plantas cultivadas en nuestro propio vivero, entrega en la ciudad de Panamá y asesoría
+            por WhatsApp con la gente que las siembra.
           </p>
           <div class="hero-ctas">
             <a
@@ -275,23 +260,6 @@ const paisajismoMessage = whatsappLink('Hola, quiero cotizar un proyecto de pais
         <a href={paisajismoMessage} class="btn btn--green paisajismo-btn" target="_blank" rel="noopener">
           <Icon name="message-circle" size={16} /> Cotizar por WhatsApp
         </a>
-      </div>
-    </div>
-  </section>
-
-  <section class="reviews-band">
-    <div class="container reviews-inner">
-      <h2>Lo que dicen los clientes</h2>
-      <div class="reviews-grid">
-        {
-          reviews.map((r) => (
-            <figure class="review-card">
-              <div class="review-stars" aria-label="5 estrellas">★★★★★</div>
-              <blockquote>{r.text}</blockquote>
-              <figcaption>{r.author}</figcaption>
-            </figure>
-          ))
-        }
       </div>
     </div>
   </section>
@@ -781,48 +749,6 @@ const paisajismoMessage = whatsappLink('Hola, quiero cotizar un proyecto de pais
 
   .paisajismo-btn { margin-top: 13.8px; }
 
-  /* Resenas */
-  .reviews-band {
-    background: var(--surface-2);
-    border-top: 1px solid var(--line);
-    border-bottom: 1px solid var(--line);
-    margin-top: 73.6px;
-  }
-
-  .reviews-inner { padding-top: 55px; padding-bottom: 55px; }
-  .reviews-inner h2 { font-size: 36px; margin: 0 0 36.8px; }
-
-  .reviews-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 27.6px;
-  }
-
-  .review-card {
-    margin: 0;
-    padding: 27.6px;
-    border: 1px solid var(--line);
-    background: var(--bg);
-    display: flex;
-    flex-direction: column;
-    gap: 13.8px;
-  }
-
-  .review-stars { color: var(--green); letter-spacing: 0.2em; font-size: 13px; }
-
-  .review-card blockquote {
-    margin: 0;
-    font-size: 15px;
-    line-height: 1.65;
-  }
-
-  .review-card figcaption {
-    font-size: 12px;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--ink-faint);
-  }
-
   /* Guias */
   .guides-grid {
     display: grid;
@@ -979,7 +905,6 @@ const paisajismoMessage = whatsappLink('Hola, quiero cotizar un proyecto de pais
 
     .section-head h2,
     .tiles-title,
-    .reviews-inner h2,
     .club-grid h2 { font-size: 25px; }
 
     .quiz-grid {
@@ -994,8 +919,6 @@ const paisajismoMessage = whatsappLink('Hola, quiero cotizar un proyecto de pais
 
     .paisajismo-band { padding: 27.6px; }
     .paisajismo-photo { display: none; }
-
-    .reviews-grid { grid-template-columns: 1fr; }
 
     .guides-grid { grid-template-columns: 1fr; }
     .guides-side { border-left: 0; padding-left: 0; }
