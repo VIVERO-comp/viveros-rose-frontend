@@ -8,8 +8,8 @@ import Base from '../../layouts/Base.astro';
 import { whatsappLink } from '../../lib/site';
 
 const steps = [
-  { key: 'confirmado', title: 'Pedido confirmado', detail: 'Recibimos tu pago y el detalle por WhatsApp.' },
-  { key: 'preparando', title: 'En preparación en el vivero', detail: 'Seleccionamos y empacamos tus plantas.' },
+  { key: 'recibido', title: 'Pedido recibido', detail: 'Registramos tu pedido y coordinamos el pago por WhatsApp.' },
+  { key: 'preparando', title: 'En preparación en el vivero', detail: 'Pago confirmado: seleccionamos y empacamos tus plantas.' },
   { key: 'en-camino', title: 'En ruta', detail: 'Va en camino a tu dirección.' },
   { key: 'entregado', title: 'Entregado', detail: 'Pedido entregado.' },
 ];
@@ -34,10 +34,10 @@ const steps = [
             type="text"
             id="order-number"
             name="order-number"
-            placeholder="VR-20260812-A7K3"
+            placeholder="VR-20260820-K7M2QX9P4T"
             required
           />
-          <p class="help">Lo recibiste por correo al confirmar tu compra.</p>
+          <p class="help">Está en el mensaje de WhatsApp con el que confirmaste tu compra.</p>
         </div>
         <button type="submit" class="btn btn--green">Consultar estado</button>
       </form>
@@ -82,31 +82,63 @@ const steps = [
   const messageEl = document.querySelector<HTMLElement>('[data-result-message]');
   const waLink = document.querySelector<HTMLAnchorElement>('[data-result-whatsapp]');
 
+  // Estados del order-api -> paso del recorrido visual. Los pasos anteriores
+  // al actual tambien se marcan: es un progreso, no un unico punto.
+  const PASO_POR_ESTADO: Record<string, string> = {
+    Recibido: 'recibido',
+    Preparando: 'preparando',
+    'En camino': 'en-camino',
+    Entregado: 'entregado',
+  };
+  const ORDEN_PASOS = ['recibido', 'preparando', 'en-camino', 'entregado'];
+
+  function pintarProgreso(estado: string) {
+    document.querySelectorAll('.status-steps li').forEach((li) => li.classList.remove('active'));
+    const paso = PASO_POR_ESTADO[estado];
+    if (!paso) return;
+    for (const clave of ORDEN_PASOS) {
+      document.querySelector(`[data-step="${clave}"]`)?.classList.add('active');
+      if (clave === paso) break;
+    }
+  }
+
   async function lookup(orderNumber: string) {
     if (numberEl) numberEl.textContent = orderNumber;
     if (waLink) {
       waLink.href = whatsappLink(`Hola, quiero información de mi pedido ${orderNumber}.`);
     }
 
-    // v1: GET /api/orders/{orderNumber} devolvera el estado real desde Odoo.
-    // Mientras el backend no este desplegado, se informa al cliente.
     try {
       const res = await fetch(`/api/orders/${encodeURIComponent(orderNumber)}`);
       if (res.ok) {
         const data = await res.json();
-        if (messageEl) messageEl.textContent = `Estado actual: ${data.status}`;
-        const active = document.querySelector(`[data-step="${data.status}"]`);
-        active?.classList.add('active');
+        pintarProgreso(data.estado);
+        if (messageEl) {
+          messageEl.textContent =
+            data.estado === 'Cancelado'
+              ? 'Este pedido fue cancelado. Si crees que es un error, escríbenos:'
+              : `Estado actual: ${data.estado}`;
+        }
+        result?.removeAttribute('hidden');
+        return;
+      }
+      if (res.status === 404) {
+        pintarProgreso('');
+        if (messageEl) {
+          messageEl.textContent =
+            'No encontramos un pedido con ese número. Revisa que esté completo (VR-fecha-código) o escríbenos:';
+        }
         result?.removeAttribute('hidden');
         return;
       }
     } catch {
-      // backend aun no disponible
+      // sin conexion con el backend: cae al mensaje de WhatsApp
     }
 
+    pintarProgreso('');
     if (messageEl) {
       messageEl.textContent =
-        'El rastreo automático estará disponible muy pronto. Mientras tanto, consulta el estado de tu pedido por WhatsApp con un solo clic:';
+        'No pudimos consultar el estado en este momento. Consulta por WhatsApp con un solo clic:';
     }
     result?.removeAttribute('hidden');
   }

@@ -22,8 +22,14 @@ import { whatsappLink } from '../../lib/site';
         <p class="help">Guardalo: es lo unico que necesitas para rastrear tu entrega.</p>
         <div class="success-actions">
           <a href="/pedido" class="btn btn--green" data-track-link>Rastrear mi pedido</a>
-          <a href={whatsappLink('Hola, acabo de hacer un pedido en plantaspanama.com.')} class="btn btn--whatsapp" target="_blank" rel="noopener">
-            Contactar por WhatsApp
+          <a
+            href={whatsappLink('Hola, acabo de hacer un pedido en plantaspanama.com.')}
+            class="btn btn--whatsapp"
+            target="_blank"
+            rel="noopener"
+            data-wa-fallback
+          >
+            Enviar mi pedido por WhatsApp
           </a>
         </div>
       </div>
@@ -33,9 +39,10 @@ import { whatsappLink } from '../../lib/site';
 
 <script>
   import { clearCart } from '../../lib/cart';
+  import { whatsappLink } from '../../lib/site';
 
-  // El numero de pedido llega como query param desde el flujo de pago:
-  // /checkout/success?order=VR-20260812-A7K3
+  // El numero de pedido llega como query param desde el checkout:
+  // /checkout/success?order=VR-20260820-K7M2QX9P4T
   const params = new URLSearchParams(window.location.search);
   const order = params.get('order');
 
@@ -45,6 +52,21 @@ import { whatsappLink } from '../../lib/site';
     const link = document.querySelector<HTMLAnchorElement>('[data-track-link]');
     if (link) link.href = `/pedido?n=${encodeURIComponent(order)}`;
     clearCart();
+  }
+
+  // El checkout dejo el mensaje completo en sessionStorage: si el navegador
+  // bloqueo la pestana de WhatsApp, este boton es el respaldo con el mismo
+  // resumen (numero incluido).
+  const waBtn = document.querySelector<HTMLAnchorElement>('[data-wa-fallback]');
+  if (waBtn) {
+    let mensaje = '';
+    try {
+      mensaje = sessionStorage.getItem('pp-wa-mensaje') ?? '';
+    } catch {
+      // sin sessionStorage se usa el saludo generico del href
+    }
+    if (mensaje) waBtn.href = whatsappLink(mensaje);
+    else if (order) waBtn.href = whatsappLink(`Hola, acabo de hacer el pedido ${order} en plantaspanama.com.`);
   }
 </script>
 

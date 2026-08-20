@@ -1,9 +1,11 @@
 ---
 // Checkout segun el diseno "Checkout" (claude.ai/design): formulario a la
 // izquierda y resumen en columna arena a la derecha. Compra como invitado.
-// El backend de pagos (order-api / Wompi) aun no esta desplegado: al
-// confirmar, el pedido completo se envia por WhatsApp con los datos y el
-// metodo elegido. El carrito sigue siendo src/lib/cart.ts.
+// Al confirmar, el pedido se registra en el order-api (via /api/checkout,
+// que corre en el servidor y guarda la API key): se revalida stock, se crea
+// el presupuesto en Odoo y vuelve el numero VR-..., que viaja en el mensaje
+// de WhatsApp con el que se coordina el pago (Yappy, transferencia o
+// efectivo). El carrito sigue siendo src/lib/cart.ts.
 import Base from '../../layouts/Base.astro';
 import Icon from '../../components/Icon.astro';
 
@@ -230,24 +232,32 @@ const PROVINCES = [
 
   const form = document.querySelector<HTMLFormElement>('.checkout-form');
   const error = document.querySelector<HTMLElement>('.form-error');
+  const submitBtn = document.querySelector<HTMLButtonElement>('.submit-btn');
 
-  form?.addEventListener('submit', (e) => {
+  function mostrarError(texto: string) {
+    if (error) {
+      error.textContent = texto;
+      error.removeAttribute('hidden');
+    }
+  }
+
+  form?.addEventListener('submit', async (e) => {
     e.preventDefault();
     if (!form.reportValidity()) return;
+    error?.setAttribute('hidden', '');
 
     const cart = getCart();
     if (!cart.length) {
-      if (error) {
-        error.textContent = 'Tu carrito está vacío.';
-        error.removeAttribute('hidden');
-      }
+      mostrarError('Tu carrito está vacío.');
       return;
     }
 
     const data = new FormData(form);
     const ship = selectedShipping();
-    const subtotal = cartTotal();
-    const total = subtotal + ship.price;
+    const envioId =
+      document.querySelector<HTMLInputElement>('input[name="envio"]:checked')?.value ?? 'std';
+    const pagoId =
+      document.querySelector<HTMLInputElement>('input[name="pago"]:checked')?.value ?? 'yappy';
 
     let gift = '';
     try {
@@ -257,20 +267,92 @@ const PROVINCES = [
       // sin nota de regalo
     }
 
+    const direccion =
+      `${data.get('address')}, ${data.get('district')}, ${data.get('province')}` +
+      `${data.get('reference') ? ` (${data.get('reference')})` : ''}`;
+
+    // El pedido se registra ANTES de abrir WhatsApp: el order-api revalida el
+    // stock, congela los precios de Odoo, crea el presupuesto y devuelve el
+    // numero VR-..., que es el que viaja en el mensaje.
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Registrando tu pedido…';
+    }
+    let pedido: {
+      numero_pedido: string;
+      subtotal_centavos: number;
+      envio_centavos: number;
+      total_centavos: number;
+    };
+    try {
+      const respuesta = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          items: cart.map((i) => ({ sku: i.sku, cantidad: i.qty })),
+          cliente: {
+            nombre: `${data.get('name')} ${data.get('lastname')}`.trim(),
+            email: data.get('email'),
+            telefono: data.get('phone'),
+            direccion,
+            notas: gift ? gift.trim() : null,
+          },
+          envio: envioId,
+          metodo_pago: pagoId,
+        }),
+      });
+      if (respuesta.status === 409) {
+        const detalle = await respuesta.json();
+        const agotados = (detalle.items ?? [])
+          .filter((i: { ok: boolean }) => !i.ok)
+          .map((i: { sku: string; disponible: number }) => {
+            const enCarrito = cart.find((c) => c.sku === i.sku);
+            return `${enCarrito?.name ?? i.sku} (quedan ${i.disponible})`;
+          })
+          .join(', ');
+        mostrarError(
+          `No hay stock suficiente de: ${agotados}. Ajusta las cantidades en el carrito.`,
+        );
+        return;
+      }
+      if (!respuesta.ok) {
+        mostrarError('No pudimos registrar tu pedido. Revisa tu conexión e intenta de nuevo.');
+        return;
+      }
+      pedido = await respuesta.json();
+    } catch {
+      mostrarError('No pudimos registrar tu pedido. Revisa tu conexión e intenta de nuevo.');
+      return;
+    } finally {
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Confirmar pedido por WhatsApp';
+      }
+    }
+
+    const centavos = (n: number) => money(n / 100);
     const lines = cart
       .map((i) => `- ${i.name} × ${i.qty} = $${(i.price * i.qty).toFixed(2)} (${i.sku})`)
       .join('\n');
     const message =
-      `Hola, quiero confirmar este pedido de plantaspanama.com:\n\n${lines}\n\n` +
-      `Subtotal: ${money(subtotal)}\nEnvío (${ship.name}): ${ship.price === 0 ? 'Gratis' : money(ship.price)}\n` +
-      `Total: ${money(total)}\n\n` +
+      `Hola, quiero confirmar mi pedido ${pedido.numero_pedido} de plantaspanama.com:\n\n${lines}\n\n` +
+      `Subtotal: ${centavos(pedido.subtotal_centavos)}\n` +
+      `Envío (${ship.name}): ${pedido.envio_centavos === 0 ? 'Gratis' : centavos(pedido.envio_centavos)}\n` +
+      `Total: ${centavos(pedido.total_centavos)}\n\n` +
       `Nombre: ${data.get('name')} ${data.get('lastname')}\n` +
       `Correo: ${data.get('email')}\nWhatsApp: ${data.get('phone')}\n` +
-      `Dirección: ${data.get('address')}, ${data.get('district')}, ${data.get('province')}` +
-      `${data.get('reference') ? ` (${data.get('reference')})` : ''}\n` +
+      `Dirección: ${direccion}\n` +
       `Método de pago: ${selectedPayment()}${gift}`;
 
+    // Se guarda el mensaje para que la pagina de gracias ofrezca el mismo
+    // enlace si el navegador bloqueo la pestana nueva de WhatsApp.
+    try {
+      sessionStorage.setItem('pp-wa-mensaje', message);
+    } catch {
+      // sin sessionStorage no hay respaldo, pero el flujo sigue
+    }
     window.open(whatsappLink(message), '_blank', 'noopener');
+    window.location.assign(`/checkout/success?order=${encodeURIComponent(pedido.numero_pedido)}`);
   });
 </script>
 
