@@ -21,13 +21,14 @@ export function getStaticPaths() {
 const { product } = Astro.props;
 const category = getCategory(product.category)!;
 const soldOut = product.available <= 0;
-const lowStock = !soldOut && product.available <= 5;
 const compareAt = soldOut ? null : compareAtPrice(product);
 const whatsappMessage = `Hola, me interesa "${product.name}" (${product.sku}) que vi en plantaspanama.com.`;
 
-// "Va bien con…": prioriza la misma categoria y excluye agotadas (diseno).
+// "Va bien con…": prioriza la misma categoria. No se filtra por available:
+// en los datos estaticos siempre es 0 (los badges de las tarjetas ya pintan
+// el stock real del proxy).
 const related = products
-  .filter((p) => p.slug !== product.slug && p.available > 0)
+  .filter((p) => p.slug !== product.slug)
   .sort((a, b) => Number(b.category === product.category) - Number(a.category === product.category))
   .slice(0, 5);
 
@@ -205,7 +206,7 @@ const careTitle = `Cuidado de ${product.name.replace(/\s*\(.*\)$/, '').toLowerCa
           {fotosGaleria.length ? '' : product.emoji}
           <span class="main-photo-num" data-main-num>Foto 1 de {fotosGaleria.length || GALLERY_SIZE}</span>
         </div>
-        {soldOut && <div class="soldout-stamp">Agotado</div>}
+        <div class="soldout-stamp" data-soldout-stamp hidden={!soldOut}>Agotado</div>
         <button class="photo-arrow photo-arrow--prev" data-gallery-prev aria-label="Foto anterior">
           <Icon name="chevron-left" size={20} />
         </button>
@@ -232,16 +233,6 @@ const careTitle = `Cuidado de ${product.name.replace(/\s*\(.*\)$/, '').toLowerCa
           <span class="price">{formatPrice(product.price)}</span>
         </div>
       </div>
-
-      {
-        lowStock && (
-          <div class="low-stock">
-            <Icon name="alert-circle" size={17} />
-            Quedan {product.available}
-            {product.available === 1 ? ' unidad en el vivero' : ' unidades en el vivero'}
-          </div>
-        )
-      }
 
       <hr class="rule" />
 
@@ -307,45 +298,66 @@ const careTitle = `Cuidado de ${product.name.replace(/\s*\(.*\)$/, '').toLowerCa
         }
       </div>
 
-      {
-        !soldOut ? (
-          <div class="cta-block">
-            <button class="cta-outline" type="button" disabled title="No disponible por ahora">
-              <Icon name="pencil" size={16} /> Personalizar tarjeta (+$5.00)
-            </button>
-            <button
-              class="cta-add add-to-cart"
-              data-sku={product.sku}
-              data-name={product.name}
-              data-price={product.price}
-              data-slug={product.slug}
-              data-category={product.category}
-              data-emoji={product.emoji}
-              data-label={`Agregar al carrito — ${formatPrice(product.price)}`}
-            >
-              Agregar al carrito — {formatPrice(product.price)}
-            </button>
-          </div>
-        ) : (
-          <div class="soldout-box">
-            <div class="soldout-title">Esta planta está agotada</div>
-            <p>
-              Sembramos tandas nuevas cada mes. Déjanos tu correo y te avisamos apenas vuelva al
-              vivero.
-            </p>
-            <form data-notify-form data-wa={SITE.whatsappNumber} data-product={`${product.name} (${product.sku})`}>
-              <input type="email" name="email" placeholder="Tu correo" required />
-              <button type="submit">Avísame</button>
-            </form>
-            <a href="#similares" class="soldout-link">Ver plantas similares disponibles</a>
-          </div>
-        )
-      }
+      <!-- Se renderizan AMBOS estados del panel y un script los alterna con
+           el stock real del proxy (evento stock-actualizado de StockBadge):
+           el build estatico siempre trae available=0 y no puede decidir. -->
+      <div class="cta-block" data-cta-block hidden={soldOut}>
+        <button class="cta-outline" type="button" disabled title="No disponible por ahora">
+          <Icon name="pencil" size={16} /> Personalizar tarjeta (+$5.00)
+        </button>
+        <button
+          class="cta-add add-to-cart"
+          data-sku={product.sku}
+          data-name={product.name}
+          data-price={product.price}
+          data-slug={product.slug}
+          data-category={product.category}
+          data-emoji={product.emoji}
+          data-label={`Agregar al carrito — ${formatPrice(product.price)}`}
+        >
+          Agregar al carrito — {formatPrice(product.price)}
+        </button>
+      </div>
+      <div class="soldout-box" data-soldout-box hidden={!soldOut}>
+        <div class="soldout-title">Esta planta está agotada</div>
+        <p>
+          Sembramos tandas nuevas cada mes. Déjanos tu correo y te avisamos apenas vuelva al
+          vivero.
+        </p>
+        <form data-notify-form data-wa={SITE.whatsappNumber} data-product={`${product.name} (${product.sku})`}>
+          <input type="email" name="email" placeholder="Tu correo" required />
+          <button type="submit">Avísame</button>
+        </form>
+        <a href="#similares" class="soldout-link">Ver plantas similares disponibles</a>
+      </div>
 
       <div class="shipping-line">
         <Icon name="truck" size={18} class="assure-icon" />
-        {soldOut ? 'Sembramos tandas nuevas cada mes' : 'Entrega en Ciudad de Panamá en 24–48 h'}
+        <span data-shipping-out hidden={!soldOut}>Sembramos tandas nuevas cada mes</span>
+        <span data-shipping-in hidden={soldOut}>Entrega en Ciudad de Panamá en 24–48 h</span>
       </div>
+
+      <script>
+        // Panel de compra segun el stock REAL: la misma fuente (stock proxy,
+        // via el evento de StockBadge) que pinta el badge de arriba. Asi la
+        // ficha no puede decir "En stock" y "agotada" a la vez.
+        import type { StockItem } from '../../../lib/stock';
+
+        document.addEventListener('stock-actualizado', (event) => {
+          const badge = document.querySelector<HTMLElement>('.price-group [data-stock-badge]');
+          const sku = badge?.dataset.sku;
+          if (!sku) return;
+          const items = (event as CustomEvent<{ items: StockItem[] }>).detail.items;
+          const item = items.find((i) => i.sku === sku);
+          if (!item) return;
+          const agotado = item.available <= 0;
+          document.querySelector<HTMLElement>('[data-soldout-stamp]')!.hidden = !agotado;
+          document.querySelector<HTMLElement>('[data-cta-block]')!.hidden = agotado;
+          document.querySelector<HTMLElement>('[data-soldout-box]')!.hidden = !agotado;
+          document.querySelector<HTMLElement>('[data-shipping-out]')!.hidden = !agotado;
+          document.querySelector<HTMLElement>('[data-shipping-in]')!.hidden = agotado;
+        });
+      </script>
     </div>
 
     <!-- Descripcion bajo la foto (columna izquierda); en movil las columnas
@@ -902,15 +914,6 @@ const careTitle = `Cuidado de ${product.name.replace(/\s*\(.*\)$/, '').toLowerCa
   }
 
   .price { font-size: 26px; font-weight: 600; font-variant-numeric: tabular-nums; }
-
-  .low-stock {
-    display: flex;
-    align-items: center;
-    gap: 9px;
-    margin-top: 14px;
-    font-size: 14px;
-    color: var(--amber-note);
-  }
 
   .rule { height: 1px; border: 0; background: var(--line); margin: 22px 0; }
   .rule--flush { margin: 0; }
