@@ -646,23 +646,41 @@ const careTitle = `Cuidado de ${product.name.replace(/\s*\(.*\)$/, '').toLowerCa
 
   .gallery {
     display: grid;
-    grid-template-columns: 88px minmax(0, 1fr);
+    /* El carril de miniaturas se angosta junto con la ventana (25vw - 148px
+       es el ancho con el que tres miniaturas cuadradas caben exactamente al
+       costado de la foto 1:1), asi TODAS se achican parejas en vez de quedar
+       fijas en 88px y desbordar de a una. */
+    --carril: clamp(48px, 25vw - 148px, 88px);
+    grid-template-columns: var(--carril) minmax(0, 1fr);
     gap: 14px;
+    position: relative;
   }
 
+  /* Absoluto sobre el carril: si fuera parte de la fila del grid, la fila
+     creceria hasta las miniaturas; asi la altura la manda SOLO la foto y las
+     miniaturas se reparten esa altura en partes iguales. */
   .thumbs {
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: var(--carril);
     display: flex;
     flex-direction: column;
+    align-items: flex-start;
     gap: 12px;
-    overflow-x: auto;
+    min-height: 0;
+    overflow-y: auto;
     padding-bottom: 2px;
   }
 
   .thumb {
-    flex: none;
+    /* Base 88px pero con permiso de encoger: si hay mas miniaturas que
+       altura de foto, todas ceden por igual (siempre cuadradas). */
+    flex: 0 1 88px;
+    min-height: 36px;
     padding: 0;
     cursor: pointer;
-    width: 88px;
+    width: auto;
+    max-width: 100%;
     aspect-ratio: 1 / 1;
     border-radius: 14px;
     overflow: hidden;
@@ -682,6 +700,9 @@ const careTitle = `Cuidado de ${product.name.replace(/\s*\(.*\)$/, '').toLowerCa
   }
 
   .main-photo {
+    /* Con las miniaturas fuera de flujo, la foto se auto-colocaria en la
+       columna del carril; va explicita en la segunda. */
+    grid-column: 2;
     position: relative;
     aspect-ratio: 1 / 1;
     border-radius: var(--radius-photo);
@@ -1261,9 +1282,18 @@ const careTitle = `Cuidado de ${product.name.replace(/\s*\(.*\)$/, '').toLowerCa
     .panel-desc { grid-column: auto; grid-row: auto; }
 
     .gallery { grid-template-columns: minmax(0, 1fr); }
+    .main-photo { grid-column: auto; }
 
-    .thumbs { flex-direction: row; order: 2; }
-    .thumb { width: 72px; }
+    /* En movil vuelven al flujo como fila bajo la foto. */
+    .thumbs {
+      position: static;
+      width: auto;
+      flex-direction: row;
+      order: 2;
+      overflow-x: auto;
+      overflow-y: hidden;
+    }
+    .thumb { flex: 0 0 72px; width: 72px; min-height: 0; }
 
     h1 { font-size: 30px; }
 
