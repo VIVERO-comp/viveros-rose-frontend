@@ -295,6 +295,10 @@ const PROVINCES = [
             email: data.get('email'),
             telefono: data.get('phone'),
             direccion,
+            // Version estructurada para el contacto de Odoo (street/city);
+            // `direccion` completa sigue yendo a la nota del pedido.
+            calle: data.get('address'),
+            ciudad: `${data.get('district')}, ${data.get('province')}`,
             notas: gift ? gift.trim() : null,
           },
           envio: envioId,
