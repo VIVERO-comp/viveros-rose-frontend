@@ -21,6 +21,13 @@ export interface EventType {
   whatsappMessage: string;
   metaTitle: string;
   metaDescription: string;
+  // Fotos del hero y del bloque principal (mismo patron que los servicios);
+  // si faltan, [slug].astro muestra el placeholder con las medidas.
+  heroPhoto?: string;
+  blockPhoto?: string;
+  // Fotos de la galeria "Como se ve en el lugar"; los huecos que falten
+  // hasta 4 se rellenan con placeholders en [slug].astro.
+  galeria?: { src: string; alt: string }[];
 }
 
 export const events: EventType[] = [
@@ -46,6 +53,24 @@ export const events: EventType[] = [
     metaTitle: 'Plantas para bodas y eventos sociales',
     metaDescription:
       'Montaje de plantas para bodas, cumpleaños y bautizos en Panamá: ceremonia, recepción y áreas de fotos, con entrega, colocación y retiro incluidos.',
+    galeria: [
+      {
+        src: '/fotos_eventos/boda/mesa_plantas.jpg',
+        alt: 'Mesa de recepción de boda decorada con calateas y helechos en macetas de barro entre velas encendidas',
+      },
+      {
+        src: '/fotos_eventos/boda/mesa_dulces.jpg',
+        alt: 'Mesa de dulces de boda rodeada de palmas, hojas de platanera y follaje tropical sobre fondo oscuro',
+      },
+      {
+        src: '/fotos_eventos/boda/carpa_jardin.jpg',
+        alt: 'Recepción bajo carpa en un jardín con mesas redondas rodeadas de palmas, monsteras, orquídeas y anturios en maceta',
+      },
+      {
+        src: '/fotos_eventos/boda/terraza_coctel.jpg',
+        alt: 'Cóctel en una terraza con mesas altas de mantel negro y arreglos de anturios, bromelias y orquídeas en maceta',
+      },
+    ],
   },
   {
     slug: 'ferias',
@@ -69,6 +94,24 @@ export const events: EventType[] = [
     metaTitle: 'Ambientación para ferias y activaciones',
     metaDescription:
       'Ambientación con plantas para stands, ferias y activaciones de marca en Panamá: material uniforme, montaje coordinado con producción y retiro al cierre.',
+    galeria: [
+      {
+        src: '/fotos_eventos/salon_gala.jpg',
+        alt: 'Tarima de un evento protocolar decorada con arreglos de heliconias, palmas y follaje tropical junto a banderas de Panamá',
+      },
+      {
+        src: '/fotos_eventos/mesa_registro.jpg',
+        alt: 'Mesa de registro de un evento corporativo rodeada de palmas, monsteras, orquídeas y bromelias en maceta',
+      },
+      {
+        src: '/fotos_eventos/boda/terraza_coctel.jpg',
+        alt: 'Cóctel en una terraza con mesas altas de mantel negro y arreglos de anturios, bromelias y orquídeas en maceta',
+      },
+      {
+        src: '/fotos_eventos/boda/carpa_jardin.jpg',
+        alt: 'Recepción bajo carpa en un jardín con mesas redondas rodeadas de palmas, monsteras, orquídeas y anturios en maceta',
+      },
+    ],
   },
   {
     slug: 'alquiler',
@@ -91,6 +134,26 @@ export const events: EventType[] = [
     metaTitle: 'Alquiler de plantas para eventos',
     metaDescription:
       'Alquiler de plantas por día, fin de semana o temporada en Panamá: entrega, colocación y retiro incluidos, con macetas decorativas.',
+    heroPhoto: '/fotos_eventos/alquiler_hero.jpeg',
+    blockPhoto: '/fotos_eventos/alquiler_carga.jpg',
+    galeria: [
+      {
+        src: '/fotos_eventos/boda/carpa_jardin.jpg',
+        alt: 'Recepción bajo carpa en un jardín con mesas redondas rodeadas de palmas, monsteras, orquídeas y anturios en maceta',
+      },
+      {
+        src: '/fotos_eventos/boda/terraza_coctel.jpg',
+        alt: 'Cóctel en una terraza con mesas altas de mantel negro y arreglos de anturios, bromelias y orquídeas en maceta',
+      },
+      {
+        src: '/fotos_eventos/mesa_registro.jpg',
+        alt: 'Mesa de registro de un evento corporativo rodeada de palmas, monsteras, orquídeas y bromelias en maceta',
+      },
+      {
+        src: '/fotos_eventos/salon_gala.jpg',
+        alt: 'Tarima de un evento protocolar decorada con arreglos de heliconias, palmas y follaje tropical junto a banderas de Panamá',
+      },
+    ],
   },
 ];
 

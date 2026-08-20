@@ -31,8 +31,16 @@ const { event } = Astro.props;
   <BackArrow href="/eventos" />
 
   <section class="ev-hero">
-    <!-- FOTO PENDIENTE: hero de eventos ({event.slug}) — banda a lo ancho, minimo 1920×600 px -->
-    <div class="ev-hero-photo" data-medidas="Foto hero · 1920×600" aria-hidden="true"></div>
+    <div
+      class="ev-hero-photo"
+      data-medidas={event.heroPhoto ? undefined : 'Foto hero · 1920×600'}
+      style={
+        event.heroPhoto
+          ? `background-image: url('${event.heroPhoto}'); background-size: cover; background-position: center;`
+          : undefined
+      }
+      aria-hidden="true"
+    ></div>
     <div class="ev-hero-scrim" aria-hidden="true"></div>
     <div class="ev-hero-copy">
       <span class="hero-pill">{event.heroKicker}</span>
@@ -71,8 +79,16 @@ const { event } = Astro.props;
           Cotizar por WhatsApp
         </a>
       </div>
-      <!-- FOTO PENDIENTE: foto del bloque ({event.slug}) — vertical, minimo 640×760 px -->
-      <div class="ev-photo" data-medidas="Foto · 640×760" aria-hidden="true"></div>
+      <div
+        class="ev-photo"
+        data-medidas={event.blockPhoto ? undefined : 'Foto · 640×760'}
+        style={
+          event.blockPhoto
+            ? `background-image: url('${event.blockPhoto}'); background-size: cover; background-position: center;`
+            : undefined
+        }
+        aria-hidden="true"
+      ></div>
     </div>
   </section>
 
@@ -82,7 +98,12 @@ const { event } = Astro.props;
       <h2 class="gallery-title">Cómo se ve en el lugar</h2>
       <!-- FOTOS PENDIENTES: 4 montajes de {event.slug} — bloques de minimo 480×300 px c/u -->
       <div class="ev-gallery">
-        {[1, 2, 3, 4].map(() => (
+        {(event.galeria ?? []).map((foto) => (
+          <div class="gallery-photo">
+            <img src={foto.src} alt={foto.alt} loading="lazy" />
+          </div>
+        ))}
+        {Array.from({ length: Math.max(0, 4 - (event.galeria?.length ?? 0)) }).map(() => (
           <div class="gallery-photo" data-medidas="Foto · 480×300" aria-hidden="true"></div>
         ))}
       </div>
@@ -130,7 +151,7 @@ const { event } = Astro.props;
 
   .ev-hero-photo::after,
   .ev-photo::after,
-  .gallery-photo::after {
+  .gallery-photo[data-medidas]::after {
     content: attr(data-medidas);
     position: absolute;
     right: 12px;
@@ -146,7 +167,7 @@ const { event } = Astro.props;
     white-space: nowrap;
   }
 
-  .gallery-photo::after {
+  .gallery-photo[data-medidas]::after {
     color: rgba(27, 42, 31, 0.5);
     background: rgba(238, 245, 240, 0.85);
   }
@@ -303,6 +324,13 @@ const { event } = Astro.props;
     overflow: hidden;
     outline: 1px solid rgba(27, 42, 31, 0.1);
     background: #ffffff;
+  }
+
+  .gallery-photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
   }
 
   /* Tarjetas informativas */
