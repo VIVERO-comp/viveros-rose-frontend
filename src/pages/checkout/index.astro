@@ -685,14 +685,14 @@ const PROVINCES = [
     height: 8px;
     border-right: 2px solid var(--ink-soft);
     border-bottom: 2px solid var(--ink-soft);
-    transform: rotate(45deg);
-    transition: transform 0.15s ease;
-    margin-top: -4px;
+    /* El ajuste vertical va en el transform (no en margin) para que el giro
+       y el centrado optico se animen juntos sin recalcular layout. */
+    transform: translateY(-2px) rotate(45deg);
+    transition: transform 240ms var(--ease-out);
   }
 
   .aside-inner[open] .aside-toggle > span::after {
-    transform: rotate(-135deg);
-    margin-top: 4px;
+    transform: translateY(2px) rotate(-135deg);
   }
 
   @media (max-width: 900px) {
@@ -704,6 +704,27 @@ const PROVINCES = [
     .aside-inner { position: static; max-width: none; }
     .aside-toggle { display: flex; }
     .aside-inner[open] .aside-body { margin-top: 1.15rem; }
+
+    /* Al desplegarse, el contenido entra fundiendose y bajando apenas; el
+       cierre queda instantaneo (details esconde de golpe), que esta bien:
+       la salida siempre mas rapida que la entrada. */
+    .aside-inner[open] .aside-body {
+      animation: resumen-entra 260ms var(--ease-out) both;
+    }
+  }
+
+  @keyframes resumen-entra {
+    from {
+      opacity: 0;
+      transform: translateY(-6px);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .aside-inner[open] .aside-body { animation-name: resumen-aparece; }
+    @keyframes resumen-aparece {
+      from { opacity: 0; }
+    }
   }
 
   .aside-item {

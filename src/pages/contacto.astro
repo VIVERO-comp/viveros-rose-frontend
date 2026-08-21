@@ -5,8 +5,8 @@
 // formularios: al enviar se abre WhatsApp con el mensaje armado.
 import Base from '../layouts/Base.astro';
 import BackArrow from '../components/BackArrow.astro';
-import GotasHero from '../components/GotasHero.astro';
 import Icon from '../components/Icon.astro';
+import GotasHero from '../components/GotasHero.astro';
 import { SITE, whatsappLink } from '../lib/site';
 
 const topics = [
@@ -231,20 +231,33 @@ const topics = [
     flex-direction: column;
     gap: 0.3rem;
     color: #ffffff;
-    transition: transform 0.25s ease, background 0.25s ease;
+    transition: transform 200ms var(--ease-out), background 200ms ease;
   }
 
-  a.c-card:hover {
-    transform: translateY(-4px);
-    text-decoration: none;
-    color: #ffffff;
+  /* Hover solo con puntero fino: en tactil el tap dejaria la tarjeta
+     "levantada". La presion si aplica en todos los dispositivos. */
+  @media (hover: hover) and (pointer: fine) {
+    a.c-card:hover {
+      transform: translateY(-4px);
+      text-decoration: none;
+      color: #ffffff;
+    }
+
+    .c-card--dark:hover { background: #16241a; }
+    .c-card--glass:hover { background: rgba(255, 255, 255, 0.22); }
+  }
+
+  a.c-card:active { transform: translateY(0) scale(0.98); }
+
+  @media (prefers-reduced-motion: reduce) {
+    a.c-card,
+    a.c-card:hover,
+    a.c-card:active { transform: none; }
   }
 
   .c-card--dark { background: var(--card-dark); outline: 1px solid rgba(255, 255, 255, 0.14); }
-  .c-card--dark:hover { background: #16241a; }
 
   .c-card--glass { background: rgba(255, 255, 255, 0.14); }
-  .c-card--glass:hover { background: rgba(255, 255, 255, 0.22); }
 
   .c-card--light {
     background: var(--bg);
@@ -264,6 +277,18 @@ const topics = [
   }
 
   .c-kicker--green { color: var(--green-deep); }
+
+  /* El icono del kicker saluda al pasar el mouse: un gesto pequeno que
+     acompana la elevacion de la tarjeta. */
+  .c-kicker :global(svg) { transition: transform 200ms var(--ease-out); }
+
+  @media (hover: hover) and (pointer: fine) {
+    a.c-card:hover .c-kicker :global(svg) { transform: scale(1.18) rotate(-8deg); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    a.c-card:hover .c-kicker :global(svg) { transform: none; }
+  }
 
   .c-main { font-size: 1.1rem; font-weight: 600; }
 

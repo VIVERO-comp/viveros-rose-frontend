@@ -41,6 +41,14 @@
   --font-ui: "Instrument Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --font-heading: "Instrument Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 
+  /* Curvas de animacion propias (las de CSS por defecto son debiles).
+     - ease-out fuerte: entradas y respuestas a un clic (arranca rapido).
+     - ease-in-out fuerte: elementos que se mueven de un sitio a otro.
+     - drawer: paneles laterales, estilo iOS. */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+
   --max-width: 1280px;
 
   /* Alias de compatibilidad para paginas aun no reconstruidas con el handoff. */
@@ -161,10 +169,17 @@ input::placeholder { color: rgba(27, 42, 31, 0.45); }
   font-weight: 600;
   cursor: pointer;
   text-decoration: none;
-  transition: background 0.15s ease, border-color 0.15s ease;
+  transition: background 0.15s ease, border-color 0.15s ease, transform 160ms var(--ease-out);
 }
 
 .btn:hover { text-decoration: none; }
+
+/* El boton confirma la presion encogiendose apenas: la interfaz "escucha". */
+.btn:active { transform: scale(0.97); }
+
+@media (prefers-reduced-motion: reduce) {
+  .btn:active { transform: none; }
+}
 
 .btn--primary {
   background: var(--ink);

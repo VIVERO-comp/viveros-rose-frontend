@@ -761,10 +761,27 @@ const menuTipos = [
     window.location.reload();
   });
 
-  // Paneles laterales (carrito, cuenta, pedidos).
+  // Paneles laterales (carrito, cuenta, pedidos). La hoja entra y sale
+  // deslizandose: hidden se quita antes de animar la entrada y se repone
+  // cuando la transicion de salida termina (con un tope por si no dispara).
+  let cierrePendiente: number | undefined;
+
   function openPanel(name: string) {
+    window.clearTimeout(cierrePendiente);
     document.querySelectorAll<HTMLElement>('[data-panel]').forEach((p) => {
-      p.hidden = p.dataset.panel !== name;
+      const abre = p.dataset.panel === name;
+      p.classList.toggle('panel--abierto', abre);
+      if (abre && p.hidden) {
+        p.hidden = false;
+        p.classList.remove('panel--abierto');
+        // Doble rAF: el navegador pinta el estado inicial (fuera de pantalla)
+        // antes de agregar la clase, para que la transicion corra.
+        requestAnimationFrame(() =>
+          requestAnimationFrame(() => p.classList.add('panel--abierto')),
+        );
+      } else if (!abre) {
+        p.hidden = true;
+      }
     });
     document.body.style.overflow = 'hidden';
     if (name === 'account') {
@@ -774,7 +791,29 @@ const menuTipos = [
   }
 
   function closePanels() {
-    document.querySelectorAll<HTMLElement>('[data-panel]').forEach((p) => (p.hidden = true));
+    window.clearTimeout(cierrePendiente);
+    const esconder = () => {
+      // Si el usuario reabrio un panel mientras este terminaba de cerrarse,
+      // el transitionend pendiente no debe esconderlo.
+      if (document.querySelector('.panel--abierto')) return;
+      document.querySelectorAll<HTMLElement>('[data-panel]').forEach((p) => (p.hidden = true));
+    };
+    const abierto = document.querySelector<HTMLElement>('.panel--abierto');
+    if (abierto) {
+      const hoja = abierto.querySelector<HTMLElement>('.panel-sheet');
+      abierto.classList.remove('panel--abierto');
+      hoja?.addEventListener(
+        'transitionend',
+        (ev) => {
+          // Solo la transicion de la hoja (no una burbujeada de un hijo).
+          if (ev.target === hoja) esconder();
+        },
+        { once: true },
+      );
+      cierrePendiente = window.setTimeout(esconder, 400);
+    } else {
+      esconder();
+    }
     document.body.style.overflow = '';
   }
 
@@ -1346,7 +1385,9 @@ const menuTipos = [
   .mobile-label { flex: 1; min-width: 0; }
   .mobile-chev { color: rgba(27, 42, 31, 0.45); flex: none; }
 
-  /* Paneles laterales */
+  /* Paneles laterales. El script agrega .panel--abierto un cuadro despues de
+     quitar hidden (entrada) y lo retira antes de volver a poner hidden
+     (salida), esperando el transitionend de la hoja. */
   .panel { position: fixed; inset: 0; z-index: 80; }
   .panel[hidden] { display: none; }
 
@@ -1354,6 +1395,8 @@ const menuTipos = [
     position: absolute;
     inset: 0;
     background: rgba(27, 42, 31, 0.45);
+    opacity: 0;
+    transition: opacity 240ms ease;
   }
 
   .panel-sheet {
@@ -1366,6 +1409,26 @@ const menuTipos = [
     box-shadow: -8px 0 32px rgba(27, 42, 31, 0.22);
     display: flex;
     flex-direction: column;
+    transform: translateX(100%);
+    /* Salida: mas corta que la entrada, el sistema responde rapido. */
+    transition: transform 260ms var(--ease-drawer);
+  }
+
+  .panel--abierto .panel-backdrop { opacity: 1; }
+
+  .panel--abierto .panel-sheet {
+    transform: translateX(0);
+    transition-duration: 420ms;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    /* Menos movimiento, no cero: la hoja solo se funde, sin desplazarse. */
+    .panel-sheet {
+      transform: none;
+      opacity: 0;
+      transition: opacity 160ms ease;
+    }
+    .panel--abierto .panel-sheet { opacity: 1; transition-duration: 160ms; }
   }
 
   .panel-head {
@@ -1436,6 +1499,13 @@ const menuTipos = [
   }
 
   .panel-cta:hover { background: #11512a; color: #ffffff; text-decoration: none; }
+
+  .panel-cta { transition: background 150ms ease, transform 160ms var(--ease-out); }
+  .panel-cta:active { transform: scale(0.97); }
+
+  @media (prefers-reduced-motion: reduce) {
+    .panel-cta:active { transform: none; }
+  }
 
   .panel-link { text-align: center; font-size: 14px; color: var(--ink); }
 

@@ -35,11 +35,20 @@ const { message = 'Hola, vengo de plantaspanama.com y tengo una consulta.' } = A
     background: var(--whatsapp);
     color: #fff;
     box-shadow: 0 4px 16px rgba(31, 168, 85, 0.4);
-    transition: transform 0.15s ease;
+    transition: transform 160ms var(--ease-out);
   }
 
-  .wa-float:hover {
-    transform: scale(1.06);
-    text-decoration: none;
+  .wa-float:hover { text-decoration: none; }
+
+  /* Crece al hover solo con puntero fino; la presion encoge en todos. */
+  @media (hover: hover) and (pointer: fine) {
+    .wa-float:hover { transform: scale(1.06); }
+  }
+
+  .wa-float:active { transform: scale(0.94); }
+
+  @media (prefers-reduced-motion: reduce) {
+    .wa-float:hover,
+    .wa-float:active { transform: none; }
   }
 </style>

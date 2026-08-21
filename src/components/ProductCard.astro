@@ -160,7 +160,13 @@ const esMasVendida = product.available >= 40;
     background: #ffffff;
   }
 
-  .product-tile:hover { outline-color: var(--green); }
+  .product-tile { transition: outline-color 150ms ease; }
+
+  /* Hover solo con puntero fino: en tactil el tap dispararia estados
+     "pegados" de hover que no se quitan. */
+  @media (hover: hover) and (pointer: fine) {
+    .product-tile:hover { outline-color: var(--green); }
+  }
 
   .tile-link {
     display: flex;
@@ -207,10 +213,13 @@ const esMasVendida = product.available >= 40;
 
   .tile-photo-hover {
     opacity: 0;
-    transition: opacity 0.4s ease;
+    /* Crossfade corto: el hover se ve decenas de veces por sesion. */
+    transition: opacity 280ms ease;
   }
 
-  .product-tile:hover .tile-photo-hover { opacity: 1; }
+  @media (hover: hover) and (pointer: fine) {
+    .product-tile:hover .tile-photo-hover { opacity: 1; }
+  }
 
   /* La pastilla de medidas solo aparece en tarjetas que aun no tienen foto. */
   .tile-photo[data-medidas]::after {
@@ -311,6 +320,20 @@ const esMasVendida = product.available >= 40;
   }
 
   .tile-add:hover { background: #ffffff; }
+
+  /* Presion: el boton se encoge un instante y confirma el toque. */
+  .tile-add,
+  .tile-fav {
+    transition: background 150ms ease, color 150ms ease, transform 160ms var(--ease-out);
+  }
+
+  .tile-add:active,
+  .tile-fav:active { transform: scale(0.94); }
+
+  @media (prefers-reduced-motion: reduce) {
+    .tile-add:active,
+    .tile-fav:active { transform: none; }
+  }
 
   .tile-add.added {
     background: var(--green);

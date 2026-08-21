@@ -156,10 +156,15 @@ const petalos = Array.from({ length: 22 }, (_, i) => {
     filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
   }
 
-  .contact-split:hover .petalo {
-    animation-name: petalo-cae;
-    animation-timing-function: linear;
-    animation-iteration-count: infinite;
+  /* Solo con puntero fino: en tactil el tap dejaria la lluvia "pegada".
+     La caida constante va en linear, como corresponde al movimiento
+     continuo. */
+  @media (hover: hover) and (pointer: fine) {
+    .contact-split:hover .petalo {
+      animation-name: petalo-cae;
+      animation-timing-function: linear;
+      animation-iteration-count: infinite;
+    }
   }
 
   @keyframes petalo-cae {

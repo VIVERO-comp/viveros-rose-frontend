@@ -384,9 +384,13 @@ const careTitle = `Cuidado de ${product.name.replace(/\s*\(.*\)$/, '').toLowerCa
       <section id="similares" class="container similares-section">
         <h2 class="similares-title">Te podrían gustar</h2>
         <div class="carrusel" data-carrusel aria-roledescription="carrusel" aria-label="Plantas similares">
-          <div class="carrusel-escenario" data-escenario>
-            {similares.map((p, i) => (
-              <div class="lamina" data-lamina data-indice={i}>
+          <!-- Fila plana de tarjetas iguales (como el catalogo): la ventana
+               es un scroller nativo con snap, las flechas pasan de pagina y
+               en tactil se desliza con el dedo. Los puntos (uno por pagina)
+               los pinta el script segun cuantas tarjetas caben. -->
+          <div class="carrusel-ventana" data-ventana tabindex="0">
+            {similares.map((p) => (
+              <div class="lamina" data-lamina>
                 <ProductCard product={p} />
               </div>
             ))}
@@ -397,18 +401,7 @@ const careTitle = `Cuidado de ${product.name.replace(/\s*\(.*\)$/, '').toLowerCa
           <button type="button" class="sim-arrow sim-arrow--next" data-sim-next aria-label="Siguiente">
             <Icon name="chevron-right" size={20} />
           </button>
-          <div class="similares-dots" role="tablist" aria-label="Elegir planta">
-            {similares.map((_, i) => (
-              <button
-                type="button"
-                role="tab"
-                data-sim-dot
-                data-indice={i}
-                aria-label={`Ir a la planta ${i + 1}`}
-                aria-selected={i === 0 ? 'true' : 'false'}
-              />
-            ))}
-          </div>
+          <div class="similares-dots" data-sim-dots role="tablist" aria-label="Página del carrusel"></div>
         </div>
       </section>
     )
@@ -507,85 +500,85 @@ const careTitle = `Cuidado de ${product.name.replace(/\s*\(.*\)$/, '').toLowerCa
   document.querySelector('[data-gallery-prev]')?.addEventListener('click', () => selectPhoto(current - 1));
   document.querySelector('[data-gallery-next]')?.addEventListener('click', () => selectPhoto(current + 1));
 
-  // Carrusel "center mode" de similares: la lamina central grande y las
-  // laterales pequenas y semitransparentes. Flechas, bolitas, teclado,
-  // deslizar con el dedo y clic en una lateral para traerla al centro.
+  // Carrusel de similares: fila plana de tarjetas iguales sobre un scroller
+  // nativo con snap (deslizar con el dedo sale gratis y es interrumpible).
+  // Las flechas avanzan una pagina completa (las tarjetas que caben en la
+  // ventana) y los puntos marcan la pagina actual.
   const carrusel = document.querySelector<HTMLElement>('[data-carrusel]');
   if (carrusel) {
-    const laminas = Array.from(carrusel.querySelectorAll<HTMLElement>('[data-lamina]'));
-    const bolitas = Array.from(carrusel.querySelectorAll<HTMLElement>('[data-sim-dot]'));
-    const total = laminas.length;
-    let activo = 0;
+    const ventana = carrusel.querySelector<HTMLElement>('[data-ventana]')!;
+    const laminas = Array.from(ventana.querySelectorAll<HTMLElement>('[data-lamina]'));
+    const prev = carrusel.querySelector<HTMLButtonElement>('[data-sim-prev]');
+    const next = carrusel.querySelector<HTMLButtonElement>('[data-sim-next]');
+    const puntos = carrusel.querySelector<HTMLElement>('[data-sim-dots]');
+    const quieto = window.matchMedia('(prefers-reduced-motion: reduce)');
 
-    // Distancia con vuelta circular (la lamina 8 queda a -1 de la 0).
-    const distancia = (i: number) => {
-      let d = i - activo;
-      if (d > total / 2) d -= total;
-      if (d < -total / 2) d += total;
-      return d;
+    // Ancho de un "paso" (tarjeta + hueco) medido del layout real.
+    const paso = () =>
+      laminas.length > 1
+        ? laminas[1].offsetLeft - laminas[0].offsetLeft
+        : laminas[0]?.offsetWidth || 1;
+    const porPagina = () => Math.max(1, Math.round(ventana.clientWidth / paso()));
+    const totalPaginas = () => Math.ceil(laminas.length / porPagina());
+    const paginaActual = () => {
+      // La ultima pagina puede ser parcial: el scroll se detiene en su tope
+      // antes de llegar a "pagina entera * paso", asi que el tope ES la
+      // ultima pagina.
+      const maximo = ventana.scrollWidth - ventana.clientWidth;
+      if (ventana.scrollLeft >= maximo - 1) return totalPaginas() - 1;
+      return Math.min(totalPaginas() - 1, Math.round(ventana.scrollLeft / (paso() * porPagina())));
     };
 
     const pintar = () => {
-      // Cinco visibles: central grande, un par a cada lado cada vez mas
-      // chico y tenue; del tercero en adelante quedan fuera.
-      const POSICIONES = [
-        { x: 0, s: 1, o: 1 },
-        { x: 104, s: 0.8, o: 0.85 },
-        { x: 192, s: 0.62, o: 0.55 },
-      ];
-      laminas.forEach((lamina, i) => {
-        const d = distancia(i);
-        const lado = Math.sign(d);
-        const abs = Math.min(Math.abs(d), 3);
-        const p = POSICIONES[abs] ?? { x: 250, s: 0.5, o: 0 };
-        lamina.style.setProperty('--x', `${lado * p.x}%`);
-        lamina.style.setProperty('--s', String(p.s));
-        lamina.style.setProperty('--o', String(p.o));
-        lamina.style.setProperty('--z', String(30 - Math.abs(d) * 10));
-        lamina.classList.toggle('lamina--activa', d === 0);
-        lamina.setAttribute('aria-hidden', d === 0 ? 'false' : 'true');
+      const total = totalPaginas();
+      const actual = paginaActual();
+      if (puntos && puntos.childElementCount !== total) {
+        puntos.replaceChildren(
+          ...Array.from({ length: total }, (_, i) => {
+            const b = document.createElement('button');
+            b.type = 'button';
+            b.setAttribute('role', 'tab');
+            b.setAttribute('aria-label', `Ir a la página ${i + 1}`);
+            b.addEventListener('click', () => irA(i));
+            return b;
+          }),
+        );
+        // Con una sola pagina no hay nada que pasar: ni puntos ni flechas.
+        const deMas = total <= 1;
+        puntos.hidden = deMas;
+        if (prev) prev.hidden = deMas;
+        if (next) next.hidden = deMas;
+      }
+      puntos
+        ?.querySelectorAll('button')
+        .forEach((b, i) => b.setAttribute('aria-selected', i === actual ? 'true' : 'false'));
+      if (prev) prev.disabled = actual <= 0;
+      if (next) next.disabled = actual >= total - 1;
+    };
+
+    const irA = (pagina: number) => {
+      const destino = Math.min(Math.max(pagina, 0), totalPaginas() - 1) * porPagina();
+      ventana.scrollTo({
+        left: laminas[destino]?.offsetLeft ?? 0,
+        behavior: quieto.matches ? 'auto' : 'smooth',
       });
-      bolitas.forEach((b, i) => b.setAttribute('aria-selected', i === activo ? 'true' : 'false'));
     };
 
-    const ir = (i: number) => {
-      activo = ((i % total) + total) % total;
-      pintar();
-    };
-
-    carrusel.querySelector('[data-sim-prev]')?.addEventListener('click', () => ir(activo - 1));
-    carrusel.querySelector('[data-sim-next]')?.addEventListener('click', () => ir(activo + 1));
-    bolitas.forEach((b, i) => b.addEventListener('click', () => ir(i)));
-
-    // Clic en una lamina lateral: la trae al centro sin abrir su enlace.
-    laminas.forEach((lamina, i) => {
-      lamina.addEventListener(
-        'click',
-        (ev) => {
-          if (i !== activo) {
-            ev.preventDefault();
-            ev.stopPropagation();
-            ir(i);
-          }
-        },
-        true,
-      );
-    });
+    prev?.addEventListener('click', () => irA(paginaActual() - 1));
+    next?.addEventListener('click', () => irA(paginaActual() + 1));
 
     carrusel.addEventListener('keydown', (ev: KeyboardEvent) => {
-      if (ev.key === 'ArrowLeft') { ev.preventDefault(); ir(activo - 1); }
-      if (ev.key === 'ArrowRight') { ev.preventDefault(); ir(activo + 1); }
+      if (ev.key === 'ArrowLeft') { ev.preventDefault(); irA(paginaActual() - 1); }
+      if (ev.key === 'ArrowRight') { ev.preventDefault(); irA(paginaActual() + 1); }
     });
 
-    // Deslizar con el dedo o el mouse.
-    let inicioX: number | null = null;
-    carrusel.addEventListener('pointerdown', (ev: PointerEvent) => { inicioX = ev.clientX; });
-    carrusel.addEventListener('pointerup', (ev: PointerEvent) => {
-      if (inicioX === null) return;
-      const dx = ev.clientX - inicioX;
-      inicioX = null;
-      if (Math.abs(dx) > 45) ir(activo + (dx < 0 ? 1 : -1));
+    // Repintar al hacer scroll (throttle por rAF) y al cambiar el ancho.
+    let pendiente = 0;
+    ventana.addEventListener('scroll', () => {
+      if (pendiente) return;
+      pendiente = requestAnimationFrame(() => { pendiente = 0; pintar(); });
     });
+    window.addEventListener('resize', pintar);
 
     pintar();
   }
@@ -597,6 +590,9 @@ const careTitle = `Cuidado de ${product.name.replace(/\s*\(.*\)$/, '').toLowerCa
       if (!body) return;
       const willOpen = body.hidden;
       body.hidden = !willOpen;
+      // La clase de entrada solo al abrir con clic: los acordeones abiertos
+      // por defecto no deben animar durante la carga de la pagina.
+      body.classList.toggle('acc-entra', willOpen);
       btn.classList.toggle('open', willOpen);
       btn.setAttribute('aria-expanded', String(willOpen));
     });
@@ -758,71 +754,80 @@ const careTitle = `Cuidado de ${product.name.replace(/\s*\(.*\)$/, '').toLowerCa
   /* Miniaturas con foto real: sin numero, la imagen llena el boton. */
   .thumb--foto { overflow: hidden; }
 
-  /* Carrusel "center mode" de similares: la tarjeta central grande, las de
-     los lados pequenas y recortadas por el borde, bolitas debajo. */
+  /* Carrusel de similares: fila plana de tarjetas del tamano del catalogo
+     (4 por pagina en escritorio, 2 en movil), flechas en los bordes y
+     puntos por pagina debajo, como los carruseles de tienda clasicos. */
   .similares-section { padding-top: 0; }
 
   .similares-title { font-size: 27px; margin: 0 0 1.15rem; }
 
   .carrusel {
-    /* Tarjeta central del tamano de las del catalogo (4 por fila): se ven
-       cinco a la vez, la central y dos a cada lado. */
-    --ancho-central: 24%;
     position: relative;
-    padding-bottom: 2.5rem;
-    user-select: none;
-    touch-action: pan-y;
+    padding-bottom: 2.1rem;
   }
 
-  /* La altura sale del ancho (la tarjeta central mide 24% del escenario y
-     es 4:5 + su texto), asi nunca se recorta abajo. */
-  .carrusel-escenario {
-    position: relative;
-    aspect-ratio: 2.35;
-    overflow: hidden;
+  /* Scroller nativo con snap: interrumpible, con inercia en tactil, y sin
+     barra visible (las flechas y el dedo son el control). */
+  .carrusel-ventana {
+    display: flex;
+    gap: 1.15rem;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+    overscroll-behavior-x: contain;
+  }
+
+  .carrusel-ventana::-webkit-scrollbar { display: none; }
+
+  .carrusel-ventana:focus-visible {
+    outline: 2px solid var(--green);
+    outline-offset: 4px;
+    border-radius: var(--radius-lg);
   }
 
   .lamina {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: var(--ancho-central);
-    transform: translate(-50%, -50%) translateX(var(--x, 0%)) scale(var(--s, 1));
-    opacity: var(--o, 1);
-    z-index: var(--z, 1);
-    transition:
-      transform 520ms cubic-bezier(0.22, 0.61, 0.36, 1),
-      opacity 520ms cubic-bezier(0.22, 0.61, 0.36, 1);
-    will-change: transform, opacity;
+    /* Un poco mas chicas que las del catalogo: cinco por pagina. */
+    flex: 0 0 calc((100% - 4 * 1.15rem) / 5);
+    min-width: 0;
+    scroll-snap-align: start;
   }
-
-  /* La tarjeta lateral entera lleva al centro al hacerle clic. */
-  .lamina:not(.lamina--activa) { cursor: pointer; }
 
   .sim-arrow {
     position: absolute;
-    /* centro vertical del escenario (el carrusel reserva 2.5rem abajo). */
-    top: calc((100% - 2.5rem) / 2);
+    /* Centrado sobre la zona de la foto (la tarjeta es foto 4:5 + texto). */
+    top: calc((100% - 2.1rem) / 2);
     transform: translateY(-50%);
-    z-index: 40;
+    z-index: 4;
     width: 42px;
     height: 42px;
     border-radius: 50%;
-    border: 0;
-    background: var(--card-dark);
-    color: #eef5f0;
+    border: 1px solid var(--line-strong);
+    background: #ffffff;
+    color: var(--ink);
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    box-shadow: 0 6px 18px rgba(27, 42, 31, 0.3);
-    transition: background 180ms ease;
+    box-shadow: 0 6px 18px rgba(27, 42, 31, 0.18);
+    transition: background 150ms ease, opacity 150ms ease, transform 160ms var(--ease-out);
   }
 
-  .sim-arrow:hover { background: var(--green-deep); }
+  .sim-arrow:hover { background: var(--bg); }
 
-  .sim-arrow--prev { left: 4px; }
-  .sim-arrow--next { right: 4px; }
+  /* La flecha ya vive con translateY(-50%): la presion lo conserva. */
+  .sim-arrow:active { transform: translateY(-50%) scale(0.94); }
+
+  /* En el tope queda visible pero apagada, como en las tiendas de referencia. */
+  .sim-arrow:disabled {
+    opacity: 0.35;
+    cursor: default;
+    pointer-events: none;
+  }
+
+  .sim-arrow[hidden] { display: none; }
+
+  .sim-arrow--prev { left: -8px; }
+  .sim-arrow--next { right: -8px; }
 
   .similares-dots {
     position: absolute;
@@ -833,7 +838,9 @@ const careTitle = `Cuidado de ${product.name.replace(/\s*\(.*\)$/, '').toLowerCa
     gap: 8px;
   }
 
-  .similares-dots button {
+  .similares-dots[hidden] { display: none; }
+
+  .similares-dots :global(button) {
     width: 8px;
     height: 8px;
     border-radius: 50%;
@@ -841,23 +848,24 @@ const careTitle = `Cuidado de ${product.name.replace(/\s*\(.*\)$/, '').toLowerCa
     padding: 0;
     background: var(--line-strong);
     cursor: pointer;
-    transition: background 0.2s ease, transform 0.2s ease;
+    transition: background 150ms ease, transform 200ms var(--ease-out);
   }
 
-  .similares-dots button[aria-selected='true'] {
+  .similares-dots :global(button[aria-selected='true']) {
     background: var(--green-deep);
     transform: scale(1.35);
   }
 
-
   @media (max-width: 768px) {
-    .carrusel { --ancho-central: 68%; }
-    .carrusel-escenario { aspect-ratio: 0.85; }
-    .sim-arrow { width: 36px; height: 36px; }
+    /* En movil manda el dedo: dos tarjetas por pagina con un asomo de la
+       tercera (invita a deslizar) y sin flechas. */
+    .carrusel-ventana { gap: 0.7rem; }
+    .lamina { flex-basis: calc((100% - 2 * 0.7rem) / 2.35); }
+    .sim-arrow { display: none; }
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .lamina { transition-duration: 1ms; }
+    .sim-arrow:active { transform: translateY(-50%); }
   }
 
   /* La pastilla de medidas solo aparece cuando aun no hay fotos reales. */
@@ -1242,6 +1250,28 @@ const careTitle = `Cuidado de ${product.name.replace(/\s*\(.*\)$/, '').toLowerCa
   }
 
   .acc-body[hidden] { display: none; }
+
+  /* Al abrir un acordeon con clic (clase que pone el script; los abiertos por
+     defecto no la llevan y no animan en la carga) el contenido entra
+     fundiendose y bajando apenas; el cierre es instantaneo (la salida
+     siempre mas rapida que la entrada). */
+  .acc-body.acc-entra {
+    animation: acc-entra 240ms var(--ease-out) both;
+  }
+
+  @keyframes acc-entra {
+    from {
+      opacity: 0;
+      transform: translateY(-5px);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .acc-body.acc-entra { animation-name: acc-aparece; }
+    @keyframes acc-aparece {
+      from { opacity: 0; }
+    }
+  }
 
   /* Guia de cuidado */
   .care-section { padding-bottom: 55px; }

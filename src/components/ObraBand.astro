@@ -46,19 +46,29 @@ import Icon from './Icon.astro';
     align-items: center;
   }
 
-  /* Imagen en diagonal a la derecha, como el handoff. */
+  /* Imagen en diagonal a la derecha, como el handoff. Ancho fijo del estado
+     hover; en reposo se desplaza a la derecha con transform (solo
+     composicion, nada de animar width, que recalcula layout en cada
+     cuadro). 10.3% de su propio ancho = 6% de la banda. */
   .obra-photo {
     position: absolute;
     top: 0;
     right: 0;
     bottom: 0;
-    width: 52%;
+    width: 58%;
     background: #2a4432;
     clip-path: polygon(26% 0, 100% 0, 100% 100%, 4% 100%);
-    transition: width 0.5s cubic-bezier(0.22, 0.61, 0.36, 1);
+    transform: translateX(10.3%);
+    transition: transform 450ms var(--ease-out);
   }
 
-  .obra-band:hover .obra-photo { width: 58%; }
+  @media (hover: hover) and (pointer: fine) {
+    .obra-band:hover .obra-photo { transform: translateX(0); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .obra-band:hover .obra-photo { transform: translateX(10.3%); }
+  }
 
   .obra-photo img {
     position: absolute;

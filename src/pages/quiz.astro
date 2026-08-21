@@ -405,11 +405,53 @@ const consultaWhatsApp = whatsappLink(
     cursor: pointer;
     font-family: var(--font-ui);
     color: var(--ink);
+    transition: background 150ms ease, border-color 150ms ease, transform 160ms var(--ease-out);
   }
 
-  .step-option:hover {
-    background: var(--green-tint);
-    border-color: var(--green);
+  /* Hover solo con puntero fino (en tactil el tap dejaria el estado pegado);
+     la presion confirma la eleccion en todos los dispositivos. */
+  @media (hover: hover) and (pointer: fine) {
+    .step-option:hover {
+      background: var(--green-tint);
+      border-color: var(--green);
+      transform: translateY(-2px);
+    }
+  }
+
+  .step-option:active { transform: scale(0.98); }
+
+  /* Al entrar a un paso, las opciones aparecen en cascada corta (una tras
+     otra, 45ms entre si): la pregunta se siente nueva sin frenar a nadie. */
+  .quiz-step:not([hidden]) .step-option {
+    animation: opcion-entra 280ms var(--ease-out) both;
+  }
+
+  .quiz-step:not([hidden]) .step-option:nth-child(2) { animation-delay: 45ms; }
+  .quiz-step:not([hidden]) .step-option:nth-child(3) { animation-delay: 90ms; }
+
+  @keyframes opcion-entra {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+  }
+
+  .quiz-results:not([hidden]) {
+    animation: opcion-entra 280ms var(--ease-out) both;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .step-option,
+    .step-option:hover,
+    .step-option:active { transform: none; }
+    .quiz-step:not([hidden]) .step-option,
+    .quiz-results:not([hidden]) {
+      animation-name: opcion-aparece;
+      animation-delay: 0ms;
+    }
+    @keyframes opcion-aparece {
+      from { opacity: 0; }
+    }
   }
 
   .option-label { font-size: 1.05rem; font-weight: 600; }

@@ -615,8 +615,8 @@ const paisajismoMessage = whatsappLink('Hola, quiero cotizar un proyecto de pais
     opacity: 0;
     transform: translateY(18px);
     transition:
-      opacity 0.7s ease,
-      transform 0.7s ease;
+      opacity 0.6s ease,
+      transform 0.6s var(--ease-out);
   }
 
   .js-reveal .quiz-card.is-visible {
@@ -624,15 +624,27 @@ const paisajismoMessage = whatsappLink('Hola, quiero cotizar un proyecto de pais
     transform: translateY(0);
   }
 
+  /* La sombra del hover vive en un pseudo-elemento y solo se le anima la
+     opacidad: animar box-shadow repinta el boton en cada cuadro. */
   .quiz-btn {
-    transition:
-      transform 0.2s ease,
-      box-shadow 0.2s ease;
+    position: relative;
+    transition: transform 200ms var(--ease-out);
   }
 
-  .quiz-btn:hover {
-    transform: translateY(-2px);
+  .quiz-btn::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 999px;
     box-shadow: 0 8px 18px rgba(27, 42, 31, 0.22);
+    opacity: 0;
+    transition: opacity 200ms ease;
+    pointer-events: none;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .quiz-btn:hover { transform: translateY(-2px); }
+    .quiz-btn:hover::after { opacity: 1; }
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -708,13 +720,23 @@ const paisajismoMessage = whatsappLink('Hola, quiero cotizar un proyecto de pais
     top: 0;
     right: 0;
     bottom: 0;
-    width: 52%;
+    /* Ancho fijo del estado hover; en reposo se desplaza a la derecha con
+       transform (solo composicion, nada de animar width, que recalcula
+       layout en cada cuadro). 10.3% de su propio ancho = 6% de la banda. */
+    width: 58%;
     background: #2a4432;
     clip-path: polygon(26% 0, 100% 0, 100% 100%, 4% 100%);
-    transition: width 0.5s cubic-bezier(0.22, 0.61, 0.36, 1);
+    transform: translateX(10.3%);
+    transition: transform 450ms var(--ease-out);
   }
 
-  .paisajismo-band:hover .paisajismo-photo { width: 58%; }
+  @media (hover: hover) and (pointer: fine) {
+    .paisajismo-band:hover .paisajismo-photo { transform: translateX(0); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .paisajismo-band:hover .paisajismo-photo { transform: translateX(10.3%); }
+  }
 
   .paisajismo-photo::before {
     content: '';
