@@ -1,4 +1,11 @@
+# Las paginas transaccionales (/carrito, /checkout, /pedido, /cuenta) NO se
+# bloquean aqui a proposito: llevan <meta name="robots" content="noindex"> y
+# Google necesita poder rastrearlas para leer esa etiqueta. Bloquearlas
+# impediria ver el noindex y podrian aparecer igual como resultado sin
+# descripcion ("indexada aunque bloqueada por robots.txt").
 User-agent: *
 Allow: /
+# Endpoints de servidor sin HTML; no hay nada que indexar ahi.
+Disallow: /api/
 
 Sitemap: https://www.plantaspanama.com/sitemap-index.xml
