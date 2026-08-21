@@ -1,10 +1,14 @@
 // @ts-check
 import { defineConfig } from 'astro/config';
 import vercel from '@astrojs/vercel';
+import sitemap from '@astrojs/sitemap';
 
 // https://astro.build/config
 export default defineConfig({
-  site: 'https://plantaspanama.com',
+  // Con www: el apex redirige a www en produccion, y de aqui salen las URLs
+  // canonicas y las del sitemap.
+  site: 'https://www.plantaspanama.com',
+  integrations: [sitemap()],
   // Sigue siendo un sitio estatico; el adaptador existe solo por los dos
   // endpoints de servidor (src/pages/api/*) que hablan con el order-api
   // guardando la API key fuera del navegador.
