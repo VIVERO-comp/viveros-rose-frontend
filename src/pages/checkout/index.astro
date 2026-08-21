@@ -338,6 +338,21 @@ const PROVINCES = [
       });
       if (respuesta.status === 409) {
         const detalle = await respuesta.json();
+        if (detalle.error === 'price_not_ready') {
+          // Salvaguarda del order-api: el producto tiene el precio sin
+          // corregir en Odoo. Mensaje claro, sin jerga tecnica.
+          const nombres = (detalle.items ?? [])
+            .map((i: { sku: string; nombre?: string }) => {
+              const enCarrito = cart.find((c) => c.sku === i.sku);
+              return enCarrito?.name ?? i.nombre ?? i.sku;
+            })
+            .join(', ');
+          mostrarError(
+            `Por ahora no podemos vender en línea: ${nombres}. ` +
+              'Quítalo del carrito para completar tu pedido, o escríbenos por WhatsApp y te lo cotizamos.',
+          );
+          return;
+        }
         const agotados = (detalle.items ?? [])
           .filter((i: { ok: boolean }) => !i.ok)
           .map((i: { sku: string; disponible: number }) => {
