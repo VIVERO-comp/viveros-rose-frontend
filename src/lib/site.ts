@@ -17,6 +17,12 @@ export const SITE = {
   byline: 'by Vivero Rose',
   domain: 'plantaspanama.com',
   address: 'Calle 11, Juan Díaz, Ciudad Radial, Panamá',
+  // La misma direccion en piezas, para el PostalAddress del schema.org.
+  addressSchema: {
+    streetAddress: 'Calle 11, Ciudad Radial, Juan Díaz',
+    addressLocality: 'Panamá',
+    addressCountry: 'PA',
+  },
   hours: 'Lunes a viernes, 9:00 a.m. – 5:00 p.m.',
   whatsappNumber,
 };

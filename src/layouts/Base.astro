@@ -8,6 +8,9 @@ import '../styles/global.css';
 interface Props {
   title: string;
   description?: string;
+  // Imagen para las vistas previas al compartir (WhatsApp, redes). Ruta
+  // relativa a public/; por defecto la foto del hero del home.
+  socialImage?: string;
   whatsappMessage?: string;
   // 'minimal': cabecera reducida sin nav ni footer, como Carrito/Checkout/
   // Pedidos en el diseno. El enlace de la derecha se configura por pagina.
@@ -21,11 +24,17 @@ interface Props {
 const {
   title,
   description = 'Vivero real en Panama. Compra plantas online con entrega a domicilio.',
+  socialImage = '/fotos_homepage/primerafoto.jpg',
   whatsappMessage,
   chrome = 'full',
   minimalLinkHref = '/plantas',
   minimalLinkLabel = 'Seguir comprando',
 } = Astro.props;
+
+// La canonica usa solo el pathname: las variantes del catalogo con parametros
+// (/plantas?c=...) sirven el mismo HTML y deben canonicalizar a /plantas.
+const canonicalUrl = new URL(Astro.url.pathname, Astro.site).href;
+const socialImageUrl = new URL(socialImage, Astro.site).href;
 ---
 
 <!doctype html>
@@ -46,16 +55,24 @@ const {
       href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap"
     />
     <meta name="description" content={description} />
+    <link rel="canonical" href={canonicalUrl} />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:type" content="website" />
+    <meta property="og:url" content={canonicalUrl} />
+    <meta property="og:image" content={socialImageUrl} />
+    <meta property="og:site_name" content={SITE.name} />
+    <meta name="twitter:card" content="summary_large_image" />
     <title>{title} · {SITE.name}</title>
     <script type="application/ld+json" set:html={JSON.stringify({
       '@context': 'https://schema.org',
       '@type': 'GardenStore',
       name: SITE.name,
       alternateName: `${SITE.name} ${SITE.byline}`,
-      url: `https://${SITE.domain}`,
+      url: Astro.site?.href,
+      telephone: `+${SITE.whatsappNumber}`,
+      // Google exige address en los Local Business para los rich results.
+      address: { '@type': 'PostalAddress', ...SITE.addressSchema },
       areaServed: 'Panama',
       parentOrganization: { '@type': 'Organization', name: 'Vivero Rose', url: 'https://viverorose.com' },
     })} />
