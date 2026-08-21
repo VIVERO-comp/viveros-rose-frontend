@@ -33,7 +33,10 @@ const {
 
 // La canonica usa solo el pathname: las variantes del catalogo con parametros
 // (/plantas?c=...) sirven el mismo HTML y deben canonicalizar a /plantas.
-const canonicalUrl = new URL(Astro.url.pathname, Astro.site).href;
+// Sin barra final (salvo el home), igual que los enlaces internos del sitio.
+const canonicalPath =
+  Astro.url.pathname.length > 1 ? Astro.url.pathname.replace(/\/$/, '') : '/';
+const canonicalUrl = new URL(canonicalPath, Astro.site).href;
 const socialImageUrl = new URL(socialImage, Astro.site).href;
 ---
 
