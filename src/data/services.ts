@@ -37,7 +37,7 @@ export const services: Service[] = [
     cardLine: 'Jardines pensados para el clima de Panamá, desde el trazo hasta la última planta.',
     description: [
       'Levantamos el terreno, proponemos un trazo con las especies que rinden en tu suelo y nos encargamos de la siembra y los detalles que hacen que un jardín se sienta como casa.',
-      'Todo lo que sembramos sale de nuestro vivero en Juan Díaz: variedades adaptadas al trópico, entregadas frescas y ya establecidas para que arranquen sin estrés.',
+      'Todo lo que sembramos sale de nuestro vivero en Ciudad de Panamá: variedades adaptadas al trópico, entregadas frescas y ya establecidas para que arranquen sin estrés.',
     ],
     incluye: [
       'Levantamiento del terreno y propuesta de trazo',
