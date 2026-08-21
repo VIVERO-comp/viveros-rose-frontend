@@ -10,13 +10,22 @@ export default defineConfig({
   site: 'https://www.plantaspanama.com',
   integrations: [
     sitemap({
-      // Paginas de flujo (confirmacion de compra, codigos de un solo uso):
-      // fuera del sitemap porque no tienen valor de busqueda y solo se llega
-      // a ellas desde el propio flujo.
-      filter: (page) =>
-        !['/checkout/success', '/cuenta/verificar', '/cuenta/recuperar'].includes(
-          new URL(page).pathname.replace(/\/$/, ''),
-        ),
+      // Paginas transaccionales, privadas o legales (carrito, checkout,
+      // rastreo, cuenta, entrega, terminos, privacidad): fuera del sitemap
+      // porque no queremos que Google las recomiende. Ademas llevan noindex
+      // en Base.
+      filter: (page) => {
+        const path = new URL(page).pathname.replace(/\/$/, '');
+        return ![
+          '/carrito',
+          '/checkout',
+          '/pedido',
+          '/cuenta',
+          '/entrega',
+          '/terminos',
+          '/privacidad',
+        ].some((prefijo) => path === prefijo || path.startsWith(`${prefijo}/`));
+      },
       serialize(item) {
         // Sin barra final, igual que las canonicas y los enlaces internos.
         const path = new URL(item.url).pathname;

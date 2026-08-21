@@ -19,6 +19,10 @@ interface Props {
   chrome?: 'full' | 'minimal' | 'bare';
   minimalLinkHref?: string;
   minimalLinkLabel?: string;
+  // true en paginas transaccionales o privadas (carrito, checkout, pedido,
+  // cuenta): les pone <meta name="robots" content="noindex"> y quedan tambien
+  // filtradas del sitemap en astro.config.mjs.
+  noindex?: boolean;
 }
 
 const {
@@ -29,6 +33,7 @@ const {
   chrome = 'full',
   minimalLinkHref = '/plantas',
   minimalLinkLabel = 'Seguir comprando',
+  noindex = false,
 } = Astro.props;
 
 // La canonica usa solo el pathname: las variantes del catalogo con parametros
@@ -58,6 +63,7 @@ const socialImageUrl = new URL(socialImage, Astro.site).href;
       href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap"
     />
     <meta name="description" content={description} />
+    {noindex && <meta name="robots" content="noindex" />}
     <link rel="canonical" href={canonicalUrl} />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
