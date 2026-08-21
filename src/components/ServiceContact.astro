@@ -12,60 +12,6 @@ interface Props {
 }
 
 const { selectedSlug, whatsappMessage = 'Hola, quiero una cotización de servicios.' } = Astro.props;
-
-// Formas de las plantas que brotan al hacer hover (SVG en viewBox 0 0 60 100,
-// dibujadas con los verdes del sitio; la flor agrega un toque de color).
-const formasPlanta: Record<string, string> = {
-  brote: `
-    <path d="M30 100 C30 78 29 58 30 34" stroke="#5cbf7e" stroke-width="3.5" stroke-linecap="round"/>
-    <path d="M30 62 C14 60 6 44 10 30 C26 33 32 48 30 62 Z" fill="#8ce6a8"/>
-    <path d="M30 46 C46 44 54 28 50 14 C34 17 28 32 30 46 Z" fill="#5cbf7e"/>
-    <path d="M30 34 C24 24 25 14 30 6 C35 14 36 24 30 34 Z" fill="#a9e6b8"/>`,
-  pasto: `
-    <path d="M30 100 C28 70 20 50 12 36" stroke="#5cbf7e" stroke-width="3" stroke-linecap="round"/>
-    <path d="M30 100 C30 64 30 44 30 26" stroke="#4a9e68" stroke-width="3" stroke-linecap="round"/>
-    <path d="M30 100 C32 70 40 52 48 38" stroke="#5cbf7e" stroke-width="3" stroke-linecap="round"/>
-    <path d="M30 100 C26 76 16 64 7 58" stroke="#8ce6a8" stroke-width="2.6" stroke-linecap="round"/>
-    <path d="M30 100 C34 76 44 64 53 58" stroke="#8ce6a8" stroke-width="2.6" stroke-linecap="round"/>`,
-  helecho: `
-    <path d="M30 100 C30 72 33 42 41 16" stroke="#4a9e68" stroke-width="3" stroke-linecap="round"/>
-    <path d="M30 88 C22 86 16 80 15 72" stroke="#8ce6a8" stroke-width="2.6" stroke-linecap="round"/>
-    <path d="M31 76 C40 74 45 68 46 60" stroke="#8ce6a8" stroke-width="2.6" stroke-linecap="round"/>
-    <path d="M32 64 C25 62 20 56 19 49" stroke="#8ce6a8" stroke-width="2.4" stroke-linecap="round"/>
-    <path d="M34 52 C42 50 46 45 47 38" stroke="#8ce6a8" stroke-width="2.4" stroke-linecap="round"/>
-    <path d="M36 40 C30 38 26 33 26 27" stroke="#a9e6b8" stroke-width="2.2" stroke-linecap="round"/>
-    <path d="M39 28 C45 26 48 22 49 16" stroke="#a9e6b8" stroke-width="2.2" stroke-linecap="round"/>`,
-  flor: `
-    <path d="M30 100 C30 76 30 56 30 36" stroke="#5cbf7e" stroke-width="3.5" stroke-linecap="round"/>
-    <path d="M30 74 C18 70 12 60 14 50 C26 54 31 64 30 74 Z" fill="#5cbf7e"/>
-    <path d="M30 60 C42 56 48 46 46 36 C34 40 29 50 30 60 Z" fill="#8ce6a8"/>
-    <circle cx="30" cy="11" r="7" fill="#e88bb1"/>
-    <circle cx="41" cy="19" r="7" fill="#e88bb1"/>
-    <circle cx="37" cy="31" r="7" fill="#e88bb1"/>
-    <circle cx="23" cy="31" r="7" fill="#e88bb1"/>
-    <circle cx="19" cy="19" r="7" fill="#e88bb1"/>
-    <circle cx="30" cy="22" r="6" fill="#f2c14e"/>`,
-  hojaAncha: `
-    <path d="M30 100 C14 84 5 62 10 40 C25 55 30 78 30 100 Z" fill="#5cbf7e"/>
-    <path d="M30 100 C46 84 55 62 50 40 C35 55 30 78 30 100 Z" fill="#5cbf7e"/>
-    <path d="M30 100 C22 76 22 50 30 30 C38 50 38 76 30 100 Z" fill="#8ce6a8"/>
-    <path d="M30 100 C20 90 12 76 10 62 C22 70 28 84 30 100 Z" fill="#a9e6b8"/>
-    <path d="M30 100 C40 90 48 76 50 62 C38 70 32 84 30 100 Z" fill="#a9e6b8"/>`,
-};
-
-// Reparto a lo largo del borde: tipo, posicion, tamano, retraso e inclinacion.
-const plantas = [
-  { tipo: 'pasto', left: '3%', alto: 62, delay: '0.12s', giro: -4 },
-  { tipo: 'brote', left: '12%', alto: 82, delay: '0.3s', giro: 5 },
-  { tipo: 'flor', left: '22%', alto: 112, delay: '0s', giro: -3 },
-  { tipo: 'helecho', left: '33%', alto: 92, delay: '0.42s', giro: 4 },
-  { tipo: 'brote', left: '44%', alto: 64, delay: '0.18s', giro: -7 },
-  { tipo: 'hojaAncha', left: '54%', alto: 98, delay: '0.34s', giro: 0 },
-  { tipo: 'flor', left: '66%', alto: 84, delay: '0.08s', giro: 6 },
-  { tipo: 'pasto', left: '77%', alto: 72, delay: '0.46s', giro: -5 },
-  { tipo: 'helecho', left: '86%', alto: 78, delay: '0.24s', giro: -4 },
-  { tipo: 'brote', left: '93%', alto: 96, delay: '0.38s', giro: 3 },
-];
 ---
 
 <section class="container contact-split-wrap">
@@ -73,20 +19,6 @@ const plantas = [
     <div class="contact-photo-col">
       <div class="contact-photo" style="background-image: url('/fotos_servicios/banda_servicios.jpeg'); background-size: cover; background-position: center;" aria-hidden="true"></div>
       <div class="contact-scrim" aria-hidden="true"></div>
-      <!-- Plantas variadas que crecen desde la tierra al hacer hover. -->
-      <div class="contact-sprouts" aria-hidden="true">
-        {
-          plantas.map((p) => (
-            <svg
-              class="sprout"
-              style={`left: ${p.left}; height: ${p.alto}px; transition-delay: ${p.delay}; --giro: ${p.giro}deg;`}
-              viewBox="0 0 60 100"
-              fill="none"
-              set:html={formasPlanta[p.tipo]}
-            />
-          ))
-        }
-      </div>
       <div class="contact-copy">
         <h2>Cuéntanos sobre tu proyecto</h2>
         <p>Cuéntanos qué necesitas y te respondemos en menos de un día hábil.</p>
@@ -167,35 +99,18 @@ const plantas = [
     position: absolute;
     inset: 0;
     background: linear-gradient(150deg, #2a4432, var(--card-dark) 70%);
-    transition: transform 1.4s cubic-bezier(0.22, 0.61, 0.36, 1);
+    transition: transform 1.2s var(--ease-out);
   }
 
-  /* Hover en cualquier parte de la carta: la ilustracion se abre hacia
-     afuera y brotan las plantas. */
-  .contact-split:hover .contact-photo { transform: scale(1.16); }
-
-  .contact-sprouts {
-    position: absolute;
-    inset: 0;
-    overflow: hidden;
-    pointer-events: none;
+  /* Hover en cualquier parte de la carta (solo puntero fino: en tactil el
+     tap dejaria el estado pegado): la ilustracion se abre hacia afuera. */
+  @media (hover: hover) and (pointer: fine) {
+    .contact-split:hover .contact-photo { transform: scale(1.16); }
   }
-
-  .sprout {
-    position: absolute;
-    bottom: -3px;
-    width: auto;
-    transform: scale(0) rotate(var(--giro, 0deg));
-    transform-origin: bottom center;
-    transition: transform 0.9s cubic-bezier(0.34, 1.56, 0.64, 1);
-    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.35));
-  }
-
-  .contact-split:hover .sprout { transform: scale(1) rotate(var(--giro, 0deg)); }
 
   @media (prefers-reduced-motion: reduce) {
-    .contact-photo,
-    .sprout { transition: none; }
+    .contact-photo { transition: none; }
+    .contact-split:hover .contact-photo { transform: none; }
   }
 
   .contact-scrim {
