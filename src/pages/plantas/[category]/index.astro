@@ -18,7 +18,10 @@ const { category } = Astro.props;
 const items = getProductsByCategory(category.slug);
 ---
 
-<Base title={category.name} description={category.description}>
+<Base
+  title={category.name}
+  description={`${category.description} Compra online desde nuestro vivero, con disponibilidad real y entrega a domicilio en Panamá.`}
+>
   <section class="cat-hero">
     <!-- FOTO PENDIENTE: banda de la categoria — a lo ancho, minimo 1920×300 px -->
     <div class="cat-hero-photo" data-medidas="Foto banda · 1920×300" aria-hidden="true"></div>

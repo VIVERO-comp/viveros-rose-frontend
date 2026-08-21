@@ -12,7 +12,10 @@ export function getStaticPaths() {
 const { guide } = Astro.props;
 ---
 
-<Base title={guide.title} description={guide.excerpt}>
+<Base
+  title={guide.title}
+  description={`${guide.excerpt} Guía del equipo de Plantas Panama, vivero con entrega a domicilio en Panamá.`}
+>
   <section class="section">
     <div class="container">
       <article class="guide">

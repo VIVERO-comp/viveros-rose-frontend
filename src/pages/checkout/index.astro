@@ -39,13 +39,16 @@ const PROVINCES = [
 
 <Base
   title="Checkout"
-  description="Finaliza tu compra como invitado. Sin crear cuenta."
+  description="Finaliza tu compra como invitado, sin crear cuenta: datos de contacto, dirección de entrega y confirmación del pedido por WhatsApp en pocos pasos."
   chrome="minimal"
   minimalLinkHref="/carrito"
   minimalLinkLabel="Volver al carrito"
 >
   <div class="checkout-grid">
     <main class="checkout-main">
+      <!-- El diseno del checkout no lleva titulo visible; el h1 queda solo
+           para lectores de pantalla y buscadores. -->
+      <h1 class="visually-hidden">Checkout</h1>
       <div class="trust-row">
         <span><Icon name="package" size={22} class="trust-icon" /> Empaque seguro</span>
         <span><Icon name="smile" size={22} class="trust-icon" /> Garantía 30 días</span>
@@ -361,6 +364,15 @@ const PROVINCES = [
 </script>
 
 <style is:global>
+  .visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
   .checkout-grid {
     display: grid;
     grid-template-columns: minmax(0, 1.15fr) minmax(340px, 0.85fr);
