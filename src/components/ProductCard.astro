@@ -68,8 +68,23 @@ const esMasVendida = product.available >= 40;
     data-slug={product.slug}
     data-category={product.category}
     data-emoji={product.emoji}
+    data-image={product.image}
   >
     <Icon name="plus" size={16} />
+  </button>
+  <button
+    class="tile-fav"
+    aria-label={`Guardar ${product.name} en favoritos`}
+    data-tile-fav
+    data-sku={product.sku}
+    data-name={product.name}
+    data-price={product.price}
+    data-slug={product.slug}
+    data-category={product.category}
+    data-emoji={product.emoji}
+    data-image={product.image}
+  >
+    <Icon name="heart" size={15} />
   </button>
 </article>
 
@@ -77,6 +92,7 @@ const esMasVendida = product.available >= 40;
   // Agregar al carrito desde la tarjeta (delegado: hay muchas tarjetas por
   // pagina y este script se incluye una sola vez).
   import { addToCart } from '../lib/cart';
+  import { esFavorito, toggleFavorito } from '../lib/preferencias';
   import type { StockItem } from '../lib/stock';
 
   // El boton de agregar sigue el stock real que reporta StockBadge, la misma
@@ -102,9 +118,33 @@ const esMasVendida = product.available >= 40;
       slug: d.slug!,
       category: d.category!,
       emoji: d.emoji!,
+      image: d.image || undefined,
     });
     btn.classList.add('added');
     setTimeout(() => btn.classList.remove('added'), 1600);
+  });
+
+  // Corazon de favoritos: estado inicial desde localStorage y alternado con
+  // clic (tambien delegado). El panel de cuenta lista los guardados.
+  document.querySelectorAll<HTMLButtonElement>('[data-tile-fav][data-sku]').forEach((btn) => {
+    btn.classList.toggle('activo', esFavorito(btn.dataset.sku!));
+  });
+
+  document.addEventListener('click', (event) => {
+    const btn = (event.target as HTMLElement).closest<HTMLButtonElement>('[data-tile-fav]');
+    if (!btn) return;
+    event.preventDefault();
+    const d = btn.dataset;
+    const activo = toggleFavorito({
+      sku: d.sku!,
+      name: d.name!,
+      price: Number(d.price),
+      slug: d.slug!,
+      category: d.category!,
+      emoji: d.emoji!,
+      image: d.image || undefined,
+    });
+    btn.classList.toggle('activo', activo);
   });
 </script>
 
@@ -277,6 +317,32 @@ const esMasVendida = product.available >= 40;
     color: #ffffff;
   }
 
+  /* Corazon de favoritos, debajo del boton de agregar. */
+  .tile-fav {
+    position: absolute;
+    top: 52px;
+    right: 10px;
+    z-index: 2;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 0;
+    background: rgba(255, 255, 255, 0.92);
+    color: var(--ink);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+
+  .tile-fav:hover { background: #ffffff; }
+
+  .tile-fav.activo {
+    color: var(--green-deep);
+  }
+
+  .tile-fav.activo :global(svg) { fill: currentColor; }
+
   /* Movil: tarjeta como la referencia de celular — foto arriba con esquinas
      redondeadas y la info debajo, en texto oscuro sobre el fondo de la pagina
      (ya no superpuesta sobre la foto con degradado). */
@@ -332,6 +398,14 @@ const esMasVendida = product.available >= 40;
       width: 32px;
       height: 32px;
       top: 8px;
+      right: 8px;
+      box-shadow: 0 2px 8px rgba(27, 42, 31, 0.18);
+    }
+
+    .tile-fav {
+      width: 32px;
+      height: 32px;
+      top: 46px;
       right: 8px;
       box-shadow: 0 2px 8px rgba(27, 42, 31, 0.18);
     }

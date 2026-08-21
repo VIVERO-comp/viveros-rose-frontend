@@ -9,6 +9,9 @@ export interface CartItem {
   slug: string;
   category: string;
   emoji: string;
+  // Foto del producto (si existe): los paneles y resumenes la muestran en
+  // lugar del emoji. Carritos guardados antes de este campo no la traen.
+  image?: string;
 }
 
 const STORAGE_KEY = 'pp-cart-v1';
@@ -36,6 +39,9 @@ export function addToCart(item: Omit<CartItem, 'qty'>, qty = 1) {
     items.push({ ...item, qty });
   }
   save(items);
+  // Ademas de cart:updated (que solo refresca contadores), se avisa que hubo
+  // un ALTA: el mini-carrito del layout se abre solo con este evento.
+  document.dispatchEvent(new CustomEvent('cart:added', { detail: { sku: item.sku } }));
 }
 
 export function setQty(sku: string, qty: number) {

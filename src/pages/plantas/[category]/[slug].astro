@@ -232,6 +232,14 @@ const careTitle = `Cuidado de ${product.name.replace(/\s*\(.*\)$/, '').toLowerCa
           {compareAt && <span class="compare">{formatPrice(compareAt)}</span>}
           <span class="price">{formatPrice(product.price)}</span>
         </div>
+        <button
+          class="fav-btn"
+          type="button"
+          aria-label={`Guardar ${product.name} en favoritos`}
+          data-fav-btn
+        >
+          <Icon name="heart" size={18} />
+        </button>
       </div>
 
       <hr class="rule" />
@@ -313,6 +321,7 @@ const careTitle = `Cuidado de ${product.name.replace(/\s*\(.*\)$/, '').toLowerCa
           data-slug={product.slug}
           data-category={product.category}
           data-emoji={product.emoji}
+          data-image={product.image}
           data-label={`Agregar al carrito — ${formatPrice(product.price)}`}
         >
           Agregar al carrito — {formatPrice(product.price)}
@@ -477,6 +486,7 @@ const careTitle = `Cuidado de ${product.name.replace(/\s*\(.*\)$/, '').toLowerCa
 
 <script>
   import { addToCart } from '../../../lib/cart';
+  import { esFavorito, recordarVisto, toggleFavorito } from '../../../lib/preferencias';
 
   // Galeria: miniatura activa y flechas en bucle. Si la miniatura trae foto
   // real (data-foto), se intercambia tambien la imagen principal.
@@ -607,12 +617,36 @@ const careTitle = `Cuidado de ${product.name.replace(/\s*\(.*\)$/, '').toLowerCa
       slug: d.slug!,
       category: d.category!,
       emoji: d.emoji!,
+      image: d.image || undefined,
     });
     addBtn.textContent = 'Agregado al carrito ✓';
     setTimeout(() => {
       addBtn.textContent = d.label!;
     }, 1600);
   });
+
+  // Vistos recientemente y corazon de favoritos (panel de cuenta del header).
+  // Los datos del producto salen del boton de agregar, que ya los trae todos.
+  if (addBtn) {
+    const d = addBtn.dataset;
+    const producto = {
+      sku: d.sku!,
+      name: d.name!,
+      price: Number(d.price),
+      slug: d.slug!,
+      category: d.category!,
+      emoji: d.emoji!,
+      image: d.image || undefined,
+    };
+    recordarVisto(producto);
+    const favBtn = document.querySelector<HTMLButtonElement>('[data-fav-btn]');
+    if (favBtn) {
+      favBtn.classList.toggle('activo', esFavorito(producto.sku));
+      favBtn.addEventListener('click', () => {
+        favBtn.classList.toggle('activo', toggleFavorito(producto));
+      });
+    }
+  }
 
   // Producto agotado: el aviso de disponibilidad se coordina por WhatsApp
   // (no hay backend de correos todavia).
@@ -933,6 +967,27 @@ const careTitle = `Cuidado de ${product.name.replace(/\s*\(.*\)$/, '').toLowerCa
     text-decoration: line-through;
     font-variant-numeric: tabular-nums;
   }
+
+  /* Corazon de favoritos junto al precio. */
+  .fav-btn {
+    width: 40px;
+    height: 40px;
+    flex: none;
+    border-radius: 50%;
+    border: 1px solid rgba(27, 42, 31, 0.2);
+    background: #ffffff;
+    color: var(--ink);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+
+  .fav-btn:hover { border-color: var(--green-deep); color: var(--green-deep); }
+
+  .fav-btn.activo { color: var(--green-deep); border-color: var(--green-deep); }
+
+  .fav-btn.activo :global(svg) { fill: currentColor; }
 
   .price { font-size: 26px; font-weight: 600; font-variant-numeric: tabular-nums; }
 
