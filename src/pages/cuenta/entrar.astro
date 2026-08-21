@@ -1,17 +1,14 @@
 ---
-// Inicio de sesion, con el lenguaje visual de la pagina de rastreo: tarjeta
-// blanca sobre el fondo del sitio, chrome minimo, errores en linea.
+// Inicio de sesion: tarjeta blanca compacta sobre el fondo del sitio, con la
+// navegacion completa (como el login de referencia) y errores en linea.
 import Base from '../../layouts/Base.astro';
 ---
 
 <Base
   title="Iniciar sesión"
   description="Entra a tu cuenta para ver tus pedidos."
-  chrome="minimal"
-  minimalLinkHref="/"
-  minimalLinkLabel="Volver al inicio"
 >
-  <section class="section">
+  <section class="section section--tight">
     <div class="container cuenta-container">
       <h1>Mi cuenta</h1>
       <p class="page-sub">Entra para ver todos tus pedidos en un solo lugar.</p>
@@ -23,10 +20,12 @@ import Base from '../../layouts/Base.astro';
           <p class="field-error" data-error-for="email" hidden></p>
         </div>
         <div class="field">
-          <label for="contrasena">Contraseña</label>
+          <div class="label-row">
+            <label for="contrasena">Contraseña</label>
+            <a class="label-link" href="/cuenta/recuperar">¿Olvidaste tu contraseña?</a>
+          </div>
           <input type="password" id="contrasena" name="contrasena" autocomplete="current-password" required />
           <p class="field-error" data-error-for="contrasena" hidden></p>
-          <p class="help"><a href="/cuenta/recuperar">¿Olvidaste tu contraseña?</a></p>
         </div>
         <p class="field-error" data-error-for="general" hidden></p>
         <button type="submit" class="btn btn--green btn--full" data-enviar>Entrar</button>
@@ -84,15 +83,31 @@ import Base from '../../layouts/Base.astro';
 
   .page-sub {
     color: var(--ink-soft);
-    margin: 0 0 2.3rem;
+    margin: 0 0 1.15rem;
   }
 
   .cuenta-card {
     background: #ffffff;
     border: 1px solid var(--line);
     border-radius: 18px;
-    padding: 1.7rem;
-    margin-bottom: 1.4rem;
+    padding: 1.4rem;
+    margin-bottom: 1rem;
+  }
+
+  /* Formulario compacto: campos mas juntos que el resto del sitio. */
+  .cuenta-card .field { margin-bottom: 0.85rem; }
+
+  .label-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.85rem;
+  }
+
+  .label-link {
+    font-size: 0.82rem;
+    color: var(--green-deep);
+    white-space: nowrap;
   }
 
   .btn--full {

@@ -10,11 +10,8 @@ import Base from '../../layouts/Base.astro';
 <Base
   title="Crear cuenta"
   description="Crea tu cuenta para seguir todos tus pedidos."
-  chrome="minimal"
-  minimalLinkHref="/"
-  minimalLinkLabel="Volver al inicio"
 >
-  <section class="section">
+  <section class="section section--tight">
     <div class="container cuenta-container">
       <h1>Crea tu cuenta</h1>
       <p class="page-sub" data-sub-normal>Sigue todos tus pedidos en un solo lugar.</p>
@@ -137,16 +134,19 @@ import Base from '../../layouts/Base.astro';
 
   .page-sub {
     color: var(--ink-soft);
-    margin: 0 0 2.3rem;
+    margin: 0 0 1.15rem;
   }
 
   .cuenta-card {
     background: #ffffff;
     border: 1px solid var(--line);
     border-radius: 18px;
-    padding: 1.7rem;
-    margin-bottom: 1.4rem;
+    padding: 1.4rem;
+    margin-bottom: 1rem;
   }
+
+  /* Formulario compacto: campos mas juntos que el resto del sitio. */
+  .cuenta-card .field { margin-bottom: 0.85rem; }
 
   .btn--full {
     width: 100%;
