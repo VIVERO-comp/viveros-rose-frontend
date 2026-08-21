@@ -10,6 +10,13 @@ export default defineConfig({
   site: 'https://www.plantaspanama.com',
   integrations: [
     sitemap({
+      // Paginas de flujo (confirmacion de compra, codigos de un solo uso):
+      // fuera del sitemap porque no tienen valor de busqueda y solo se llega
+      // a ellas desde el propio flujo.
+      filter: (page) =>
+        !['/checkout/success', '/cuenta/verificar', '/cuenta/recuperar'].includes(
+          new URL(page).pathname.replace(/\/$/, ''),
+        ),
       serialize(item) {
         // Sin barra final, igual que las canonicas y los enlaces internos.
         const path = new URL(item.url).pathname;
