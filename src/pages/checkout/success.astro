@@ -33,6 +33,18 @@ import { whatsappLink } from '../../lib/site';
           </a>
         </div>
       </div>
+
+      <!-- Oferta de cuenta (decision del diseno de cuentas): el camino
+           principal es el enlace de un solo uso del correo de confirmacion;
+           el boton es la alternativa. Se oculta si ya hay sesion. -->
+      <div class="card success-card success-cuenta" data-cuenta-oferta>
+        <h2>Sigue todos tus pedidos en un solo lugar</h2>
+        <p class="help">
+          En el correo de confirmación va un enlace personal para crear tu cuenta con un solo
+          clic, sin códigos. También puedes crearla ahora:
+        </p>
+        <a href="/cuenta/registro" class="btn btn--ghost">Crear mi cuenta</a>
+      </div>
     </div>
   </section>
 </Base>
@@ -68,6 +80,15 @@ import { whatsappLink } from '../../lib/site';
     if (mensaje) waBtn.href = whatsappLink(mensaje);
     else if (order) waBtn.href = whatsappLink(`Hola, acabo de hacer el pedido ${order} en plantaspanama.com.`);
   }
+
+  // Quien ya tiene sesion no necesita la oferta de crear cuenta.
+  fetch('/api/auth/me')
+    .then((res) => {
+      if (res.ok) document.querySelector<HTMLElement>('[data-cuenta-oferta]')?.setAttribute('hidden', '');
+    })
+    .catch(() => {
+      // sin backend disponible la oferta se queda visible
+    });
 </script>
 
 <style>
@@ -95,4 +116,13 @@ import { whatsappLink } from '../../lib/site';
     flex-wrap: wrap;
     margin-top: 1.25rem;
   }
+
+  .success-cuenta h2 {
+    font-size: 1.2rem;
+    margin-bottom: 0.4rem;
+  }
+
+  .success-cuenta .btn { margin-top: 0.85rem; }
+
+  .success-cuenta[hidden] { display: none; }
 </style>

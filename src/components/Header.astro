@@ -4,9 +4,9 @@
 // los paneles laterales de carrito, cuenta y pedidos.
 // El contador del carrito conserva data-cart-count (lo refresca src/lib/cart).
 // "Nuestro Vivero" apunta al sitio corporativo viverorose.com (externo).
-// Las cuentas de usuario no existen todavia: el panel de cuenta muestra el
-// estado "sin sesion" del diseno con el boton deshabilitado, sin inventar
-// una sesion falsa.
+// El panel de cuenta consulta la sesion real (/api/auth/me, cookie httpOnly)
+// la primera vez que se abre: sin sesion ofrece entrar o registrarse; con
+// sesion saluda y lleva a /cuenta.
 import { SITE, whatsappLink } from '../lib/site';
 import { collections } from '../data/collections';
 import { products } from '../data/products';
@@ -439,15 +439,16 @@ const menuTipos = [
     </div>
     <div class="panel-body">
       <div class="account-tab" data-account-tab="forYou">
-        <p class="account-headline">Acumula puntos, sigue tus pedidos y guarda tus favoritos</p>
-        <input type="email" class="account-input" placeholder="Correo electrónico" disabled />
-        <label class="account-check">
-          <input type="checkbox" disabled /> Quiero recibir novedades y ofertas
-        </label>
-        <button class="account-signin" disabled title="No disponible por ahora">
-          Iniciar sesión / Crear cuenta
-        </button>
-        <p class="account-soon">Próximamente: por ahora la tienda funciona sin cuenta.</p>
+        <div class="cuenta-estado" data-cuenta-anon>
+          <p class="account-headline">Sigue tus pedidos y compra más rápido</p>
+          <a href="/cuenta/entrar" class="account-signin account-signin--link">Iniciar sesión</a>
+          <a href="/cuenta/registro" class="account-alt">Crear cuenta</a>
+        </div>
+        <div class="cuenta-estado" data-cuenta-user hidden>
+          <p class="account-headline">Hola, <span data-cuenta-nombre></span></p>
+          <a href="/cuenta" class="account-signin account-signin--link">Ver mis pedidos</a>
+          <button class="account-alt account-alt--btn" data-cuenta-salir>Cerrar sesión</button>
+        </div>
         <div class="account-chips">
           <a href="/plantas?c=mas-vendidas">Más vendidas</a>
           <a href="/plantas">Todas las plantas</a>
@@ -455,7 +456,7 @@ const menuTipos = [
         <p class="account-sub">Vistas recientemente</p>
         <div class="account-card">Sin artículos vistos</div>
         <p class="account-sub">Favoritos</p>
-        <div class="account-card">Inicia sesión para ver tus favoritos</div>
+        <div class="account-card">Próximamente: guarda tus plantas favoritas</div>
         <div class="account-links">
           <a href="/mayorista">Compras al mayor</a>
           <a href={whatsappLink('Hola, tengo una consulta sobre mi cuenta.')} target="_blank" rel="noopener">Contáctanos</a>
@@ -463,15 +464,15 @@ const menuTipos = [
       </div>
       <div class="account-tab" data-account-tab="orders" hidden>
         <p class="account-headline">Consulta tus pedidos y el estado de la entrega</p>
-        <div class="account-card account-card--left">
-          Inicia sesión para ver tus pedidos y el estado de la entrega. Mientras tanto puedes
-          consultar con tu número de pedido.
+        <div class="account-card account-card--left" data-cuenta-orders-nota>
+          Inicia sesión para ver todos tus pedidos, o consulta uno con su número.
         </div>
-        <a href="/pedido" class="panel-cta">Consultar con número de pedido</a>
+        <a href="/cuenta/entrar" class="panel-cta" data-cuenta-orders-cta>Iniciar sesión</a>
+        <a href="/pedido" class="panel-link">Consultar con número de pedido</a>
       </div>
       <div class="account-tab" data-account-tab="profile" hidden>
         <p class="account-headline">Perfil</p>
-        <div class="account-card">Inicia sesión para ver tus datos y direcciones</div>
+        <div class="account-card" data-cuenta-perfil>Inicia sesión para ver tus datos</div>
       </div>
     </div>
     <div class="account-tabs">
@@ -669,12 +670,53 @@ const menuTipos = [
     renderCartPanel();
   });
 
+  // Panel de cuenta: estado real de sesion. Se consulta una sola vez, la
+  // primera vez que se abre el panel; sin sesion (401) queda el estado
+  // anonimo que ya esta pintado.
+  let cuentaConsultada = false;
+
+  async function pintarPanelCuenta() {
+    if (cuentaConsultada) return;
+    cuentaConsultada = true;
+    try {
+      const res = await fetch('/api/auth/me');
+      if (!res.ok) return;
+      const yo = (await res.json()) as { nombre?: string; email?: string };
+      document.querySelectorAll<HTMLElement>('[data-cuenta-anon]').forEach((el) => (el.hidden = true));
+      const user = document.querySelector<HTMLElement>('[data-cuenta-user]');
+      if (user) user.hidden = false;
+      const nombre = document.querySelector('[data-cuenta-nombre]');
+      if (nombre) nombre.textContent = yo.nombre ?? '';
+      const cta = document.querySelector<HTMLAnchorElement>('[data-cuenta-orders-cta]');
+      if (cta) {
+        cta.href = '/cuenta';
+        cta.textContent = 'Ver mis pedidos';
+      }
+      const nota = document.querySelector<HTMLElement>('[data-cuenta-orders-nota]');
+      if (nota) nota.textContent = 'Tus pedidos están en tu cuenta; también puedes consultar uno con su número.';
+      const perfil = document.querySelector<HTMLElement>('[data-cuenta-perfil]');
+      if (perfil) perfil.textContent = yo.email ?? '';
+    } catch {
+      // sin red: se queda el estado anonimo
+    }
+  }
+
+  document.querySelector('[data-cuenta-salir]')?.addEventListener('click', async () => {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+    } catch {
+      // la cookie ya se borro en el servidor o no hay red; recargar igual
+    }
+    window.location.reload();
+  });
+
   // Paneles laterales (carrito, cuenta, pedidos).
   function openPanel(name: string) {
     document.querySelectorAll<HTMLElement>('[data-panel]').forEach((p) => {
       p.hidden = p.dataset.panel !== name;
     });
     document.body.style.overflow = 'hidden';
+    if (name === 'account') pintarPanelCuenta();
   }
 
   function closePanels() {
@@ -1501,9 +1543,35 @@ const menuTipos = [
     color: #ffffff;
   }
 
-  .account-signin:disabled { opacity: 0.55; cursor: not-allowed; }
+  .cuenta-estado { display: flex; flex-direction: column; gap: 13.8px; }
+  .cuenta-estado[hidden] { display: none; }
 
-  .account-soon { font-size: 13px; color: rgba(27, 42, 31, 0.7); margin: 0; }
+  .account-signin--link {
+    display: block;
+    text-align: center;
+    text-decoration: none;
+  }
+
+  .account-signin--link:hover {
+    background: #11512a;
+    color: #ffffff;
+    text-decoration: none;
+  }
+
+  /* Accion secundaria del panel (crear cuenta / cerrar sesion). */
+  .account-alt {
+    display: block;
+    text-align: center;
+    font-family: var(--font-ui);
+    font-size: 14px;
+    color: var(--ink);
+    background: transparent;
+    border: 0;
+    padding: 0;
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
 
   .account-chips { display: flex; gap: 9.2px; flex-wrap: wrap; }
 
