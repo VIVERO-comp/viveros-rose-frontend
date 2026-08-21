@@ -156,24 +156,32 @@ const PROVINCES = [
     </main>
 
     <aside class="checkout-aside">
-      <div class="aside-inner">
-        <div data-summary-items></div>
-        <!-- Codigo de descuento: aun no hay backend de cupones. -->
-        <div class="discount-row">
-          <input type="text" placeholder="Código de descuento" disabled title="No disponible por ahora" />
-          <button type="button" disabled title="No disponible por ahora">Aplicar</button>
-        </div>
-        <div class="aside-rows">
-          <div class="aside-row"><span>Subtotal</span><span data-summary-subtotal>$0.00</span></div>
-          <div class="aside-row"><span>Envío</span><span data-summary-shipping>Gratis</span></div>
-        </div>
-        <div class="aside-total">
-          <span>Total</span>
-          <strong data-summary-total>$0.00</strong>
-        </div>
+      <!-- En movil el resumen queda arriba y colapsable; en escritorio el
+           script lo mantiene siempre abierto y la barra de toggle se oculta. -->
+      <details class="aside-inner" data-aside-details open>
+        <summary class="aside-toggle">
+          <span>Resumen del pedido</span>
+          <strong data-toggle-total>$0.00</strong>
+        </summary>
+        <div class="aside-body">
+          <div data-summary-items></div>
+          <!-- Codigo de descuento: aun no hay backend de cupones. -->
+          <div class="discount-row">
+            <input type="text" placeholder="Código de descuento" disabled title="No disponible por ahora" />
+            <button type="button" disabled title="No disponible por ahora">Aplicar</button>
+          </div>
+          <div class="aside-rows">
+            <div class="aside-row"><span>Subtotal</span><span data-summary-subtotal>$0.00</span></div>
+            <div class="aside-row"><span>Envío</span><span data-summary-shipping>Gratis</span></div>
+          </div>
+          <div class="aside-total">
+            <span>Total</span>
+            <strong data-summary-total>$0.00</strong>
+          </div>
 
-        <p class="secure-note"><Icon name="lock" size={15} class="lock-icon" /> Pedido seguro · Vivero Rose, Juan Díaz</p>
-      </div>
+          <p class="secure-note"><Icon name="lock" size={15} class="lock-icon" /> Pedido seguro · Vivero Rose, Juan Díaz</p>
+        </div>
+      </details>
     </aside>
   </div>
 </Base>
@@ -195,14 +203,21 @@ const PROVINCES = [
       list.innerHTML = '<p class="aside-empty">Tu carrito está vacío. <a href="/plantas">Ver plantas</a></p>';
     } else {
       list.innerHTML = items
-        .map(
-          (i) => `
+        .map((i) => {
+          // Con foto real se muestra la foto; sin foto queda el emoji.
+          const contenido = i.image
+            ? `<i class="aside-qty">${i.qty}</i>`
+            : `${i.emoji}<i class="aside-qty">${i.qty}</i>`;
+          const estilo = i.image
+            ? ` style="background-image: url('${i.image}'); background-size: cover; background-position: center;"`
+            : '';
+          return `
             <div class="aside-item">
-              <span class="aside-thumb" aria-hidden="true">${i.emoji}<i class="aside-qty">${i.qty}</i></span>
+              <span class="aside-thumb" aria-hidden="true"${estilo}>${contenido}</span>
               <span class="aside-name">${i.name}</span>
               <span class="aside-line">$${(i.price * i.qty).toFixed(2)}</span>
-            </div>`,
-        )
+            </div>`;
+        })
         .join('');
     }
   }
@@ -223,15 +238,28 @@ const PROVINCES = [
   function refreshTotals() {
     const subtotal = cartTotal();
     const ship = selectedShipping();
+    const total = subtotal + (subtotal > 0 ? ship.price : 0);
     if (subtotalEl) subtotalEl.textContent = money(subtotal);
     if (shippingEl) shippingEl.textContent = ship.price === 0 ? 'Gratis' : money(ship.price);
-    if (totalEl) totalEl.textContent = money(subtotal + (subtotal > 0 ? ship.price : 0));
+    if (totalEl) totalEl.textContent = money(total);
+    const toggleTotal = document.querySelector<HTMLElement>('[data-toggle-total]');
+    if (toggleTotal) toggleTotal.textContent = money(total);
   }
 
   document
     .querySelectorAll<HTMLInputElement>('input[name="envio"]')
     .forEach((r) => r.addEventListener('change', refreshTotals));
   refreshTotals();
+
+  // Resumen colapsable solo en movil: en escritorio queda siempre abierto.
+  const resumen = document.querySelector<HTMLDetailsElement>('[data-aside-details]');
+  const escritorio = window.matchMedia('(min-width: 901px)');
+  if (resumen) {
+    resumen.open = escritorio.matches;
+    escritorio.addEventListener('change', (e) => {
+      resumen.open = e.matches;
+    });
+  }
 
   const form = document.querySelector<HTMLFormElement>('.checkout-form');
   const error = document.querySelector<HTMLElement>('.form-error');
@@ -604,11 +632,63 @@ const PROVINCES = [
   .discount-row input:disabled,
   .discount-row button:disabled { opacity: 0.55; cursor: not-allowed; }
 
+  /* El resumen queda fijo mientras el formulario hace scroll. */
   .aside-inner {
     max-width: 420px;
+    position: sticky;
+    top: 2.9rem;
+  }
+
+  .aside-body {
     display: flex;
     flex-direction: column;
     gap: 1.4rem;
+  }
+
+  /* Barra del colapsable (solo movil). */
+  .aside-toggle {
+    display: none;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.85rem;
+    cursor: pointer;
+    font-weight: 600;
+    list-style: none;
+  }
+
+  .aside-toggle::-webkit-details-marker { display: none; }
+
+  .aside-toggle > span {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .aside-toggle > span::after {
+    content: '';
+    width: 8px;
+    height: 8px;
+    border-right: 2px solid var(--ink-soft);
+    border-bottom: 2px solid var(--ink-soft);
+    transform: rotate(45deg);
+    transition: transform 0.15s ease;
+    margin-top: -4px;
+  }
+
+  .aside-inner[open] .aside-toggle > span::after {
+    transform: rotate(-135deg);
+    margin-top: 4px;
+  }
+
+  @media (max-width: 900px) {
+    .checkout-aside {
+      border-left: 0;
+      border-bottom: 1px solid var(--line);
+      padding: 1.15rem 1.5rem;
+    }
+    .aside-inner { position: static; max-width: none; }
+    .aside-toggle { display: flex; }
+    .aside-inner[open] .aside-body { margin-top: 1.15rem; }
   }
 
   .aside-item {

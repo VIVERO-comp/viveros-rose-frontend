@@ -34,6 +34,13 @@ const compareMap = Object.fromEntries(
 
       <div class="cart-grid">
         <div class="cart-col">
+          <!-- Sellos de confianza arriba de la lista (estructura tipo checkout). -->
+          <div class="cart-trust" data-cart-trust hidden>
+            <span><Icon name="package" size={16} class="trust-icon" /> Empaque seguro</span>
+            <span><Icon name="shield-check" size={16} class="trust-icon" /> Garantía 30 días</span>
+            <span><Icon name="truck" size={16} class="trust-icon" /> Entrega 24–48 h</span>
+          </div>
+
           <div class="empty-card" data-cart-empty hidden>
             <p class="empty-title">Tu carrito está vacío</p>
             <p class="empty-text">Agrega plantas del catálogo y aparecerán aquí.</p>
@@ -59,8 +66,12 @@ const compareMap = Object.fromEntries(
             <div class="addons-grid">
               {suggestions.map((p) => (
                 <div class="addon-card">
-                  <!-- FOTO PENDIENTE: producto {p.sku} — bloque de minimo 360×260 px -->
-                  <div class="addon-photo" data-medidas="Foto · 360×260" aria-hidden="true">{p.emoji}</div>
+                  {p.image ? (
+                    <div class="addon-photo addon-photo--img" style={`background-image: url('${p.image}');`} aria-hidden="true" />
+                  ) : (
+                    <!-- FOTO PENDIENTE: producto {p.sku} — bloque de minimo 360×260 px -->
+                    <div class="addon-photo" data-medidas="Foto · 360×260" aria-hidden="true">{p.emoji}</div>
+                  )}
                   <div class="addon-info">
                     <p class="addon-name">{p.name}</p>
                     <p class="addon-price">{formatPrice(p.price)}</p>
@@ -74,6 +85,7 @@ const compareMap = Object.fromEntries(
                       data-slug={p.slug}
                       data-category={p.category}
                       data-emoji={p.emoji}
+                      data-image={p.image}
                     >Agregar</button>
                   </div>
                 </div>
@@ -83,30 +95,37 @@ const compareMap = Object.fromEntries(
         </div>
 
         <aside class="summary" data-summary hidden>
-          <p class="summary-title">Resumen</p>
-          <!-- Codigo de descuento: aun no hay backend de cupones. -->
-          <div class="discount-row">
-            <input type="text" placeholder="Código de descuento" disabled title="No disponible por ahora" />
-            <button type="button" disabled title="No disponible por ahora">Aplicar</button>
-          </div>
-          <div class="summary-rows">
-            <div class="summary-row"><span>Subtotal</span><span data-cart-total>$0.00</span></div>
-            <div class="summary-row" data-savings-row hidden>
-              <span>Ahorro</span><span class="savings" data-cart-savings>$0.00</span>
+          <!-- En movil el resumen queda arriba y colapsable; en escritorio el
+               script lo mantiene siempre abierto y la barra de toggle se oculta. -->
+          <details class="summary-details" data-summary-details open>
+            <summary class="summary-toggle">
+              <span>Resumen del pedido</span>
+              <strong data-toggle-total>$0.00</strong>
+            </summary>
+            <div class="summary-body">
+              <p class="summary-title">Resumen</p>
+              <!-- Lineas del pedido: foto (emoji por ahora), cantidad y precio. -->
+              <div class="summary-items" data-summary-lines></div>
+              <!-- Codigo de descuento: aun no hay backend de cupones. -->
+              <div class="discount-row">
+                <input type="text" placeholder="Código de descuento" disabled title="No disponible por ahora" />
+                <button type="button" disabled title="No disponible por ahora">Aplicar</button>
+              </div>
+              <div class="summary-rows">
+                <div class="summary-row"><span>Subtotal</span><span data-cart-total>$0.00</span></div>
+                <div class="summary-row" data-savings-row hidden>
+                  <span>Ahorro</span><span class="savings" data-cart-savings>$0.00</span>
+                </div>
+                <div class="summary-row"><span>Envío</span><span class="muted" data-shipping-label>Se calcula al pagar</span></div>
+              </div>
+              <div class="summary-total">
+                <span>Total</span>
+                <strong data-cart-grand-total>$0.00</strong>
+              </div>
+              <a href="/checkout" class="btn btn--green summary-cta">Ir a pagar</a>
+              <p class="summary-note">Impuestos y envío se calculan al pagar.</p>
             </div>
-            <div class="summary-row"><span>Envío</span><span class="muted" data-shipping-label>Se calcula al pagar</span></div>
-          </div>
-          <div class="summary-total">
-            <span>Total</span>
-            <strong data-cart-grand-total>$0.00</strong>
-          </div>
-          <a href="/checkout" class="btn btn--green summary-cta">Ir a pagar</a>
-          <p class="summary-note">Impuestos y envío se calculan al pagar.</p>
-          <div class="summary-trust">
-            <span><Icon name="package" size={16} class="trust-icon" /> Empaque seguro para plantas</span>
-            <span><Icon name="shield-check" size={16} class="trust-icon" /> Garantía de 30 días</span>
-            <span><Icon name="truck" size={16} class="trust-icon" /> Entrega en 24–48 h en la ciudad</span>
-          </div>
+          </details>
         </aside>
       </div>
     </div>
@@ -145,6 +164,28 @@ const compareMap = Object.fromEntries(
     summary?.toggleAttribute('hidden', !hasItems);
     giftCard?.toggleAttribute('hidden', !hasItems);
     addons?.toggleAttribute('hidden', !hasItems);
+    document.querySelector<HTMLElement>('[data-cart-trust]')?.toggleAttribute('hidden', !hasItems);
+
+    // Lineas del resumen: miniatura con cantidad y total por linea.
+    const summaryLines = document.querySelector<HTMLElement>('[data-summary-lines]');
+    if (summaryLines) {
+      summaryLines.innerHTML = items
+        .map((i) => {
+          const contenido = i.image
+            ? `<i class="summary-qty">${i.qty}</i>`
+            : `${i.emoji}<i class="summary-qty">${i.qty}</i>`;
+          const estilo = i.image
+            ? ` style="background-image: url('${i.image}'); background-size: cover; background-position: center;"`
+            : '';
+          return `
+            <div class="summary-item">
+              <span class="summary-thumb" aria-hidden="true"${estilo}>${contenido}</span>
+              <span class="summary-item-name">${i.name}</span>
+              <span class="summary-item-line">${money(i.price * i.qty)}</span>
+            </div>`;
+        })
+        .join('');
+    }
 
     if (list) {
       list.innerHTML = '';
@@ -153,8 +194,12 @@ const compareMap = Object.fromEntries(
         const hasDiscount = typeof compare === 'number' && compare > item.price;
         const row = document.createElement('div');
         row.className = 'cart-line';
+        // Con foto real se muestra la foto; sin foto queda el emoji.
+        const thumb = item.image
+          ? `<span class="line-emoji" aria-hidden="true" style="background-image: url('${item.image}'); background-size: cover; background-position: center;"></span>`
+          : `<span class="line-emoji" aria-hidden="true">${item.emoji}</span>`;
         row.innerHTML = `
-          <span class="line-emoji" aria-hidden="true">${item.emoji}</span>
+          ${thumb}
           <div class="line-info">
             <a href="/plantas/${item.category}/${item.slug}">${item.name}</a>
             <span class="line-price">${money(item.price)} c/u</span>
@@ -214,6 +259,8 @@ const compareMap = Object.fromEntries(
     const savingsEl = document.querySelector<HTMLElement>('[data-cart-savings]');
     if (totalEl) totalEl.textContent = money(subtotal);
     if (grandEl) grandEl.textContent = money(subtotal);
+    const toggleTotal = document.querySelector<HTMLElement>('[data-toggle-total]');
+    if (toggleTotal) toggleTotal.textContent = money(subtotal);
     if (savingsRow) savingsRow.hidden = savings <= 0;
     if (savingsEl) savingsEl.textContent = `– ${money(savings)}`;
     if (shipEl) {
@@ -239,6 +286,7 @@ const compareMap = Object.fromEntries(
         slug: d.slug!,
         category: d.category!,
         emoji: d.emoji!,
+        image: d.image || undefined,
       });
       render();
     })
@@ -265,6 +313,16 @@ const compareMap = Object.fromEntries(
   giftToggle?.addEventListener('change', saveGift);
   giftNote?.addEventListener('input', saveGift);
 
+  // Resumen colapsable solo en movil: en escritorio queda siempre abierto.
+  const resumen = document.querySelector<HTMLDetailsElement>('[data-summary-details]');
+  const escritorio = window.matchMedia('(min-width: 861px)');
+  if (resumen) {
+    resumen.open = escritorio.matches;
+    escritorio.addEventListener('change', (e) => {
+      resumen.open = e.matches;
+    });
+  }
+
   render();
 </script>
 
@@ -287,7 +345,30 @@ const compareMap = Object.fromEntries(
 
   @media (max-width: 860px) {
     .cart-grid { grid-template-columns: 1fr; }
+    /* En movil el resumen se apila arriba, colapsado. */
+    .summary { order: -1; }
   }
+
+  .cart-trust {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.7rem;
+    justify-content: center;
+    font-size: 0.82rem;
+    font-weight: 600;
+    padding: 0.85rem 1.15rem;
+    background: #ffffff;
+    border: 1px solid var(--line);
+    border-radius: 18px;
+  }
+
+  .cart-trust span {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .cart-trust .trust-icon { color: var(--green-deep); flex: none; }
 
   .cart-col {
     display: flex;
@@ -335,6 +416,14 @@ const compareMap = Object.fromEntries(
     align-items: center;
     justify-content: center;
     font-size: 2.2rem;
+  }
+
+  /* En pantallas angostas la tarjeta se compacta para que el control de
+     cantidad y "Eliminar" quepan completos. */
+  @media (max-width: 560px) {
+    .cart-line { padding: 0.85rem; gap: 0.85rem; }
+    .line-emoji { width: 72px; height: 72px; font-size: 1.7rem; }
+    .line-controls { flex-wrap: wrap; gap: 0.55rem 0.85rem; }
   }
 
   .line-info {
@@ -482,6 +571,11 @@ const compareMap = Object.fromEntries(
     font-size: 2rem;
   }
 
+  .addon-photo--img {
+    background-size: cover;
+    background-position: center;
+  }
+
   .addon-photo::after {
     content: attr(data-medidas);
     position: absolute;
@@ -531,12 +625,106 @@ const compareMap = Object.fromEntries(
     padding: 1.7rem;
     position: sticky;
     top: 1.7rem;
+  }
+
+  .summary-body {
     display: flex;
     flex-direction: column;
     gap: 1.15rem;
   }
 
   .summary-title { font-size: 1.25rem; font-weight: 600; margin: 0; }
+
+  /* Barra del colapsable (solo movil). */
+  .summary-toggle {
+    display: none;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.85rem;
+    cursor: pointer;
+    font-weight: 600;
+    list-style: none;
+  }
+
+  .summary-toggle::-webkit-details-marker { display: none; }
+
+  .summary-toggle > span {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .summary-toggle > span::after {
+    content: '';
+    width: 8px;
+    height: 8px;
+    border-right: 2px solid var(--ink-soft);
+    border-bottom: 2px solid var(--ink-soft);
+    transform: rotate(45deg);
+    transition: transform 0.15s ease;
+    margin-top: -4px;
+  }
+
+  .summary-details[open] .summary-toggle > span::after {
+    transform: rotate(-135deg);
+    margin-top: 4px;
+  }
+
+  @media (max-width: 860px) {
+    .summary { position: static; padding: 1.15rem 1.4rem; }
+    .summary-toggle { display: flex; }
+    .summary-title { display: none; }
+    .summary-details[open] .summary-body { margin-top: 1.15rem; }
+  }
+
+  /* Lineas del pedido dentro del resumen. */
+  .summary-items {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+  }
+
+  .summary-items:empty { display: none; }
+
+  .summary-item {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 0.85rem;
+    align-items: center;
+  }
+
+  /* FOTO PENDIENTE: miniatura de producto — cuadrada, minimo 120×120 px. */
+  .summary-thumb {
+    position: relative;
+    width: 48px;
+    height: 48px;
+    border-radius: 10px;
+    background: var(--green-tint);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+  }
+
+  .summary-qty {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--ink);
+    color: #ffffff;
+    font-size: 0.7rem;
+    font-style: normal;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .summary-item-name { font-size: 0.88rem; font-weight: 600; }
+  .summary-item-line { font-size: 0.88rem; font-weight: 600; font-variant-numeric: tabular-nums; }
 
   .discount-row { display: flex; gap: 9px; }
 
@@ -569,14 +757,6 @@ const compareMap = Object.fromEntries(
 
   .gift-check .gift-icon { color: var(--green-deep); }
 
-  .summary-trust span {
-    display: flex;
-    align-items: center;
-    gap: 9px;
-  }
-
-  .summary-trust .trust-icon { color: var(--green-deep); flex: none; }
-
   .summary-rows {
     display: flex;
     flex-direction: column;
@@ -608,15 +788,5 @@ const compareMap = Object.fromEntries(
     color: var(--ink-soft);
     text-align: center;
     margin: 0;
-  }
-
-  .summary-trust {
-    border-top: 1px solid var(--line);
-    padding-top: 1.15rem;
-    display: flex;
-    flex-direction: column;
-    gap: 0.7rem;
-    font-size: 0.82rem;
-    color: var(--ink-soft);
   }
 </style>
