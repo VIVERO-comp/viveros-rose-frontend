@@ -12,16 +12,21 @@ Implementa la arquitectura de informacion y el sistema visual de la propuesta de
 | `/plantas` | Catalogo con badges de stock |
 | `/plantas/[category]` | Listado por categoria |
 | `/plantas/[category]/[slug]` | Detalle de producto + agregar al carrito |
+| `/colecciones` | Colecciones curadas del catalogo |
+| `/quiz` | Quiz "Encuentra tu planta ideal" |
 | `/entrega` | Zonas y tarifas de entrega |
 | `/vivero` | Historia del vivero fisico |
-| `/paisajismo` | Servicios de paisajismo |
+| `/servicios` y `/servicios/[slug]` | Servicios del vivero (paisajismo, mantenimiento) |
+| `/eventos` y `/eventos/[slug]` | Eventos y talleres |
 | `/mayorista` | Venta al por mayor (B2B) |
 | `/guia` y `/guia/[slug]` | Guias de cuidado (SEO) |
 | `/contacto` | Contacto (WhatsApp primero) |
 | `/carrito` | Carrito (cliente, localStorage) |
 | `/checkout` | Checkout de invitado |
-| `/checkout/success` | Confirmacion post-pago |
+| `/checkout/success` | Confirmacion del pedido creado |
 | `/pedido` | Rastreo publico de pedido por numero |
+| `/cuenta` | Cuenta del cliente: historial de pedidos; `entrar`, `registro`, `verificar` y `recuperar` |
+| `/privacidad` y `/terminos` | Paginas legales |
 
 ## Desarrollo
 
@@ -38,13 +43,28 @@ Copia `.env.example` a `.env`:
 
 - `PUBLIC_STOCK_PROXY_URL` — URL del stock proxy (disponibilidad real desde Odoo).
 - `PUBLIC_WHATSAPP_NUMBER` — numero de WhatsApp del negocio.
+- `ORDER_API_URL` y `ORDER_API_KEY` — order-api (`vivero-rose-order-api`). Solo las
+  funciones de servidor las usan; la key nunca llega al navegador. En produccion se
+  cargan en el panel de Vercel.
 
-## Estado y pendientes (backend)
+En produccion el sitio se despliega en **Vercel** (adaptador `@astrojs/vercel`), no
+en el droplet.
 
-Este repositorio es **solo el frontend**. El catalogo usa datos de ejemplo en `src/data/products.ts` con la forma final (SKU como llave hacia Odoo). Quedan fuera y se integran despues:
+## Integraciones (backend)
 
-- **Stock proxy** (`src/lib/stock.ts` ya es el cliente): badges se actualizan con datos reales cuando `PUBLIC_STOCK_PROXY_URL` este activo.
-- **Pagos Wompi**: el checkout valida el formulario y hoy dirige a WhatsApp; el `POST /api/checkout/create-intent` se conecta cuando exista el backend.
-- **Rastreo de pedidos**: `/pedido` consulta `GET /api/orders/{orderNumber}` y degrada a WhatsApp mientras no exista.
+Este repositorio es **solo el frontend**; los backends viven en sus propios repos y
+ya estan conectados:
+
+- **Catalogo**: `src/data/products.ts` es el export real de Odoo (18/08/2026). El SKU
+  (referencia interna de Odoo) es la llave hacia el stock proxy y el order-api.
+  Descripcion, cuidados y parte de los precios siguen como placeholder hasta
+  completarlos en Odoo.
+- **Stock** (`vivero-rose-stock-proxy`): `src/lib/stock.ts` es el cliente; los badges
+  muestran disponibilidad real via `PUBLIC_STOCK_PROXY_URL`.
+- **Pedidos y cuentas** (`vivero-rose-order-api`): las funciones de servidor en
+  `src/pages/api/` son el unico puente. El checkout crea el pedido real (numero
+  `VR-...`) y el pago se coordina por WhatsApp (Yappy, transferencia o efectivo);
+  `/pedido` consulta el estado publico y `/cuenta` maneja registro, sesion e
+  historial. Wompi (pago online) queda disenado pero sin conectar.
 
 El frontend **nunca** habla con Odoo directamente ni escribe stock.

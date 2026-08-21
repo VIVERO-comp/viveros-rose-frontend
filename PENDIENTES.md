@@ -12,21 +12,14 @@ en `src/data/products.ts` ni en Odoo. Cuando Abraham decida si vende
 accesorios, se crean como productos con su SKU y la sección del carrito se
 cambia a los complementos del diseño.
 
-## Flujo de pedido completo (orders-api)
+## Notificar a Abraham cada pedido nuevo
 
-El checkout hoy confirma el pedido por WhatsApp. El flujo completo va aparte
-y requiere modo server de Astro (hoy `output: 'static'`):
+Del flujo de pedido original solo queda esto. El resto ya está conectado: el
+checkout crea el pedido real en el order-api (número `VR-...`),
+`checkout/success` es la confirmación real, y `/pedido` y el panel del navbar
+consultan `GET /api/orders/{numero}`, que ya existe. El cliente recibe su
+correo de confirmación por SES, pero Abraham hoy se entera del pedido por
+Odoo o por el WhatsApp del cliente; falta una notificación interna.
 
-- Conectar el checkout al orders-api para crear un pedido real con número.
-- Página de "pedido confirmado" al aprobarse (hoy existe `checkout/success`
-  sin uso real).
-- Notificar a Abraham cada pedido nuevo.
-- Seguimiento de estados reales en la página de Pedidos y en el panel del
-  navbar (hoy consultan `GET /api/orders/{numero}` que aún no existe).
-
-## CORS del stock proxy
-
-`StockBadge` ya llama a `fetchStock()` del stock proxy desde el navegador,
-pero el proxy (repo `vivero-rose-stock-proxy`) aún no tiene CORS habilitado
-para el dominio de la tienda; sin eso el refresco en producción se bloquea.
-Se resuelve en el repo del proxy, no aquí.
+(El pendiente de CORS del stock proxy se resolvió en ese repo: la lectura de
+stock es pública, con CORS para los dominios de la tienda y límite por IP.)
