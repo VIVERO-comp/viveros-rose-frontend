@@ -1,0 +1,107 @@
+---
+// Inicio de sesion, con el lenguaje visual de la pagina de rastreo: tarjeta
+// blanca sobre el fondo del sitio, chrome minimo, errores en linea.
+import Base from '../../layouts/Base.astro';
+---
+
+<Base
+  title="Iniciar sesión"
+  description="Entra a tu cuenta para ver tus pedidos."
+  chrome="minimal"
+  minimalLinkHref="/"
+  minimalLinkLabel="Volver al inicio"
+>
+  <section class="section">
+    <div class="container cuenta-container">
+      <h1>Mi cuenta</h1>
+      <p class="page-sub">Entra para ver todos tus pedidos en un solo lugar.</p>
+
+      <form class="cuenta-card" data-form novalidate>
+        <div class="field">
+          <label for="email">Correo</label>
+          <input type="email" id="email" name="email" placeholder="tu@correo.com" autocomplete="email" required />
+          <p class="field-error" data-error-for="email" hidden></p>
+        </div>
+        <div class="field">
+          <label for="contrasena">Contraseña</label>
+          <input type="password" id="contrasena" name="contrasena" autocomplete="current-password" required />
+          <p class="field-error" data-error-for="contrasena" hidden></p>
+          <p class="help"><a href="/cuenta/recuperar">¿Olvidaste tu contraseña?</a></p>
+        </div>
+        <p class="field-error" data-error-for="general" hidden></p>
+        <button type="submit" class="btn btn--green btn--full" data-enviar>Entrar</button>
+      </form>
+
+      <p class="cuenta-alt">
+        ¿Primera vez? <a href="/cuenta/registro">Crea tu cuenta</a> con el correo con el que compraste.
+      </p>
+    </div>
+  </section>
+</Base>
+
+<script>
+  import { limpiarErrores, llamarCuenta, mostrarError, mostrarErrorDeRespuesta } from '../../lib/cuenta-ui';
+
+  const form = document.querySelector<HTMLFormElement>('[data-form]')!;
+  const boton = form.querySelector<HTMLButtonElement>('[data-enviar]')!;
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    limpiarErrores(form);
+    const datos = new FormData(form);
+    const email = String(datos.get('email') ?? '').trim();
+    const contrasena = String(datos.get('contrasena') ?? '');
+    if (!email) return mostrarError(form, 'email', 'Escribe tu correo.');
+    if (!contrasena) return mostrarError(form, 'contrasena', 'Escribe tu contraseña.');
+
+    boton.disabled = true;
+    const respuesta = await llamarCuenta('/api/auth/login', { email, contrasena });
+    boton.disabled = false;
+
+    if (respuesta.status === 200) {
+      window.location.href = '/cuenta';
+      return;
+    }
+    if (respuesta.datos.error === 'email_not_verified') {
+      // Contrasena correcta pero correo sin verificar: el backend ya reenvio
+      // el codigo; la pantalla de verificacion lo espera.
+      try {
+        sessionStorage.setItem('pp-verificar-email', email);
+      } catch {
+        // sin sessionStorage, la pagina de verificar pide el correo
+      }
+      window.location.href = `/cuenta/verificar?email=${encodeURIComponent(email)}`;
+      return;
+    }
+    mostrarErrorDeRespuesta(form, respuesta);
+  });
+</script>
+
+<style>
+  .cuenta-container { max-width: 30rem; }
+
+  h1 { font-weight: 400; margin-bottom: 0.2rem; }
+
+  .page-sub {
+    color: var(--ink-soft);
+    margin: 0 0 2.3rem;
+  }
+
+  .cuenta-card {
+    background: #ffffff;
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 1.7rem;
+    margin-bottom: 1.4rem;
+  }
+
+  .btn--full {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .cuenta-alt {
+    font-size: 0.95rem;
+    color: var(--ink-soft);
+  }
+</style>

@@ -288,6 +288,22 @@ input:focus, textarea:focus, select:focus {
   margin-top: 0.3rem;
 }
 
+/* Error en linea junto al campo (paginas de cuenta y formularios en general) */
+.field-error {
+  font-size: 0.85rem;
+  color: var(--red);
+  margin: 0.3rem 0 0;
+}
+
+.field-error[hidden] { display: none; }
+
+input.invalid, textarea.invalid { border-color: var(--red); }
+
+input.invalid:focus, textarea.invalid:focus {
+  outline-color: var(--red);
+  border-color: var(--red);
+}
+
 /* Tablas */
 table {
   width: 100%;

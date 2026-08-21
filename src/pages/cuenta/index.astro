@@ -1,0 +1,196 @@
+---
+// Mi cuenta: saludo + historial de pedidos de la sesion. La pagina es
+// estatica; el estado llega del navegador via /api/auth/me y
+// /api/account/orders (sin sesion, redirige a /cuenta/entrar).
+import Base from '../../layouts/Base.astro';
+---
+
+<Base
+  title="Mi cuenta"
+  description="Tus pedidos en un solo lugar."
+  chrome="minimal"
+  minimalLinkHref="/plantas"
+  minimalLinkLabel="Seguir comprando"
+>
+  <section class="section">
+    <div class="container cuenta-container">
+      <div class="cuenta-head">
+        <div>
+          <h1>Hola<span data-nombre></span></h1>
+          <p class="page-sub">Estos son los pedidos hechos con tu correo.</p>
+        </div>
+        <button class="btn btn--ghost" data-salir>Cerrar sesión</button>
+      </div>
+
+      <p class="cuenta-cargando" data-cargando>Cargando tus pedidos…</p>
+
+      <div class="cuenta-card" data-vacio hidden>
+        <p class="vacio-titulo">Todavía no hay pedidos con este correo.</p>
+        <p class="help">Cuando compres, tus pedidos aparecerán aquí solos.</p>
+        <a href="/plantas" class="btn btn--green">Ver las plantas</a>
+      </div>
+
+      <div data-lista></div>
+
+      <p class="field-error" data-error hidden></p>
+    </div>
+  </section>
+</Base>
+
+<script>
+  import { llamarCuenta } from '../../lib/cuenta-ui';
+
+  const cargando = document.querySelector<HTMLElement>('[data-cargando]')!;
+  const vacio = document.querySelector<HTMLElement>('[data-vacio]')!;
+  const lista = document.querySelector<HTMLElement>('[data-lista]')!;
+  const error = document.querySelector<HTMLElement>('[data-error]')!;
+
+  const dinero = (centavos: number) => `$${(centavos / 100).toFixed(2)}`;
+  const fecha = (iso: string) =>
+    new Date(iso).toLocaleDateString('es-PA', { day: 'numeric', month: 'long', year: 'numeric' });
+
+  interface Articulo { nombre: string; cantidad: number }
+  interface Pedido { numero: string; fecha: string; total_centavos: number; articulos: Articulo[] }
+
+  function pintarPedidos(pedidos: Pedido[]) {
+    cargando.hidden = true;
+    if (!pedidos.length) {
+      vacio.hidden = false;
+      return;
+    }
+    lista.replaceChildren(
+      ...pedidos.map((pedido) => {
+        const tarjeta = document.createElement('a');
+        tarjeta.className = 'pedido-card';
+        tarjeta.href = `/pedido?n=${encodeURIComponent(pedido.numero)}`;
+        const resumen = pedido.articulos
+          .map((a) => (a.cantidad > 1 ? `${a.cantidad} × ${a.nombre}` : a.nombre))
+          .join(' · ');
+        tarjeta.innerHTML = `
+          <div class="pedido-fila">
+            <span class="pedido-numero"></span>
+            <span class="pedido-total"></span>
+          </div>
+          <span class="pedido-fecha"></span>
+          <span class="pedido-resumen"></span>
+          <span class="pedido-ver">Ver estado →</span>`;
+        tarjeta.querySelector('.pedido-numero')!.textContent = pedido.numero;
+        tarjeta.querySelector('.pedido-total')!.textContent = dinero(pedido.total_centavos);
+        tarjeta.querySelector('.pedido-fecha')!.textContent = fecha(pedido.fecha);
+        tarjeta.querySelector('.pedido-resumen')!.textContent = resumen;
+        return tarjeta;
+      }),
+    );
+  }
+
+  async function cargar() {
+    const yo = await llamarCuenta('/api/auth/me');
+    if (yo.status === 401) {
+      window.location.href = '/cuenta/entrar';
+      return;
+    }
+    if (yo.status !== 200) {
+      cargando.hidden = true;
+      error.textContent = 'No pudimos cargar tu cuenta. Intenta de nuevo en un momento.';
+      error.hidden = false;
+      return;
+    }
+    const nombre = String(yo.datos.nombre ?? '');
+    if (nombre) document.querySelector('[data-nombre]')!.textContent = `, ${nombre}`;
+
+    const pedidos = await llamarCuenta('/api/account/orders');
+    if (pedidos.status !== 200) {
+      cargando.hidden = true;
+      error.textContent = 'No pudimos cargar tus pedidos. Intenta de nuevo en un momento.';
+      error.hidden = false;
+      return;
+    }
+    pintarPedidos((pedidos.datos.pedidos as Pedido[]) ?? []);
+  }
+
+  document.querySelector('[data-salir]')!.addEventListener('click', async () => {
+    await llamarCuenta('/api/auth/logout', {});
+    window.location.href = '/';
+  });
+
+  cargar();
+</script>
+
+<style>
+  .cuenta-container { max-width: 44rem; }
+
+  .cuenta-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  h1 { font-weight: 400; margin-bottom: 0.2rem; }
+
+  .page-sub {
+    color: var(--ink-soft);
+    margin: 0 0 2.3rem;
+  }
+
+  .cuenta-cargando { color: var(--ink-soft); }
+
+  .cuenta-card {
+    background: #ffffff;
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 1.7rem;
+    margin-bottom: 1.4rem;
+  }
+
+  .cuenta-card[hidden] { display: none; }
+
+  .vacio-titulo { font-weight: 600; margin: 0 0 0.3rem; }
+
+  .cuenta-card .btn { margin-top: 0.85rem; }
+
+  /* Tarjeta por pedido, con el aire de las tarjetas del sitio. */
+  :global(.pedido-card) {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    background: #ffffff;
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 1.15rem 1.4rem;
+    margin-bottom: 0.85rem;
+    color: var(--ink);
+  }
+
+  :global(.pedido-card:hover) {
+    text-decoration: none;
+    color: var(--ink);
+    border-color: var(--line-strong);
+  }
+
+  :global(.pedido-fila) {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 1rem;
+  }
+
+  :global(.pedido-numero) { font-weight: 600; }
+
+  :global(.pedido-total) {
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+
+  :global(.pedido-fecha) { font-size: 0.82rem; color: var(--ink-faint); }
+
+  :global(.pedido-resumen) { font-size: 0.9rem; color: var(--ink-soft); }
+
+  :global(.pedido-ver) {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--green-deep);
+    margin-top: 0.35rem;
+  }
+</style>

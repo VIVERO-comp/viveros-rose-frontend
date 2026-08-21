@@ -1,0 +1,154 @@
+---
+// Recuperacion de contrasena en dos pasos sobre la misma pagina:
+//  1. correo -> el backend responde 202 exista o no la cuenta (no revela nada)
+//  2. codigo de 6 digitos + contrasena nueva -> al confirmar se cierran todas
+//     las sesiones y se vuelve a /cuenta/entrar.
+import Base from '../../layouts/Base.astro';
+---
+
+<Base
+  title="Recuperar contraseña"
+  description="Te enviamos un código a tu correo para elegir una contraseña nueva."
+  chrome="minimal"
+  minimalLinkHref="/cuenta/entrar"
+  minimalLinkLabel="Volver a iniciar sesión"
+>
+  <section class="section">
+    <div class="container cuenta-container">
+      <h1>Recuperar contraseña</h1>
+      <p class="page-sub" data-sub-paso1>Escribe tu correo y te enviamos un código para elegir una nueva.</p>
+      <p class="page-sub" data-sub-paso2 hidden>
+        Si <strong data-email-destino></strong> tiene cuenta, ya va un código en camino. Vence en 15 minutos.
+      </p>
+
+      <form class="cuenta-card" data-form-correo novalidate>
+        <div class="field">
+          <label for="email">Correo</label>
+          <input type="email" id="email" name="email" placeholder="tu@correo.com" autocomplete="email" required />
+          <p class="field-error" data-error-for="email" hidden></p>
+        </div>
+        <p class="field-error" data-error-for="general" hidden></p>
+        <button type="submit" class="btn btn--green btn--full" data-enviar>Enviarme el código</button>
+      </form>
+
+      <form class="cuenta-card" data-form-codigo novalidate hidden>
+        <div class="field">
+          <label for="codigo">Código</label>
+          <input
+            type="text"
+            id="codigo"
+            name="codigo"
+            inputmode="numeric"
+            autocomplete="one-time-code"
+            pattern="[0-9]{6}"
+            maxlength="6"
+            placeholder="000000"
+            required
+          />
+          <p class="field-error" data-error-for="codigo" hidden></p>
+        </div>
+        <div class="field">
+          <label for="contrasena">Contraseña nueva</label>
+          <input
+            type="password"
+            id="contrasena"
+            name="contrasena"
+            autocomplete="new-password"
+            minlength="8"
+            required
+          />
+          <p class="field-error" data-error-for="contrasena" hidden></p>
+          <p class="help">Mínimo 8 caracteres. Al cambiarla se cierran tus sesiones abiertas.</p>
+        </div>
+        <p class="field-error" data-error-for="general" hidden></p>
+        <button type="submit" class="btn btn--green btn--full" data-enviar>Cambiar contraseña</button>
+      </form>
+    </div>
+  </section>
+</Base>
+
+<script>
+  import { limpiarErrores, llamarCuenta, mostrarError, mostrarErrorDeRespuesta } from '../../lib/cuenta-ui';
+
+  const formCorreo = document.querySelector<HTMLFormElement>('[data-form-correo]')!;
+  const formCodigo = document.querySelector<HTMLFormElement>('[data-form-codigo]')!;
+  let email = '';
+
+  formCorreo.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    limpiarErrores(formCorreo);
+    email = String(new FormData(formCorreo).get('email') ?? '').trim();
+    if (!email) return mostrarError(formCorreo, 'email', 'Escribe tu correo.');
+
+    const boton = formCorreo.querySelector<HTMLButtonElement>('[data-enviar]')!;
+    boton.disabled = true;
+    const respuesta = await llamarCuenta('/api/auth/recover', { email });
+    boton.disabled = false;
+    if (respuesta.status !== 202) {
+      mostrarErrorDeRespuesta(formCorreo, respuesta);
+      return;
+    }
+
+    document.querySelector('[data-email-destino]')!.textContent = email;
+    document.querySelector<HTMLElement>('[data-sub-paso1]')!.hidden = true;
+    document.querySelector<HTMLElement>('[data-sub-paso2]')!.hidden = false;
+    formCorreo.hidden = true;
+    formCodigo.hidden = false;
+    formCodigo.querySelector<HTMLInputElement>('#codigo')!.focus();
+  });
+
+  formCodigo.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    limpiarErrores(formCodigo);
+    const datos = new FormData(formCodigo);
+    const codigo = String(datos.get('codigo') ?? '').trim();
+    const contrasena = String(datos.get('contrasena') ?? '');
+    if (!/^\d{6}$/.test(codigo)) return mostrarError(formCodigo, 'codigo', 'El código son 6 dígitos.');
+    if (contrasena.length < 8) {
+      return mostrarError(formCodigo, 'contrasena', 'La contraseña necesita al menos 8 caracteres.');
+    }
+
+    const boton = formCodigo.querySelector<HTMLButtonElement>('[data-enviar]')!;
+    boton.disabled = true;
+    const respuesta = await llamarCuenta('/api/auth/recover-confirm', { email, codigo, contrasena });
+    boton.disabled = false;
+
+    if (respuesta.status === 200) {
+      window.location.href = '/cuenta/entrar';
+      return;
+    }
+    mostrarErrorDeRespuesta(formCodigo, respuesta);
+  });
+</script>
+
+<style>
+  .cuenta-container { max-width: 30rem; }
+
+  h1 { font-weight: 400; margin-bottom: 0.2rem; }
+
+  .page-sub {
+    color: var(--ink-soft);
+    margin: 0 0 2.3rem;
+  }
+
+  .cuenta-card {
+    background: #ffffff;
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 1.7rem;
+    margin-bottom: 1.4rem;
+  }
+
+  .cuenta-card[hidden] { display: none; }
+
+  #codigo {
+    font-size: 1.4rem;
+    letter-spacing: 0.45em;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .btn--full {
+    width: 100%;
+    justify-content: center;
+  }
+</style>

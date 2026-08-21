@@ -1,0 +1,163 @@
+---
+// Registro. Dos modos sobre el mismo formulario:
+//  - Normal: nombre + correo + contrasena -> codigo de verificacion al correo.
+//  - Con ?token=... (el enlace de un solo uso del correo de confirmacion del
+//    pedido): el correo ya esta demostrado, solo se elige la contrasena y la
+//    cuenta nace verificada, con sesion abierta.
+import Base from '../../layouts/Base.astro';
+---
+
+<Base
+  title="Crear cuenta"
+  description="Crea tu cuenta para seguir todos tus pedidos."
+  chrome="minimal"
+  minimalLinkHref="/"
+  minimalLinkLabel="Volver al inicio"
+>
+  <section class="section">
+    <div class="container cuenta-container">
+      <h1>Crea tu cuenta</h1>
+      <p class="page-sub" data-sub-normal>Sigue todos tus pedidos en un solo lugar.</p>
+      <p class="page-sub" data-sub-token hidden>
+        Estás creando tu cuenta con el enlace de tu pedido: solo falta elegir una contraseña.
+      </p>
+
+      <form class="cuenta-card" data-form novalidate>
+        <div class="field" data-campo-nombre>
+          <label for="nombre">Nombre</label>
+          <input type="text" id="nombre" name="nombre" placeholder="Tu nombre" autocomplete="name" required />
+          <p class="field-error" data-error-for="nombre" hidden></p>
+        </div>
+        <div class="field" data-campo-email>
+          <label for="email">Correo</label>
+          <input type="email" id="email" name="email" placeholder="tu@correo.com" autocomplete="email" required />
+          <p class="field-error" data-error-for="email" hidden></p>
+          <p class="help">Usa el correo con el que compraste: tus pedidos anteriores aparecerán solos.</p>
+        </div>
+        <div class="field">
+          <label for="contrasena">Contraseña</label>
+          <input
+            type="password"
+            id="contrasena"
+            name="contrasena"
+            autocomplete="new-password"
+            minlength="8"
+            required
+          />
+          <p class="field-error" data-error-for="contrasena" hidden></p>
+          <p class="help">Mínimo 8 caracteres.</p>
+        </div>
+        <p class="field-error" data-error-for="general" hidden></p>
+        <button type="submit" class="btn btn--green btn--full" data-enviar>Crear cuenta</button>
+      </form>
+
+      <p class="cuenta-alt">
+        ¿Ya tienes cuenta? <a href="/cuenta/entrar">Inicia sesión</a>
+      </p>
+    </div>
+  </section>
+</Base>
+
+<script>
+  import { limpiarErrores, llamarCuenta, mostrarError, mostrarErrorDeRespuesta } from '../../lib/cuenta-ui';
+
+  const form = document.querySelector<HTMLFormElement>('[data-form]')!;
+  const boton = form.querySelector<HTMLButtonElement>('[data-enviar]')!;
+
+  // Modo enlace del correo: sin nombre ni correo (los aporta el token).
+  const token = new URLSearchParams(window.location.search).get('token');
+  if (token) {
+    document.querySelector<HTMLElement>('[data-sub-normal]')!.hidden = true;
+    document.querySelector<HTMLElement>('[data-sub-token]')!.hidden = false;
+    for (const selector of ['[data-campo-nombre]', '[data-campo-email]']) {
+      const campo = document.querySelector<HTMLElement>(selector)!;
+      campo.hidden = true;
+      campo.querySelector('input')!.required = false;
+    }
+  }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    limpiarErrores(form);
+    const datos = new FormData(form);
+    const contrasena = String(datos.get('contrasena') ?? '');
+    if (contrasena.length < 8) {
+      return mostrarError(form, 'contrasena', 'La contraseña necesita al menos 8 caracteres.');
+    }
+
+    if (token) {
+      boton.disabled = true;
+      const respuesta = await llamarCuenta('/api/auth/register-token', { token, contrasena });
+      boton.disabled = false;
+      if (respuesta.status === 201) {
+        window.location.href = '/cuenta';
+        return;
+      }
+      if (respuesta.datos.error === 'invalid_token') {
+        // El enlace ya se uso o vencio: se reabre el registro normal.
+        mostrarError(
+          form,
+          'general',
+          'Este enlace ya se usó o venció. Completa tus datos para crear la cuenta con un código a tu correo.',
+        );
+        window.history.replaceState(null, '', '/cuenta/registro');
+        window.location.reload();
+        return;
+      }
+      mostrarErrorDeRespuesta(form, respuesta);
+      return;
+    }
+
+    const nombre = String(datos.get('nombre') ?? '').trim();
+    const email = String(datos.get('email') ?? '').trim();
+    if (!nombre) return mostrarError(form, 'nombre', 'Escribe tu nombre.');
+    if (!email) return mostrarError(form, 'email', 'Escribe tu correo.');
+
+    boton.disabled = true;
+    const respuesta = await llamarCuenta('/api/auth/register', { nombre, email, contrasena });
+    boton.disabled = false;
+
+    if (respuesta.status === 201) {
+      try {
+        sessionStorage.setItem('pp-verificar-email', email);
+      } catch {
+        // sin sessionStorage, la pagina de verificar pide el correo
+      }
+      window.location.href = `/cuenta/verificar?email=${encodeURIComponent(email)}`;
+      return;
+    }
+    mostrarErrorDeRespuesta(form, respuesta);
+  });
+</script>
+
+<style>
+  .cuenta-container { max-width: 30rem; }
+
+  h1 { font-weight: 400; margin-bottom: 0.2rem; }
+
+  .page-sub {
+    color: var(--ink-soft);
+    margin: 0 0 2.3rem;
+  }
+
+  .cuenta-card {
+    background: #ffffff;
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 1.7rem;
+    margin-bottom: 1.4rem;
+  }
+
+  .btn--full {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .cuenta-alt {
+    font-size: 0.95rem;
+    color: var(--ink-soft);
+  }
+
+  [data-campo-nombre][hidden],
+  [data-campo-email][hidden] { display: none; }
+</style>

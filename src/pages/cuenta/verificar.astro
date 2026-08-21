@@ -1,0 +1,128 @@
+---
+// Verificacion del correo: el codigo de 6 digitos que enviamos al registrarse.
+// El correo llega por ?email= (o sessionStorage); si no esta, se pide.
+import Base from '../../layouts/Base.astro';
+---
+
+<Base
+  title="Verifica tu correo"
+  description="Escribe el código que te enviamos por correo."
+  chrome="minimal"
+  minimalLinkHref="/cuenta/entrar"
+  minimalLinkLabel="Volver a iniciar sesión"
+>
+  <section class="section">
+    <div class="container cuenta-container">
+      <h1>Verifica tu correo</h1>
+      <p class="page-sub">
+        Te enviamos un código de 6 dígitos a <strong data-email-destino>tu correo</strong>. Vence en 15 minutos.
+      </p>
+
+      <form class="cuenta-card" data-form novalidate>
+        <div class="field" data-campo-email hidden>
+          <label for="email">Correo</label>
+          <input type="email" id="email" name="email" placeholder="tu@correo.com" autocomplete="email" />
+          <p class="field-error" data-error-for="email" hidden></p>
+        </div>
+        <div class="field">
+          <label for="codigo">Código</label>
+          <input
+            type="text"
+            id="codigo"
+            name="codigo"
+            inputmode="numeric"
+            autocomplete="one-time-code"
+            pattern="[0-9]{6}"
+            maxlength="6"
+            placeholder="000000"
+            required
+          />
+          <p class="field-error" data-error-for="codigo" hidden></p>
+          <p class="help">¿No llegó? Revisa el correo no deseado. Si venció, vuelve a <a href="/cuenta/entrar">iniciar sesión</a> y te enviamos otro.</p>
+        </div>
+        <p class="field-error" data-error-for="general" hidden></p>
+        <button type="submit" class="btn btn--green btn--full" data-enviar>Verificar y entrar</button>
+      </form>
+    </div>
+  </section>
+</Base>
+
+<script>
+  import { limpiarErrores, llamarCuenta, mostrarError, mostrarErrorDeRespuesta } from '../../lib/cuenta-ui';
+
+  const form = document.querySelector<HTMLFormElement>('[data-form]')!;
+  const boton = form.querySelector<HTMLButtonElement>('[data-enviar]')!;
+  const campoEmail = document.querySelector<HTMLElement>('[data-campo-email]')!;
+
+  let email = new URLSearchParams(window.location.search).get('email') ?? '';
+  if (!email) {
+    try {
+      email = sessionStorage.getItem('pp-verificar-email') ?? '';
+    } catch {
+      // sin sessionStorage se muestra el campo
+    }
+  }
+  if (email) {
+    document.querySelector('[data-email-destino]')!.textContent = email;
+  } else {
+    campoEmail.hidden = false;
+    campoEmail.querySelector('input')!.required = true;
+  }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    limpiarErrores(form);
+    const datos = new FormData(form);
+    const destino = email || String(datos.get('email') ?? '').trim();
+    const codigo = String(datos.get('codigo') ?? '').trim();
+    if (!destino) return mostrarError(form, 'email', 'Escribe tu correo.');
+    if (!/^\d{6}$/.test(codigo)) return mostrarError(form, 'codigo', 'El código son 6 dígitos.');
+
+    boton.disabled = true;
+    const respuesta = await llamarCuenta('/api/auth/verify', { email: destino, codigo });
+    boton.disabled = false;
+
+    if (respuesta.status === 200) {
+      try {
+        sessionStorage.removeItem('pp-verificar-email');
+      } catch {
+        // nada que limpiar
+      }
+      window.location.href = '/cuenta';
+      return;
+    }
+    mostrarErrorDeRespuesta(form, respuesta);
+  });
+</script>
+
+<style>
+  .cuenta-container { max-width: 30rem; }
+
+  h1 { font-weight: 400; margin-bottom: 0.2rem; }
+
+  .page-sub {
+    color: var(--ink-soft);
+    margin: 0 0 2.3rem;
+  }
+
+  .cuenta-card {
+    background: #ffffff;
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 1.7rem;
+    margin-bottom: 1.4rem;
+  }
+
+  #codigo {
+    font-size: 1.4rem;
+    letter-spacing: 0.45em;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .btn--full {
+    width: 100%;
+    justify-content: center;
+  }
+
+  [data-campo-email][hidden] { display: none; }
+</style>
