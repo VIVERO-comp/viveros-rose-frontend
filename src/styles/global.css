@@ -74,6 +74,14 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* El atributo hidden SIEMPRE oculta, aunque el elemento tenga display:flex o
+   display:grid propio (sin esto, reglas como .tile-add { display:flex } le
+   ganaban al [hidden] del navegador y aparecian botones de "agregar" en
+   productos agotados). */
+[hidden] {
+  display: none !important;
+}
+
 ::selection {
   background: rgba(22, 163, 74, 0.25);
 }

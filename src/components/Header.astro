@@ -646,7 +646,7 @@ const menuTipos = [
     linesEl.replaceChildren(
       ...items.map((item) => {
         const row = document.createElement('div');
-        row.className = 'cart-line';
+        row.className = 'panel-line';
         // Con foto real se muestra la foto; sin foto queda el emoji.
         const thumb = item.image
           ? `<div class="cart-thumb" aria-hidden="true" style="background-image: url('${item.image}'); background-size: cover; background-position: center;"></div>`
@@ -1633,15 +1633,17 @@ const menuTipos = [
     background: #dce9df;
   }
 
-  /* Carrito: lineas */
-  :global(.cart-line) {
+  /* Carrito: lineas. El nombre panel-line es propio del panel: la pagina
+     /carrito tiene su propia .cart-line y compartir el nombre hacia que este
+     CSS global (que sale en un chunk comun) pisara la grilla de esa pagina. */
+  :global(.panel-line) {
     display: grid;
     grid-template-columns: 72px minmax(0, 1fr) auto;
     gap: 13.8px;
     align-items: start;
   }
 
-  :global(.cart-line + .cart-line) { margin-top: 18.4px; }
+  :global(.panel-line + .panel-line) { margin-top: 18.4px; }
 
   :global(.cart-thumb) {
     width: 72px;

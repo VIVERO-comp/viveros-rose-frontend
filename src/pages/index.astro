@@ -21,9 +21,29 @@ const products = await productosPublicados();
 const bySlugs = (slugs: string[]) =>
   slugs.map((slug) => products.find((p) => p.slug === slug)).filter((p) => p !== undefined);
 
-// Selecciones curadas del diseno (productos reales del catalogo).
-const featured = bySlugs(['monstera-deliciosa', 'rosa', 'lavanda', 'ficus-lyrata']);
-const bestsellers = bySlugs(['ixora', 'palma-abanico', 'cactus-mediano', 'jazmin-blanco-enano']);
+// Selecciones curadas del diseno (productos reales del catalogo). La grilla
+// de tarjetas es de 4 columnas fijas, asi que cada seccion completa SIEMPRE
+// sus 4 puestos: si un slug curado ya no existe (lavanda quedo archivada en
+// Odoo y dejaba un hueco en la fila), se rellena con otros productos del
+// catalogo. Dentro de cada fila van primero los productos que ya tienen foto
+// real, para que la portada no abra con puros huecos de "foto pendiente".
+const usados = new Set<string>();
+const filaDeCuatro = (slugs: string[]) => {
+  const curados = bySlugs(slugs).filter((p) => !usados.has(p.slug));
+  const relleno = products.filter((p) => !usados.has(p.slug) && !curados.includes(p));
+  const candidatos = [
+    ...curados.filter((p) => p.image),
+    ...relleno.filter((p) => p.image),
+    ...curados.filter((p) => !p.image),
+    ...relleno.filter((p) => !p.image),
+  ];
+  const fila = candidatos.slice(0, 4);
+  for (const p of fila) usados.add(p.slug);
+  return fila;
+};
+
+const featured = filaDeCuatro(['monstera-deliciosa', 'rosa', 'lavanda', 'ficus-lyrata']);
+const bestsellers = filaDeCuatro(['ixora', 'palma-abanico', 'cactus-mediano', 'jazmin-blanco-enano']);
 
 const colName = (slug: string) => collections.find((c) => c.slug === slug)!.name;
 

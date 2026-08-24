@@ -7,10 +7,15 @@ import Base from '../layouts/Base.astro';
 import Icon from '../components/Icon.astro';
 import { compareAtPrice, formatPrice, products } from '../data/products';
 
-// Sugerencias "Va bien con": productos disponibles del catalogo real.
-// (El diseno muestra sustrato/abono/matera, pero esos accesorios no existen
-// en el catalogo ni en Odoo; se sugieren plantas reales en su lugar.)
-const suggestions = products.filter((p) => p.available > 0).slice(0, 3);
+// Sugerencias "Va bien con": candidatos del catalogo real, con los que ya
+// tienen foto primero. En build no hay stock (available estatico es 0, por
+// eso antes esta lista salia siempre vacia y el titulo quedaba flotando);
+// se renderizan ocultos y el stock del proxy decide en el cliente cuales de
+// estos se muestran (hasta 3). El diseno original sugeria sustrato/abono/
+// matera, pero esos accesorios no existen en el catalogo ni en Odoo.
+const suggestions = [...products]
+  .sort((a, b) => Number(Boolean(b.image)) - Number(Boolean(a.image)))
+  .slice(0, 6);
 
 // Precio de lista por SKU (promo 15% exterior) para mostrar el ahorro.
 const compareMap = Object.fromEntries(
@@ -66,7 +71,7 @@ const compareMap = Object.fromEntries(
             <p class="addons-title">Va bien con</p>
             <div class="addons-grid">
               {suggestions.map((p) => (
-                <div class="addon-card">
+                <div class="addon-card" data-addon-card data-sku={p.sku} hidden>
                   {p.image ? (
                     <div class="addon-photo addon-photo--img" style={`background-image: url('${p.image}');`} aria-hidden="true" />
                   ) : (
@@ -135,8 +140,14 @@ const compareMap = Object.fromEntries(
 
 <script>
   import { addToCart, cartCount, cartTotal, getCart, removeFromCart, setQty } from '../lib/cart';
+  import { fetchStock } from '../lib/stock';
 
   const GIFT_KEY = 'pp-gift-v1';
+
+  // Cuantas sugerencias de "Va bien con" quedaron visibles tras consultar el
+  // stock real. Arranca en 0: la seccion no aparece hasta saber que hay algo
+  // que sugerir (antes el titulo salia flotando sobre una grilla vacia).
+  let sugerenciasVisibles = 0;
 
   const money = (n: number) => `$${n.toFixed(2)}`;
 
@@ -164,7 +175,7 @@ const compareMap = Object.fromEntries(
     empty?.toggleAttribute('hidden', hasItems);
     summary?.toggleAttribute('hidden', !hasItems);
     giftCard?.toggleAttribute('hidden', !hasItems);
-    addons?.toggleAttribute('hidden', !hasItems);
+    addons?.toggleAttribute('hidden', !hasItems || sugerenciasVisibles === 0);
     document.querySelector<HTMLElement>('[data-cart-trust]')?.toggleAttribute('hidden', !hasItems);
 
     // Lineas del resumen: miniatura con cantidad y total por linea.
@@ -292,6 +303,28 @@ const compareMap = Object.fromEntries(
       render();
     })
   );
+
+  // "Va bien con": el stock real del proxy decide cuales candidatos se
+  // muestran (hasta 3). Sin proxy configurado se muestran los primeros 3 tal
+  // cual; la validacion definitiva de stock ocurre igual en el checkout.
+  async function filtrarSugerencias() {
+    const cards = Array.from(document.querySelectorAll<HTMLElement>('[data-addon-card]'));
+    if (cards.length === 0) return;
+    const items = await fetchStock(cards.map((c) => c.dataset.sku!));
+    const bySku = items ? new Map(items.map((i) => [i.sku, i.available])) : null;
+    const enCarrito = new Set(getCart().map((i) => i.sku));
+    let visibles = 0;
+    for (const card of cards) {
+      const disponible = bySku ? (bySku.get(card.dataset.sku!) ?? 0) > 0 : true;
+      const mostrar = disponible && !enCarrito.has(card.dataset.sku!) && visibles < 3;
+      card.hidden = !mostrar;
+      if (mostrar) visibles += 1;
+    }
+    sugerenciasVisibles = visibles;
+    render();
+  }
+
+  filtrarSugerencias();
 
   // Nota de regalo: se guarda en localStorage para usarla en el checkout.
   const giftToggle = document.querySelector<HTMLInputElement>('[data-gift-toggle]');
@@ -588,7 +621,7 @@ const compareMap = Object.fromEntries(
     background-position: center;
   }
 
-  .addon-photo::after {
+  .addon-photo[data-medidas]::after {
     content: attr(data-medidas);
     position: absolute;
     right: 8px;
