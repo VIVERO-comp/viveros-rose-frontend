@@ -16,7 +16,7 @@ import { whatsappLink } from '../../lib/site';
     <div class="container success-container">
       <div class="success-icon"><Icon name="badge-check" size={52} /></div>
       <h1>¡Gracias por tu compra!</h1>
-      <p class="lead">
+      <p class="lead" data-lead>
         Recibimos tu pedido y lo confirmamos contigo por WhatsApp, junto con el
         número de pedido para darle seguimiento.
       </p>
@@ -61,6 +61,19 @@ import { whatsappLink } from '../../lib/site';
   // /checkout/success?order=VR-20260820-K7M2QX9P4T
   const params = new URLSearchParams(window.location.search);
   const order = params.get('order');
+
+  // Al volver de la pagina de pago de Wompi la URL trae ademas ?id=<la
+  // transaccion>: aqui no hay WhatsApp que abrir, el webhook confirma el
+  // pedido solo.
+  if (params.get('id')) {
+    const lead = document.querySelector<HTMLElement>('[data-lead]');
+    if (lead) {
+      lead.textContent =
+        'Recibimos tu pago y lo estamos confirmando con el banco. En unos minutos ' +
+        'tu pedido queda confirmado; puedes seguirlo con tu número de pedido.';
+    }
+    document.querySelector<HTMLElement>('[data-wa-fallback]')?.setAttribute('hidden', '');
+  }
 
   if (order) {
     const el = document.querySelector('[data-order-number]');
@@ -129,4 +142,8 @@ import { whatsappLink } from '../../lib/site';
   .success-cuenta .btn { margin-top: 0.85rem; }
 
   .success-cuenta[hidden] { display: none; }
+
+  /* El display de .btn le gana al atributo hidden; sin esto el boton de
+     WhatsApp no se ocultaria al volver de Wompi. */
+  .success-actions .btn[hidden] { display: none; }
 </style>

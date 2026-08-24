@@ -17,12 +17,19 @@ const SHIPPING = [
   { id: 'pickup', name: 'Retiro en el vivero', detail: 'Ciudad de Panamá · Lun–Vie 9–5', price: 0 },
 ];
 
-// Metodos de pago del diseno. La tarjeta va deshabilitada ("Proximamente"):
-// la integracion con Wompi no esta lista. Yappy queda seleccionado.
+// Metodos de pago del diseno. La tarjeta (Wompi) vive detras de la bandera
+// PUBLIC_WOMPI_ACTIVO: apagada, se muestra deshabilitada ("Proximamente") y
+// nada del flujo de pago en linea existe en la pagina. Encendida, el submit
+// redirige a la url_pago que devuelve el order-api. Yappy queda seleccionado
+// por defecto en ambos casos.
+const WOMPI_ACTIVO = (import.meta.env.PUBLIC_WOMPI_ACTIVO ?? '0') === '1';
 const PAYMENTS = [
   { id: 'yappy', name: 'Yappy', detail: 'Pago desde tu banco' },
   { id: 'transfer', name: 'Transferencia bancaria', detail: 'Enviamos los datos por WhatsApp' },
   { id: 'cash', name: 'Efectivo contra entrega', detail: 'Solo ciudad de Panamá' },
+  ...(WOMPI_ACTIVO
+    ? [{ id: 'wompi', name: 'Tarjeta de crédito o débito', detail: 'Pago seguro en línea (Wompi)' }]
+    : []),
 ];
 
 const PROVINCES = [
@@ -158,13 +165,15 @@ const GOOGLE_MAPS_KEY = import.meta.env.PUBLIC_GOOGLE_MAPS_KEY ?? '';
         <h2>Pago</h2>
         <p class="pay-note">Todas las transacciones son seguras y encriptadas.</p>
         <div class="pay-box">
-          <label class="pay-row pay-row--disabled" title="Próximamente">
-            <span class="pay-main">
-              <input type="radio" name="pago" disabled />
-              Tarjeta de crédito o débito
-            </span>
-            <span class="pay-soon">Próximamente</span>
-          </label>
+          {!WOMPI_ACTIVO && (
+            <label class="pay-row pay-row--disabled" title="Próximamente">
+              <span class="pay-main">
+                <input type="radio" name="pago" disabled />
+                Tarjeta de crédito o débito
+              </span>
+              <span class="pay-soon">Próximamente</span>
+            </label>
+          )}
           {PAYMENTS.map((p, i) => (
             <label class="pay-row">
               <span class="pay-main">
@@ -176,12 +185,19 @@ const GOOGLE_MAPS_KEY = import.meta.env.PUBLIC_GOOGLE_MAPS_KEY ?? '';
           ))}
         </div>
 
-        <button type="submit" class="submit-btn">Confirmar pedido por WhatsApp</button>
+        <button type="submit" class="submit-btn" data-submit-whatsapp="Confirmar pedido por WhatsApp" data-submit-wompi="Continuar al pago seguro">Confirmar pedido por WhatsApp</button>
         <p class="form-error" hidden></p>
-        <p class="help center">
-          El pago online con Wompi estará disponible muy pronto. Al confirmar se abre
-          WhatsApp con el resumen de tu pedido para cerrar la compra al instante.
+        <p class="help center" data-help-whatsapp>
+          {WOMPI_ACTIVO
+            ? 'Al confirmar se abre WhatsApp con el resumen de tu pedido para cerrar la compra al instante.'
+            : 'El pago online con Wompi estará disponible muy pronto. Al confirmar se abre WhatsApp con el resumen de tu pedido para cerrar la compra al instante.'}
         </p>
+        {WOMPI_ACTIVO && (
+          <p class="help center" data-help-wompi hidden>
+            Al confirmar te llevamos a la página segura de Wompi para pagar con tu tarjeta.
+            Tu pedido queda confirmado automáticamente al aprobarse el pago.
+          </p>
+        )}
       </form>
     </main>
 
@@ -481,6 +497,30 @@ const GOOGLE_MAPS_KEY = import.meta.env.PUBLIC_GOOGLE_MAPS_KEY ?? '';
     }
   }
 
+  function pagoConTarjeta() {
+    return (
+      document.querySelector<HTMLInputElement>('input[name="pago"]:checked')?.value === 'wompi'
+    );
+  }
+
+  function textoDeConfirmar() {
+    if (!submitBtn) return;
+    submitBtn.textContent = pagoConTarjeta()
+      ? (submitBtn.dataset.submitWompi ?? '')
+      : (submitBtn.dataset.submitWhatsapp ?? '');
+    // Con Wompi la ayuda de WhatsApp no aplica y viceversa. El bloque de
+    // Wompi solo existe con PUBLIC_WOMPI_ACTIVO encendida.
+    const ayudaWa = document.querySelector<HTMLElement>('[data-help-whatsapp]');
+    const ayudaWompi = document.querySelector<HTMLElement>('[data-help-wompi]');
+    if (ayudaWa) ayudaWa.hidden = pagoConTarjeta();
+    if (ayudaWompi) ayudaWompi.hidden = !pagoConTarjeta();
+  }
+
+  document
+    .querySelectorAll<HTMLInputElement>('input[name="pago"]')
+    .forEach((r) => r.addEventListener('change', textoDeConfirmar));
+  textoDeConfirmar();
+
   form?.addEventListener('submit', async (e) => {
     e.preventDefault();
     if (!form.reportValidity()) return;
@@ -523,6 +563,7 @@ const GOOGLE_MAPS_KEY = import.meta.env.PUBLIC_GOOGLE_MAPS_KEY ?? '';
       subtotal_centavos: number;
       envio_centavos: number;
       total_centavos: number;
+      url_pago?: string;
     };
     try {
       const respuesta = await fetch('/api/checkout', {
@@ -587,8 +628,15 @@ const GOOGLE_MAPS_KEY = import.meta.env.PUBLIC_GOOGLE_MAPS_KEY ?? '';
     } finally {
       if (submitBtn) {
         submitBtn.disabled = false;
-        submitBtn.textContent = 'Confirmar pedido por WhatsApp';
+        textoDeConfirmar();
       }
+    }
+
+    // Con tarjeta no hay WhatsApp: el pedido ya quedo registrado y el pago se
+    // hace en la pagina de Wompi, que al terminar regresa a /checkout/success.
+    if (pagoId === 'wompi' && pedido.url_pago) {
+      window.location.assign(pedido.url_pago);
+      return;
     }
 
     const centavos = (n: number) => money(n / 100);
