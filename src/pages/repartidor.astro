@@ -36,19 +36,44 @@ const FOTOS_CATALOGO = Object.fromEntries(
         <button class="btn btn--ghost btn-refrescar" data-refrescar type="button">Actualizar</button>
       </header>
 
-      <!-- Sin clave: solo se entra con el enlace personal. -->
+      <!-- Sin clave: solo se entra con el enlace personal. La app instalada
+           en iPhone no comparte lo guardado por Safari y abre /repartidor
+           pelado, asi que el enlace tambien se puede pegar a mano una vez. -->
       <div class="tarjeta aviso-sin-clave" data-sin-clave hidden>
         <p><strong>Falta tu enlace personal.</strong></p>
         <p>
           Abre el enlace de repartidor que te mandaron por WhatsApp (termina en
-          <code>?clave=…</code>). Si no lo tienes, pide que te lo reenvíen desde el vivero.
+          <code>?clave=…</code>), o pégalo aquí:
         </p>
+        <form class="form-clave" data-form-clave>
+          <input
+            type="text"
+            data-input-clave
+            placeholder="Pega aquí tu enlace o tu clave"
+            autocomplete="off"
+            autocapitalize="off"
+            spellcheck="false"
+          />
+          <button type="submit" class="btn btn--green">Entrar</button>
+        </form>
+        <p class="field-error" data-error-clave hidden>Pega el enlace completo o la clave.</p>
+        <p class="suave">Si no tienes el enlace, pide que te lo reenvíen desde el vivero.</p>
       </div>
 
-      <!-- Clave del dueno: no lista pedidos, pero si activa avisos. -->
+      <!-- La lista respondio 401: clave vieja (se genero un enlace mas nuevo)
+           o la clave del dueno, que solo sirve para los avisos. -->
       <div class="tarjeta" data-modo-dueno hidden>
-        <p><strong>Avisos del negocio.</strong> Esta clave no es de un repartidor:
-        sirve para recibir los avisos de pedidos nuevos y retrasos en este teléfono.</p>
+        <p><strong>Esta clave no abre la lista de pedidos.</strong></p>
+        <p>
+          Si eres repartidor, se generó un enlace más nuevo y este quedó viejo:
+          pide el enlace vigente (en Odoo se copia del campo de la ficha, sin
+          volver a generar) y
+          <button type="button" class="enlace-boton" data-usar-otro>úsalo aquí</button>.
+        </p>
+        <p>
+          Si este es el enlace del dueño, es normal: solo sirve para recibir los
+          avisos de pedidos nuevos y retrasos en este teléfono — actívalos abajo.
+        </p>
       </div>
 
       <div class="banda-push" data-banda-push hidden>
@@ -131,6 +156,15 @@ const FOTOS_CATALOGO = Object.fromEntries(
 
   async function cargarLista() {
     mensaje('');
+    // Sin clave no hay nada que pedir: la tarjeta de pegar el enlace es la
+    // unica salida (tambien cubre "Actualizar" sin clave guardada).
+    if (!clave) {
+      listaEl.innerHTML = '';
+      $('[data-sin-clave]').hidden = false;
+      return;
+    }
+    $('[data-sin-clave]').hidden = true;
+    $('[data-modo-dueno]').hidden = true;
     listaEl.innerHTML = '<p class="cargando">Cargando pedidos…</p>';
     try {
       const res = await fetch(`/api/repartidor/pedidos?clave=${encodeURIComponent(clave)}`);
@@ -467,6 +501,41 @@ const FOTOS_CATALOGO = Object.fromEntries(
     }
   }
 
+  // -- enlace pegado a mano -------------------------------------------------
+
+  // Acepta el enlace completo del WhatsApp o la clave sola.
+  function extraerClave(texto: string): string {
+    const limpio = texto.trim();
+    try {
+      const url = new URL(limpio);
+      return url.searchParams.get('clave')?.trim() ?? '';
+    } catch {
+      return limpio;
+    }
+  }
+
+  $('[data-form-clave]').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const input = $('[data-input-clave]') as unknown as HTMLInputElement;
+    const nueva = extraerClave(input.value);
+    if (!nueva) {
+      $('[data-error-clave]').hidden = false;
+      return;
+    }
+    localStorage.setItem('vr_clave_repartidor', nueva);
+    // Recarga limpia: el arranque lee la clave guardada.
+    location.replace('/repartidor');
+  });
+
+  $('[data-usar-otro]').addEventListener('click', () => {
+    // La clave guardada quedo vieja: se descarta y se pide la nueva.
+    localStorage.removeItem('vr_clave_repartidor');
+    $('[data-modo-dueno]').hidden = true;
+    $('[data-banda-push]').hidden = true;
+    $('[data-sin-clave]').hidden = false;
+    ($('[data-input-clave]') as unknown as HTMLInputElement).focus();
+  });
+
   // -- arranque -------------------------------------------------------------
 
   $('[data-refrescar]').addEventListener('click', volverALista);
@@ -533,6 +602,27 @@ const FOTOS_CATALOGO = Object.fromEntries(
   }
 
   .portal .aviso-sin-clave code { font-size: 0.9em; }
+
+  .portal .form-clave {
+    display: flex;
+    gap: 0.6rem;
+    margin: 0.9rem 0 0.5rem;
+  }
+
+  .portal .form-clave input { min-width: 0; flex: 1; }
+
+  .portal .form-clave .btn { flex-shrink: 0; }
+
+  /* Boton que se lee como enlace, dentro del texto de la tarjeta. */
+  .portal .enlace-boton {
+    background: none;
+    border: none;
+    padding: 0;
+    font: inherit;
+    color: var(--green-deep);
+    text-decoration: underline;
+    cursor: pointer;
+  }
 
   .portal .banda-push {
     display: flex;
