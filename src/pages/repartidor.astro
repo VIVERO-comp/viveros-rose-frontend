@@ -94,16 +94,20 @@ const FOTOS_CATALOGO = Object.fromEntries(
       <header class="inicio-head">
         <p class="kicker">VIVERO ROSE · REPARTOS</p>
         <h1 class="saludo">Hola<span data-nombre></span></h1>
+        <p class="estrellas" data-estrellas hidden></p>
       </header>
 
-      <div class="tarjeta-ganancias">
+      <!-- Tocar la tarjeta abre el corte de la semana. -->
+      <button class="tarjeta-ganancias" type="button" data-abrir-semana aria-expanded="false">
         <p class="ganancias-etiqueta">Ganado hoy</p>
         <p class="ganancias-monto" data-ganado-hoy>—</p>
         <p class="ganancias-detalle">
           <span data-entregas-hoy>—</span>
           <span class="ganancias-propinas" data-propinas-hoy hidden></span>
         </p>
-      </div>
+        <p class="ganancias-toca"><span data-semana-pista>Toca para ver la semana</span> <span class="chevron" data-chevron>▾</span></p>
+      </button>
+      <div class="desglose" data-desglose hidden></div>
 
       <h2 class="bloque-titulo">Por entregar hoy</h2>
       <div class="pendientes">
@@ -167,6 +171,7 @@ const FOTOS_CATALOGO = Object.fromEntries(
     <button class="tab" type="button" data-tab="avisos" aria-label="Notificaciones">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 9a6 6 0 1 0-12 0c0 6-2 7-2 7h16s-2-1-2-7"/><path d="M10.3 20a2 2 0 0 0 3.4 0"/></svg>
       <span>Avisos</span>
+      <span class="tab-globito" data-globito-avisos hidden></span>
     </button>
   </nav>
 </Base>
@@ -242,6 +247,17 @@ const FOTOS_CATALOGO = Object.fromEntries(
     return (doc.body.textContent ?? '').trim();
   }
 
+  // La direccion viaja en la nota que armo el checkout, en la linea
+  // "Entrega: ...". De ahi sale el boton "Como llegar"; si no esta, el boton
+  // simplemente no se pinta.
+  function extraerDireccion(nota: string): string | null {
+    const linea = nota
+      .split('\n')
+      .find((l) => l.trim().toLowerCase().startsWith('entrega:'));
+    if (!linea) return null;
+    return linea.slice(linea.indexOf(':') + 1).trim() || null;
+  }
+
   function usarNombre(nombre: string) {
     nombreRepartidor = nombre;
     const pila = nombre.trim().split(/\s+/)[0];
@@ -298,6 +314,14 @@ const FOTOS_CATALOGO = Object.fromEntries(
     // calle los datos cambian rapido y no hay boton mas simple que ese.
     pantallaActual = destino;
     window.scrollTo(0, 0);
+    // Entrar a Avisos marca todo como visto y apaga el globito de la
+    // pestana; en las demas se revisa si llego algo nuevo.
+    if (destino === 'avisos') {
+      localStorage.setItem('vr_avisos_visto', new Date().toISOString());
+      pintarGlobitoAvisos(0);
+    } else if (clave) {
+      revisarAvisosNuevos();
+    }
     if (clave) CARGADORES[destino]();
   }
 
@@ -307,6 +331,49 @@ const FOTOS_CATALOGO = Object.fromEntries(
   document.querySelectorAll<HTMLElement>('[data-ir-pedidos]').forEach((boton) => {
     boton.addEventListener('click', () => cambiarPantalla('pedidos'));
   });
+
+  // Tocar la tarjeta de ganancias abre (o cierra) el corte de la semana.
+  const botonSemana = $('[data-abrir-semana]');
+  botonSemana.addEventListener('click', () => {
+    const desgloseEl = $('[data-desglose]');
+    const abrir = desgloseEl.hidden;
+    if (abrir) {
+      desgloseEl.hidden = false;
+      animarEntrada(desgloseEl, 'pantalla-entrando');
+    } else {
+      desgloseEl.hidden = true;
+    }
+    botonSemana.setAttribute('aria-expanded', String(abrir));
+    $('[data-chevron]').classList.toggle('chevron--abierto', abrir);
+    $('[data-semana-pista]').textContent = abrir
+      ? 'Ocultar la semana'
+      : 'Toca para ver la semana';
+  });
+
+  // -- globito de la pestana Avisos ----------------------------------------
+
+  // Cuenta los avisos posteriores a la ultima vez que se abrio la pestana.
+  // No es critico: si la red falla, simplemente no se pinta.
+  function pintarGlobitoAvisos(nuevos: number) {
+    const globito = $('[data-globito-avisos]');
+    globito.hidden = nuevos <= 0;
+    globito.textContent = nuevos > 9 ? '9+' : String(nuevos);
+  }
+
+  async function revisarAvisosNuevos() {
+    try {
+      const res = await fetch(`/api/repartidor/avisos?clave=${encodeURIComponent(clave)}`);
+      if (!res.ok) return;
+      const avisos = (await res.json()).avisos ?? [];
+      const visto = localStorage.getItem('vr_avisos_visto');
+      const corte = visto ? new Date(visto).getTime() : 0;
+      pintarGlobitoAvisos(
+        avisos.filter((a: any) => new Date(a.creado_en).getTime() > corte).length,
+      );
+    } catch {
+      // sin red no hay globito, nada mas
+    }
+  }
 
   // -- pantalla INICIO ------------------------------------------------------
 
@@ -325,6 +392,49 @@ const FOTOS_CATALOGO = Object.fromEntries(
     }
   }
 
+  // Fecha local "YYYY-MM-DD" -> Hoy / Ayer / "vie 22 ago".
+  function etiquetaFecha(fechaIso: string): string {
+    const [a, m, d] = fechaIso.split('-').map(Number);
+    const fecha = new Date(a, m - 1, d);
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    const dias = Math.round((hoy.getTime() - fecha.getTime()) / 86400000);
+    if (dias === 0) return 'Hoy';
+    if (dias === 1) return 'Ayer';
+    return fecha.toLocaleDateString('es-PA', { weekday: 'short', day: 'numeric', month: 'short' });
+  }
+
+  // El corte de la semana: cuanto hay que pagarle al repartidor (los pagos
+  // sellados; las propinas van aparte porque ya las recibio directo).
+  function pintarDesglose(semana: any) {
+    const desgloseEl = $('[data-desglose]');
+    if (!semana || !semana.entregas) {
+      desgloseEl.innerHTML =
+        '<div class="tarjeta vacio"><p>Sin entregas esta semana todavía.</p></div>';
+      return;
+    }
+    const filas = (semana.dias ?? [])
+      .map(
+        (dia: any) => `
+        <p class="corte-dia">
+          <span>${escapar(etiquetaFecha(dia.fecha))}</span>
+          <span class="suave">${dia.entregas === 1 ? '1 entrega' : `${dia.entregas} entregas`}</span>
+          <span class="corte-monto">${dinero(dia.pago_centavos)}${
+            dia.propinas_centavos > 0 ? ` <em>+${dinero(dia.propinas_centavos)}</em>` : ''
+          }</span>
+        </p>`,
+      )
+      .join('');
+    desgloseEl.innerHTML = `
+      <div class="tarjeta corte">
+        <p class="corte-total"><span>Esta semana</span><strong>${dinero(semana.pago_centavos)}</strong></p>
+        <p class="suave">${semana.entregas === 1 ? '1 entrega' : `${semana.entregas} entregas`}${
+          semana.propinas_centavos > 0 ? ` · ${dinero(semana.propinas_centavos)} en propinas` : ''
+        } · desde el ${escapar(etiquetaFecha(semana.desde))}</p>
+        ${filas ? `<div class="corte-dias">${filas}</div>` : ''}
+      </div>`;
+  }
+
   function pintarInicio(datos: any) {
     usarNombre(datos.repartidor ?? '');
 
@@ -337,6 +447,19 @@ const FOTOS_CATALOGO = Object.fromEntries(
     const propinasEl = $('[data-propinas-hoy]');
     propinasEl.hidden = propinas <= 0;
     propinasEl.textContent = propinas > 0 ? `· ${dinero(propinas)} en propinas` : '';
+
+    const calificacion = datos.calificacion;
+    const estrellasEl = $('[data-estrellas]');
+    estrellasEl.hidden = !calificacion;
+    if (calificacion) {
+      estrellasEl.textContent = `★ ${calificacion.promedio.toFixed(1)} · ${
+        calificacion.cantidad === 1
+          ? '1 calificación'
+          : `${calificacion.cantidad} calificaciones`
+      }`;
+    }
+
+    pintarDesglose(datos.semana);
 
     $('[data-mios]').textContent = String(datos.pendientes?.mios ?? 0);
     $('[data-disponibles]').textContent = String(datos.pendientes?.disponibles ?? 0);
@@ -518,6 +641,28 @@ const FOTOS_CATALOGO = Object.fromEntries(
         `Hola${p.cliente?.nombre ? ' ' + p.cliente.nombre : ''}! Soy ${nombreRepartidor || 'tu repartidor'}, de Vivero Rose. ` +
           `Tu pedido ${p.numero} va en camino. Puedes seguirlo aqui: ${location.origin}/pedido?n=${p.numero}`,
       );
+    const notaTexto = p.nota ? notaComoTexto(p.nota) : '';
+    const direccion = extraerDireccion(notaTexto);
+    const mapsUrl = direccion
+      ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${direccion}, Panamá`)}`
+      : null;
+    const waContacto = telefono ? enlaceWhatsApp(telefono, textoContacto(p)) : null;
+    // Problemas en la calle (no contesta, direccion mala, se rompio algo):
+    // directo al WhatsApp del vivero con el numero del pedido ya escrito.
+    const waProblema = `https://wa.me/50765673062?text=${encodeURIComponent(
+      `Hola, soy ${nombreRepartidor || 'el repartidor'}. Problema con el pedido ${p.numero}: `,
+    )}`;
+    const botonesContacto = [
+      telefono ? `<a class="btn btn--ghost" href="tel:${escapar(telefono)}">Llamar</a>` : '',
+      waContacto
+        ? `<a class="btn btn--ghost" href="${waContacto}" target="_blank" rel="noopener">WhatsApp</a>`
+        : '',
+      mapsUrl
+        ? `<a class="btn btn--ghost" href="${mapsUrl}" target="_blank" rel="noopener">Cómo llegar</a>`
+        : '',
+    ]
+      .filter(Boolean)
+      .join('');
 
     detalleEl.innerHTML = `
       <div class="tarjeta">
@@ -526,18 +671,13 @@ const FOTOS_CATALOGO = Object.fromEntries(
           <span class="chip chip--${p.estado_entrega}">${ETIQUETA_ESTADO[p.estado_entrega] ?? p.estado_entrega}</span>
         </p>
         <p class="detalle-cliente">${escapar(p.cliente?.nombre ?? 'Cliente')}${p.cliente?.ciudad ? ' · ' + escapar(p.cliente.ciudad) : ''}</p>
-        ${
-          telefono
-            ? `<p class="detalle-contacto">
-                 <a class="btn btn--ghost" href="tel:${escapar(telefono)}">Llamar</a>
-                 ${waCamino ? `<a class="btn btn--ghost" href="${enlaceWhatsApp(telefono, textoContacto(p))}" target="_blank" rel="noopener">WhatsApp</a>` : ''}
-               </p>`
-            : '<p class="suave">El pedido no tiene teléfono; la dirección va en la nota.</p>'
-        }
-        ${p.nota ? `<pre class="detalle-nota">${escapar(notaComoTexto(p.nota))}</pre>` : ''}
+        ${botonesContacto ? `<p class="detalle-contacto">${botonesContacto}</p>` : ''}
+        ${telefono ? '' : '<p class="suave">El pedido no tiene teléfono; la dirección va en la nota.</p>'}
+        ${notaTexto ? `<pre class="detalle-nota">${escapar(notaTexto)}</pre>` : ''}
         <ul class="items">${items}</ul>
         <p class="detalle-total">Total: <strong>$${Number(p.total).toFixed(2)}</strong></p>
         ${p.repartidor && !mio ? `<p class="suave">Lo lleva ${escapar(p.repartidor)}.</p>` : ''}
+        <a class="problema" href="${waProblema}" target="_blank" rel="noopener">⚠️ Avisar un problema al vivero</a>
       </div>
       <div class="acciones" data-acciones></div>
     `;
@@ -890,6 +1030,7 @@ const FOTOS_CATALOGO = Object.fromEntries(
     ($('[data-tabs]') as HTMLElement).style.display = 'none';
   } else {
     cargarInicio();
+    revisarAvisosNuevos();
   }
 </script>
 
@@ -982,12 +1123,91 @@ const FOTOS_CATALOGO = Object.fromEntries(
 
   /* -- tarjeta de ganancias (inicio) -------------------------------------- */
 
+  .app .estrellas {
+    color: var(--terracotta);
+    font-size: 0.92rem;
+    font-weight: 600;
+    margin: 0.35rem 0 0;
+  }
+
   .app .tarjeta-ganancias {
+    display: block;
+    width: 100%;
+    text-align: left;
+    border: none;
+    font: inherit;
+    cursor: pointer;
     background: var(--card-dark);
     color: #fff;
     border-radius: var(--radius-lg);
-    padding: 1.3rem 1.4rem 1.4rem;
+    padding: 1.3rem 1.4rem 1.2rem;
     margin-bottom: 1.2rem;
+    transition: transform 160ms var(--ease-out);
+  }
+
+  .app .tarjeta-ganancias:active { transform: scale(0.99); }
+
+  .app .ganancias-toca {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin: 0.8rem 0 0;
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.6);
+  }
+
+  .app .chevron {
+    display: inline-block;
+    transition: transform 180ms var(--ease-out);
+  }
+
+  .app .chevron--abierto { transform: rotate(180deg); }
+
+  /* El corte de la semana, plegado bajo la tarjeta. */
+  .app .desglose {
+    margin: -0.4rem 0 1.2rem;
+    transition: opacity 180ms var(--ease-out), transform 180ms var(--ease-out);
+  }
+
+  .app .corte-total {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.8rem;
+    margin: 0 0 0.15rem;
+    font-size: 1.02rem;
+  }
+
+  .app .corte-total strong {
+    font-size: 1.25rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .app .corte-dias { margin-top: 0.7rem; }
+
+  .app .corte-dia {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    gap: 0.8rem;
+    align-items: center;
+    padding: 0.5rem 0;
+    margin: 0;
+    font-size: 0.92rem;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .app .corte-dia:last-child { border-bottom: none; }
+
+  .app .corte-monto {
+    font-weight: 600;
+    color: var(--green-deep);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .app .corte-monto em {
+    font-style: normal;
+    font-size: 0.8rem;
+    color: var(--choco-deep);
   }
 
   .app .ganancias-etiqueta {
@@ -1246,7 +1466,20 @@ const FOTOS_CATALOGO = Object.fromEntries(
 
   .app .detalle-cliente { margin: 0.3rem 0 0.8rem; color: var(--ink-soft); }
 
-  .app .detalle-contacto { display: flex; gap: 0.6rem; margin: 0 0 1rem; }
+  .app .detalle-contacto {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    margin: 0 0 1rem;
+  }
+
+  .app .problema {
+    display: inline-block;
+    margin-top: 0.9rem;
+    font-size: 0.88rem;
+    color: var(--choco-deep);
+    text-decoration: underline;
+  }
 
   .app .detalle-nota {
     white-space: pre-wrap;
@@ -1372,7 +1605,10 @@ const FOTOS_CATALOGO = Object.fromEntries(
     padding: 0.35rem 0.4rem calc(0.35rem + env(safe-area-inset-bottom, 0px));
   }
 
+  .tabs [hidden] { display: none !important; }
+
   .tabs .tab {
+    position: relative;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -1397,9 +1633,28 @@ const FOTOS_CATALOGO = Object.fromEntries(
     font-weight: 600;
   }
 
+  /* El globito rojo de avisos nuevos, junto a la campana. */
+  .tabs .tab-globito {
+    position: absolute;
+    top: 0.15rem;
+    left: calc(50% + 7px);
+    min-width: 17px;
+    height: 17px;
+    padding: 0 4px;
+    display: grid;
+    place-items: center;
+    border-radius: 999px;
+    background: var(--red);
+    color: #fff;
+    font-size: 0.66rem;
+    font-weight: 700;
+    line-height: 1;
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .app .pendiente-card:active,
     .app .pedido-card:active,
+    .app .tarjeta-ganancias:active,
     .tabs .tab:active {
       transform: none;
     }
