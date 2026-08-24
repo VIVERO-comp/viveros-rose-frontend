@@ -35,6 +35,12 @@ const PROVINCES = [
   'Los Santos',
   'Veraguas',
 ];
+
+// Con la llave de Google Maps configurada, la direccion gana autocompletado
+// (Places API New, restringido a Panama) y el boton para marcar el punto
+// exacto en un mapa. Sin la llave, el checkout se ve y funciona exactamente
+// igual que siempre: nada de esto se renderiza.
+const GOOGLE_MAPS_KEY = import.meta.env.PUBLIC_GOOGLE_MAPS_KEY ?? '';
 ---
 
 <Base
@@ -93,14 +99,37 @@ const PROVINCES = [
             <label for="district">Corregimiento o barriada *</label>
             <input type="text" id="district" name="district" required />
           </div>
-          <div class="field">
+          <div class="field field--direccion">
             <label for="address">Dirección: calle, casa o edificio *</label>
             <input type="text" id="address" name="address" required autocomplete="street-address" />
+            {GOOGLE_MAPS_KEY && <div class="sugerencias" data-sugerencias hidden></div>}
           </div>
           <div class="field">
             <label for="reference">Apartamento, piso, referencia (opcional)</label>
             <input type="text" id="reference" name="reference" />
           </div>
+          {GOOGLE_MAPS_KEY && (
+            <div class="field">
+              <button type="button" class="mapa-boton" data-abrir-mapa>
+                📍 Marcar el punto exacto en el mapa <span class="suave-inline">(opcional)</span>
+              </button>
+              <p class="mapa-marcado" data-mapa-marcado hidden>
+                <span>✓ Punto de entrega marcado</span>
+                <button type="button" class="mapa-quitar" data-quitar-punto>Quitar</button>
+              </p>
+              <div class="mapa-panel" data-mapa-panel hidden>
+                <p class="help">Mueve el mapa hasta que el pin quede en tu puerta.</p>
+                <div class="mapa-lienzo" data-mapa>
+                  <span class="mapa-pin" aria-hidden="true">📍</span>
+                </div>
+                <div class="mapa-acciones">
+                  <button type="button" class="mapa-secundario" data-usar-gps>Usar mi ubicación</button>
+                  <button type="button" class="mapa-confirmar" data-confirmar-punto>Confirmar este punto</button>
+                </div>
+                <p class="help mapa-error" data-mapa-error hidden>El mapa no está disponible ahora; tu dirección escrita es suficiente.</p>
+              </div>
+            </div>
+          )}
         </div>
 
         <h2>Método de entrega</h2>
@@ -262,6 +291,185 @@ const PROVINCES = [
     });
   }
 
+  // -- ubicacion exacta (solo existe con PUBLIC_GOOGLE_MAPS_KEY) -----------
+  //
+  // El punto que marca el cliente viaja como cliente.ubicacion {lat, lng}
+  // JUNTO al texto de la direccion, nunca en vez de el. Google se carga
+  // perezoso (al escribir la direccion o abrir el mapa), y cualquier fallo
+  // deja el checkout funcionando como siempre: el texto es el respaldo.
+  const MAPS_KEY = import.meta.env.PUBLIC_GOOGLE_MAPS_KEY as string | undefined;
+  let ubicacion: { lat: number; lng: number } | null = null;
+
+  if (MAPS_KEY && document.querySelector('[data-abrir-mapa]')) {
+    const campoDireccion = document.querySelector<HTMLInputElement>('#address')!;
+    const sugerenciasEl = document.querySelector<HTMLElement>('[data-sugerencias]')!;
+    const botonMapa = document.querySelector<HTMLElement>('[data-abrir-mapa]')!;
+    const panelMapa = document.querySelector<HTMLElement>('[data-mapa-panel]')!;
+    const lienzoMapa = document.querySelector<HTMLElement>('[data-mapa]')!;
+    const marcadoEl = document.querySelector<HTMLElement>('[data-mapa-marcado]')!;
+    const errorMapa = document.querySelector<HTMLElement>('[data-mapa-error]')!;
+
+    const CENTRO_PANAMA = { lat: 8.9824, lng: -79.5199 };
+    const textoOriginalBoton = botonMapa.innerHTML;
+    let promesaGoogle: Promise<any> | null = null;
+    let mapa: any = null;
+    let tokenSesion: any = null;
+
+    function cargarGoogle(): Promise<any> {
+      if (!promesaGoogle) {
+        promesaGoogle = new Promise((listo, fallo) => {
+          (window as any).__mapsListo = () => listo((window as any).google);
+          const script = document.createElement('script');
+          script.src =
+            'https://maps.googleapis.com/maps/api/js?key=' +
+            encodeURIComponent(MAPS_KEY!) +
+            '&v=weekly&loading=async&language=es&region=PA&callback=__mapsListo';
+          script.onerror = () => fallo(new Error('google maps no cargo'));
+          document.head.appendChild(script);
+        });
+      }
+      return promesaGoogle;
+    }
+
+    function marcarPunto(punto: { lat: number; lng: number }) {
+      ubicacion = punto;
+      marcadoEl.hidden = false;
+      botonMapa.textContent = '📍 Ajustar el punto en el mapa';
+    }
+
+    // Autocompletado con dropdown propio (Places API New): el input del
+    // formulario no se toca, las sugerencias se pintan debajo con el estilo
+    // del sitio.
+    let temporizador: ReturnType<typeof setTimeout> | undefined;
+    campoDireccion.addEventListener('input', () => {
+      clearTimeout(temporizador);
+      const texto = campoDireccion.value.trim();
+      if (texto.length < 3) {
+        sugerenciasEl.hidden = true;
+        return;
+      }
+      temporizador = setTimeout(() => sugerir(texto), 300);
+    });
+    document.addEventListener('click', (e) => {
+      if (!sugerenciasEl.contains(e.target as Node) && e.target !== campoDireccion) {
+        sugerenciasEl.hidden = true;
+      }
+    });
+
+    async function sugerir(texto: string) {
+      try {
+        const google = await cargarGoogle();
+        const { AutocompleteSuggestion, AutocompleteSessionToken } =
+          await google.maps.importLibrary('places');
+        tokenSesion ??= new AutocompleteSessionToken();
+        const { suggestions } = await AutocompleteSuggestion.fetchAutocompleteSuggestions({
+          input: texto,
+          sessionToken: tokenSesion,
+          includedRegionCodes: ['pa'],
+          language: 'es-419',
+        });
+        if (campoDireccion.value.trim() !== texto) return; // ya siguio escribiendo
+        pintarSugerencias(suggestions.slice(0, 5));
+      } catch {
+        sugerenciasEl.hidden = true; // sin sugerencias no pasa nada: texto libre
+      }
+    }
+
+    function pintarSugerencias(sugerencias: any[]) {
+      if (!sugerencias.length) {
+        sugerenciasEl.hidden = true;
+        return;
+      }
+      sugerenciasEl.innerHTML = '';
+      for (const sugerencia of sugerencias) {
+        const boton = document.createElement('button');
+        boton.type = 'button';
+        boton.className = 'sugerencia';
+        boton.textContent = sugerencia.placePrediction.text.text;
+        boton.addEventListener('click', () => elegirSugerencia(sugerencia));
+        sugerenciasEl.appendChild(boton);
+      }
+      sugerenciasEl.hidden = false;
+    }
+
+    async function elegirSugerencia(sugerencia: any) {
+      sugerenciasEl.hidden = true;
+      campoDireccion.value = sugerencia.placePrediction.text.text;
+      try {
+        const lugar = sugerencia.placePrediction.toPlace();
+        // Cierra la sesion de autocompletado (asi las sugerencias son gratis).
+        await lugar.fetchFields({ fields: ['location'] });
+        tokenSesion = null;
+        if (lugar.location) {
+          marcarPunto({ lat: lugar.location.lat(), lng: lugar.location.lng() });
+          if (mapa) {
+            mapa.setCenter(ubicacion!);
+            mapa.setZoom(17);
+          }
+        }
+      } catch {
+        tokenSesion = null; // el texto elegido queda igual; sin coordenadas
+      }
+    }
+
+    // El mapa con el pin fijo al centro: se mueve el mapa, no el pin. Es el
+    // gesto mas comodo con una mano y no depende de arrastrar un marcador.
+    async function abrirMapa() {
+      panelMapa.hidden = false;
+      errorMapa.hidden = true;
+      try {
+        const google = await cargarGoogle();
+        const { Map } = await google.maps.importLibrary('maps');
+        if (!mapa) {
+          mapa = new Map(lienzoMapa, {
+            center: ubicacion ?? CENTRO_PANAMA,
+            zoom: ubicacion ? 17 : 12,
+            disableDefaultUI: true,
+            zoomControl: true,
+            clickableIcons: false,
+            gestureHandling: 'greedy',
+          });
+        } else if (ubicacion) {
+          mapa.setCenter(ubicacion);
+        }
+      } catch {
+        errorMapa.hidden = false;
+      }
+    }
+
+    botonMapa.addEventListener('click', () => {
+      if (panelMapa.hidden) abrirMapa();
+      else panelMapa.hidden = true;
+    });
+
+    document.querySelector('[data-confirmar-punto]')!.addEventListener('click', () => {
+      if (!mapa) return;
+      const centro = mapa.getCenter();
+      marcarPunto({
+        lat: Number(centro.lat().toFixed(7)),
+        lng: Number(centro.lng().toFixed(7)),
+      });
+      panelMapa.hidden = true;
+    });
+
+    document.querySelector('[data-usar-gps]')!.addEventListener('click', () => {
+      navigator.geolocation?.getCurrentPosition(
+        (posicion) => {
+          mapa?.setCenter({ lat: posicion.coords.latitude, lng: posicion.coords.longitude });
+          mapa?.setZoom(17);
+        },
+        () => {}, // permiso negado: el mapa se queda donde estaba
+        { enableHighAccuracy: true, timeout: 8000 },
+      );
+    });
+
+    document.querySelector('[data-quitar-punto]')!.addEventListener('click', () => {
+      ubicacion = null;
+      marcadoEl.hidden = true;
+      botonMapa.innerHTML = textoOriginalBoton;
+    });
+  }
+
   const form = document.querySelector<HTMLFormElement>('.checkout-form');
   const error = document.querySelector<HTMLElement>('.form-error');
   const submitBtn = document.querySelector<HTMLButtonElement>('.submit-btn');
@@ -332,6 +540,8 @@ const PROVINCES = [
             calle: data.get('address'),
             ciudad: `${data.get('district')}, ${data.get('province')}`,
             notas: gift ? gift.trim() : null,
+            // El punto exacto del mapa o del autocompletado, si lo marco.
+            ...(ubicacion ? { ubicacion } : {}),
           },
           envio: envioId,
           metodo_pago: pagoId,
@@ -483,6 +693,139 @@ const PROVINCES = [
     color: var(--ink-soft);
     margin: -0.3rem 0 0.85rem;
   }
+
+  /* -- ubicacion exacta (solo se renderiza con la llave de Google) -------- */
+
+  /* Los bloques del mapa usan display propio: sin esto, el atributo hidden
+     perderia contra esas reglas. */
+  .checkout-form [hidden] { display: none !important; }
+
+  .field--direccion { position: relative; }
+
+  .sugerencias {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 30;
+    margin-top: -0.6rem;
+    background: #ffffff;
+    border: 1px solid rgba(27, 42, 31, 0.22);
+    border-radius: 10px;
+    box-shadow: 0 10px 26px rgba(27, 42, 31, 0.14);
+    overflow: hidden;
+  }
+
+  .sugerencia {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 0.7rem 0.95rem;
+    border: none;
+    background: none;
+    font-family: var(--font-ui);
+    font-size: 0.9rem;
+    color: var(--ink);
+    cursor: pointer;
+  }
+
+  .sugerencia + .sugerencia { border-top: 1px solid rgba(27, 42, 31, 0.1); }
+
+  .sugerencia:hover,
+  .sugerencia:focus { background: var(--green-tint); }
+
+  /* Boton discreto: se lee como enlace, no compite con el formulario. */
+  .mapa-boton {
+    align-self: flex-start;
+    background: none;
+    border: none;
+    padding: 0;
+    font-family: var(--font-ui);
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--green-deep);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    cursor: pointer;
+  }
+
+  .suave-inline { font-weight: 400; color: var(--ink-soft); text-decoration: none; }
+
+  .mapa-marcado {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    margin: 0.6rem 0 0;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--green-deep);
+  }
+
+  .mapa-quitar {
+    background: none;
+    border: none;
+    padding: 0;
+    font: inherit;
+    font-weight: 400;
+    color: var(--ink-faint);
+    text-decoration: underline;
+    cursor: pointer;
+  }
+
+  .mapa-panel { margin-top: 0.85rem; }
+
+  .mapa-lienzo {
+    position: relative;
+    height: 300px;
+    border: 1px solid rgba(27, 42, 31, 0.22);
+    border-radius: 12px;
+    background: var(--surface-2);
+    overflow: hidden;
+  }
+
+  /* El pin fijo al centro: se mueve el mapa, no el pin. La punta del pin es
+     el punto que se guarda, por eso el ajuste vertical. */
+  .mapa-pin {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -100%);
+    font-size: 2rem;
+    z-index: 2;
+    pointer-events: none;
+    filter: drop-shadow(0 2px 3px rgba(27, 42, 31, 0.35));
+  }
+
+  .mapa-acciones {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.7rem;
+    margin-top: 0.7rem;
+  }
+
+  .mapa-secundario,
+  .mapa-confirmar {
+    font-family: var(--font-ui);
+    font-weight: 600;
+    font-size: 0.9rem;
+    padding: 0.65rem 1.1rem;
+    border-radius: 10px;
+    cursor: pointer;
+  }
+
+  .mapa-secundario {
+    background: #ffffff;
+    border: 1px solid rgba(27, 42, 31, 0.22);
+    color: var(--ink);
+  }
+
+  .mapa-confirmar {
+    background: var(--green-deep);
+    border: 1px solid var(--green-deep);
+    color: #ffffff;
+  }
+
+  .mapa-error { color: var(--amber); }
 
   .option-list {
     display: flex;

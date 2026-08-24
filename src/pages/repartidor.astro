@@ -643,8 +643,21 @@ const FOTOS_CATALOGO = Object.fromEntries(
       );
     const notaTexto = p.nota ? notaComoTexto(p.nota) : '';
     const direccion = extraerDireccion(notaTexto);
-    const mapsUrl = direccion
-      ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${direccion}, Panamá`)}`
+    // Navegacion de un toque: con el punto exacto que marco el cliente si
+    // existe, y con el texto de la direccion si no. Waze o Google Maps son
+    // enlaces universales: abren la app instalada, gratis y sin llave.
+    const destinoNav = p.ubicacion
+      ? `${p.ubicacion.lat},${p.ubicacion.lng}`
+      : direccion
+        ? `${direccion}, Panamá`
+        : null;
+    const navUrls = destinoNav
+      ? {
+          waze: p.ubicacion
+            ? `https://waze.com/ul?ll=${encodeURIComponent(destinoNav)}&navigate=yes`
+            : `https://waze.com/ul?q=${encodeURIComponent(destinoNav)}&navigate=yes`,
+          gmaps: `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destinoNav)}`,
+        }
       : null;
     const waContacto = telefono ? enlaceWhatsApp(telefono, textoContacto(p)) : null;
     // Problemas en la calle (no contesta, direccion mala, se rompio algo):
@@ -656,9 +669,6 @@ const FOTOS_CATALOGO = Object.fromEntries(
       telefono ? `<a class="btn btn--ghost" href="tel:${escapar(telefono)}">Llamar</a>` : '',
       waContacto
         ? `<a class="btn btn--ghost" href="${waContacto}" target="_blank" rel="noopener">WhatsApp</a>`
-        : '',
-      mapsUrl
-        ? `<a class="btn btn--ghost" href="${mapsUrl}" target="_blank" rel="noopener">Cómo llegar</a>`
         : '',
     ]
       .filter(Boolean)
@@ -674,6 +684,18 @@ const FOTOS_CATALOGO = Object.fromEntries(
         ${botonesContacto ? `<p class="detalle-contacto">${botonesContacto}</p>` : ''}
         ${telefono ? '' : '<p class="suave">El pedido no tiene teléfono; la dirección va en la nota.</p>'}
         ${notaTexto ? `<pre class="detalle-nota">${escapar(notaTexto)}</pre>` : ''}
+        ${
+          navUrls
+            ? `<div class="nav-zona">
+                 <button class="btn btn--green btn-grande" type="button" data-navegar>🧭 Ir a la dirección</button>
+                 <div class="nav-opciones" data-nav-opciones hidden>
+                   <a class="btn btn--ghost" href="${navUrls.waze}" target="_blank" rel="noopener" data-nav-app="waze">Waze</a>
+                   <a class="btn btn--ghost" href="${navUrls.gmaps}" target="_blank" rel="noopener" data-nav-app="gmaps">Google Maps</a>
+                 </div>
+                 <button class="nav-otra" type="button" data-nav-otra hidden>Usar otra app de navegación</button>
+               </div>`
+            : ''
+        }
         <ul class="items">${items}</ul>
         <p class="detalle-total">Total: <strong>$${Number(p.total).toFixed(2)}</strong></p>
         ${p.repartidor && !mio ? `<p class="suave">Lo lleva ${escapar(p.repartidor)}.</p>` : ''}
@@ -683,6 +705,36 @@ const FOTOS_CATALOGO = Object.fromEntries(
     `;
 
     const acciones = detalleEl.querySelector<HTMLElement>('[data-acciones]')!;
+
+    // Navegacion: la primera vez se elige Waze o Google Maps; la eleccion se
+    // recuerda y los siguientes toques van directo (un solo toque en la
+    // calle). "Usar otra app" reabre la eleccion.
+    const zonaNav = detalleEl.querySelector<HTMLElement>('.nav-zona');
+    if (zonaNav && navUrls) {
+      const botonNav = zonaNav.querySelector<HTMLButtonElement>('[data-navegar]')!;
+      const opciones = zonaNav.querySelector<HTMLElement>('[data-nav-opciones]')!;
+      const otraApp = zonaNav.querySelector<HTMLElement>('[data-nav-otra]')!;
+      const preferida = () => localStorage.getItem('vr_nav_app') as 'waze' | 'gmaps' | null;
+      const abrirOpciones = () => {
+        opciones.hidden = false;
+        otraApp.hidden = true;
+        animarEntrada(opciones, 'pantalla-entrando');
+      };
+      if (preferida()) otraApp.hidden = false;
+      botonNav.addEventListener('click', () => {
+        const app = preferida();
+        if (app && navUrls[app]) window.open(navUrls[app], '_blank', 'noopener');
+        else abrirOpciones();
+      });
+      otraApp.addEventListener('click', abrirOpciones);
+      opciones.querySelectorAll<HTMLElement>('[data-nav-app]').forEach((enlace) => {
+        enlace.addEventListener('click', () => {
+          localStorage.setItem('vr_nav_app', enlace.getAttribute('data-nav-app')!);
+          opciones.hidden = true;
+          otraApp.hidden = false;
+        });
+      });
+    }
 
     if (entregado) {
       acciones.innerHTML = '<p class="hecho">✅ Entregado</p>';
@@ -1471,6 +1523,36 @@ const FOTOS_CATALOGO = Object.fromEntries(
     flex-wrap: wrap;
     gap: 0.6rem;
     margin: 0 0 1rem;
+  }
+
+  /* La navegacion: lo primero despues de la direccion, grande para tocarlo
+     con el pulgar en la calle. */
+  .app .nav-zona {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    margin: 0 0 1rem;
+  }
+
+  .app .nav-opciones {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.6rem;
+    transition: opacity 180ms var(--ease-out), transform 180ms var(--ease-out);
+  }
+
+  .app .nav-opciones .btn { text-align: center; padding: 0.8rem 0.6rem; }
+
+  .app .nav-otra {
+    align-self: flex-start;
+    background: none;
+    border: none;
+    padding: 0;
+    font: inherit;
+    font-size: 0.82rem;
+    color: var(--ink-faint);
+    text-decoration: underline;
+    cursor: pointer;
   }
 
   .app .problema {
