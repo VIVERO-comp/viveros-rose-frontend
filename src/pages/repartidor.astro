@@ -862,6 +862,23 @@ const FOTOS_CATALOGO = Object.fromEntries(
     $('[data-instalar]').hidden = true;
   });
 
+  // El globito rojo del icono se apaga al abrir (o volver a) la app: los
+  // avisos ya se vieron, y los que sigan en el centro de notificaciones se
+  // recogen para que el conteo del service worker vuelva a cero.
+  function limpiarGlobito() {
+    (navigator as any).clearAppBadge?.().catch(() => {});
+    navigator.serviceWorker
+      ?.getRegistration('/sw-avisos.js')
+      .then((registro) =>
+        registro?.getNotifications().then((avisos) => avisos.forEach((a) => a.close())),
+      )
+      .catch(() => {});
+  }
+  limpiarGlobito();
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) limpiarGlobito();
+  });
+
   const instalada = window.matchMedia('(display-mode: standalone)').matches;
   if (!instalada && !localStorage.getItem('vr_instalar_visto')) {
     $('[data-instalar]').hidden = false;
