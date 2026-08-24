@@ -26,6 +26,8 @@ Implementa la arquitectura de informacion y el sistema visual de la propuesta de
 | `/checkout/success` | Confirmacion del pedido creado |
 | `/pedido` | Rastreo publico de pedido por numero |
 | `/cuenta` | Cuenta del cliente: historial de pedidos; `entrar`, `registro`, `verificar` y `recuperar` |
+| `/repartidor` | Portal del repartidor (instalable como app; la clave del enlace personal es la credencial; noindex) |
+| `/calificar` | Calificacion de la entrega con propina opcional (se llega por WhatsApp; noindex) |
 | `/privacidad` y `/terminos` | Paginas legales |
 
 ## Desarrollo

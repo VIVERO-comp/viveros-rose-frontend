@@ -20,9 +20,13 @@ interface Props {
   minimalLinkHref?: string;
   minimalLinkLabel?: string;
   // true en paginas transaccionales o privadas (carrito, checkout, pedido,
-  // cuenta): les pone <meta name="robots" content="noindex"> y quedan tambien
-  // filtradas del sitemap en astro.config.mjs.
+  // cuenta, repartidor, calificar): les pone <meta name="robots"
+  // content="noindex"> y quedan tambien filtradas del sitemap en
+  // astro.config.mjs.
   noindex?: boolean;
+  // Ruta de un web app manifest (solo /repartidor: lo hace instalable como
+  // app en la pantalla de inicio del celular).
+  manifest?: string;
 }
 
 const {
@@ -34,6 +38,7 @@ const {
   minimalLinkHref = '/plantas',
   minimalLinkLabel = 'Seguir comprando',
   noindex = false,
+  manifest,
 } = Astro.props;
 
 // La canonica usa solo el pathname: las variantes del catalogo con parametros
@@ -64,6 +69,7 @@ const socialImageUrl = new URL(socialImage, Astro.site).href;
     />
     <meta name="description" content={description} />
     {noindex && <meta name="robots" content="noindex" />}
+    {manifest && <link rel="manifest" href={manifest} />}
     <link rel="canonical" href={canonicalUrl} />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />

@@ -1,0 +1,14 @@
+{
+  "name": "Repartos Vivero Rose",
+  "short_name": "Repartos",
+  "description": "Portal del repartidor de Plantas Panama: pedidos listos para salir, agarrar y entregar con foto.",
+  "start_url": "/repartidor",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#eef5f0",
+  "theme_color": "#1b2a1f",
+  "icons": [
+    { "src": "/icono-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icono-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

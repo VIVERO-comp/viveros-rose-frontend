@@ -1,0 +1,721 @@
+---
+// Portal del repartidor. Movil primero e instalable como app (manifest +
+// service worker): el enlace personal ...?clave=... que genera Odoo es la
+// unica credencial; se guarda en el navegador y todas las llamadas salen por
+// las funciones de servidor de este sitio (la clave nunca queda en HTML
+// servido a otros, la pagina es estatica y los datos llegan por fetch).
+//
+// Flujo: lista de pedidos activos -> detalle con direccion y contacto ->
+// "Agarrar" (candado atomico en Odoo) -> WhatsApp "va en camino" -> foto de
+// entrega (la foto ES el "Entregado") -> WhatsApp "califica tu compra".
+import Base from '../layouts/Base.astro';
+import { products } from '../data/products';
+
+// La foto del catalogo por SKU, para pintar las lineas del pedido sin que
+// viajen binarios de Odoo (el emoji es el respaldo de siempre).
+const FOTOS_CATALOGO = Object.fromEntries(
+  products.map((p) => [p.sku, { image: p.image ?? null, emoji: p.emoji }]),
+);
+---
+
+<Base
+  noindex
+  title="Repartos"
+  description="Portal del repartidor de Vivero Rose."
+  chrome="bare"
+  manifest="/manifest-repartidor.webmanifest"
+>
+  <section class="section portal">
+    <div class="container portal-container">
+      <header class="portal-head">
+        <div>
+          <p class="portal-kicker">VIVERO ROSE</p>
+          <h1>Repartos</h1>
+          <p class="portal-quien" data-quien hidden></p>
+        </div>
+        <button class="btn btn--ghost btn-refrescar" data-refrescar type="button">Actualizar</button>
+      </header>
+
+      <!-- Sin clave: solo se entra con el enlace personal. -->
+      <div class="tarjeta aviso-sin-clave" data-sin-clave hidden>
+        <p><strong>Falta tu enlace personal.</strong></p>
+        <p>
+          Abre el enlace de repartidor que te mandaron por WhatsApp (termina en
+          <code>?clave=…</code>). Si no lo tienes, pide que te lo reenvíen desde el vivero.
+        </p>
+      </div>
+
+      <!-- Clave del dueno: no lista pedidos, pero si activa avisos. -->
+      <div class="tarjeta" data-modo-dueno hidden>
+        <p><strong>Avisos del negocio.</strong> Esta clave no es de un repartidor:
+        sirve para recibir los avisos de pedidos nuevos y retrasos en este teléfono.</p>
+      </div>
+
+      <div class="banda-push" data-banda-push hidden>
+        <p>Activa los avisos para que te suene el teléfono cuando haya un pedido listo.</p>
+        <button class="btn btn--green" data-activar-push type="button">Activar avisos</button>
+      </div>
+      <p class="push-estado" data-push-estado hidden></p>
+
+      <p class="instalar-pista" data-instalar hidden>
+        Instala esta página como app: en el menú del navegador elige
+        <strong>“Agregar a pantalla de inicio”</strong>.
+        <button class="cerrar-pista" data-cerrar-instalar type="button" aria-label="Cerrar">✕</button>
+      </p>
+
+      <p class="portal-mensaje" data-mensaje hidden></p>
+
+      <!-- Vista 1: la lista -->
+      <div data-vista-lista>
+        <div data-lista></div>
+      </div>
+
+      <!-- Vista 2: el detalle -->
+      <div data-vista-detalle hidden>
+        <button class="volver" data-volver type="button">← Todos los pedidos</button>
+        <div data-detalle></div>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<script is:inline define:vars={{ FOTOS_CATALOGO }}>
+  window.FOTOS_CATALOGO = FOTOS_CATALOGO;
+</script>
+
+<script>
+  const $ = <T extends HTMLElement>(sel: string) => document.querySelector<T>(sel)!;
+  const listaEl = $('[data-lista]');
+  const detalleEl = $('[data-detalle]');
+  const vistaLista = $('[data-vista-lista]');
+  const vistaDetalle = $('[data-vista-detalle]');
+  const mensajeEl = $('[data-mensaje]');
+  const quienEl = $('[data-quien]');
+
+  const FOTOS: Record<string, { image: string | null; emoji: string }> =
+    (window as any).FOTOS_CATALOGO ?? {};
+
+  const ETIQUETA_ESTADO: Record<string, string> = {
+    listo: 'Listo para salir',
+    saliendo: 'Saliendo',
+    en_camino: 'En camino',
+    entregado: 'Entregado',
+  };
+
+  // -- credencial -----------------------------------------------------------
+
+  const parametros = new URLSearchParams(location.search);
+  const claveUrl = parametros.get('clave');
+  if (claveUrl) {
+    localStorage.setItem('vr_clave_repartidor', claveUrl);
+    // La clave no se queda en la barra ni en el historial compartible.
+    history.replaceState(null, '', '/repartidor');
+  }
+  const clave = claveUrl || localStorage.getItem('vr_clave_repartidor') || '';
+
+  // Mapa numero -> es_mio de la ultima lista, para pintar el detalle.
+  const esMio = new Map<string, boolean>();
+
+  function mensaje(texto: string) {
+    mensajeEl.textContent = texto;
+    mensajeEl.hidden = !texto;
+  }
+
+  function escapar(texto: string): string {
+    const div = document.createElement('div');
+    div.textContent = texto;
+    return div.innerHTML;
+  }
+
+  // -- lista ----------------------------------------------------------------
+
+  async function cargarLista() {
+    mensaje('');
+    listaEl.innerHTML = '<p class="cargando">Cargando pedidos…</p>';
+    try {
+      const res = await fetch(`/api/repartidor/pedidos?clave=${encodeURIComponent(clave)}`);
+      if (res.status === 401) {
+        listaEl.innerHTML = '';
+        // Puede ser la clave del dueno (solo avisos) o una clave mala; el
+        // boton de avisos decide: si la suscripcion entra, era del dueno.
+        $('[data-modo-dueno]').hidden = false;
+        mostrarBandaPush();
+        return;
+      }
+      if (!res.ok) throw new Error();
+      const datos = await res.json();
+      quienEl.textContent = datos.repartidor;
+      quienEl.hidden = false;
+      esMio.clear();
+      for (const p of datos.pedidos) esMio.set(p.numero, p.es_mio);
+      pintarLista(datos.pedidos);
+      mostrarBandaPush();
+    } catch {
+      listaEl.innerHTML = '';
+      mensaje('No pudimos cargar los pedidos. Revisa tu señal y toca “Actualizar”.');
+    }
+  }
+
+  function pintarLista(pedidos: any[]) {
+    if (!pedidos.length) {
+      listaEl.innerHTML =
+        '<div class="tarjeta vacio"><p>No hay pedidos para salir ahora mismo.</p>' +
+        '<p class="suave">Cuando un pedido quede listo te llegará un aviso (si los activaste).</p></div>';
+      return;
+    }
+    const mios = pedidos.filter((p) => p.es_mio);
+    const libres = pedidos.filter((p) => !p.repartidor);
+    const deOtros = pedidos.filter((p) => p.repartidor && !p.es_mio);
+    listaEl.innerHTML = [
+      bloque('Mis entregas', mios),
+      bloque('Disponibles', libres),
+      bloque('Los llevan otros', deOtros),
+    ].join('');
+    listaEl.querySelectorAll('[data-numero]').forEach((el) =>
+      el.addEventListener('click', () => abrirDetalle(el.getAttribute('data-numero')!)),
+    );
+  }
+
+  function bloque(titulo: string, pedidos: any[]): string {
+    if (!pedidos.length) return '';
+    return (
+      `<h2 class="bloque-titulo">${titulo}</h2>` +
+      pedidos
+        .map(
+          (p) => `
+        <button class="tarjeta pedido-card" data-numero="${escapar(p.numero)}" type="button">
+          <span class="pedido-linea1">
+            <span class="pedido-numero">${escapar(p.numero)}</span>
+            <span class="chip chip--${p.estado_entrega}">${ETIQUETA_ESTADO[p.estado_entrega] ?? p.estado_entrega}</span>
+          </span>
+          <span class="pedido-linea2">
+            <span>${escapar(p.cliente ?? 'Cliente')}${p.ciudad ? ' · ' + escapar(p.ciudad) : ''}</span>
+            <span class="pedido-total">$${Number(p.total).toFixed(2)}</span>
+          </span>
+          ${p.con_retraso ? '<span class="chip chip--retraso">Con retraso</span>' : ''}
+          ${p.repartidor && !p.es_mio ? `<span class="suave">Lo lleva ${escapar(p.repartidor)}</span>` : ''}
+        </button>`,
+        )
+        .join('')
+    );
+  }
+
+  // -- detalle --------------------------------------------------------------
+
+  async function abrirDetalle(numero: string) {
+    vistaLista.hidden = true;
+    vistaDetalle.hidden = false;
+    detalleEl.innerHTML = '<p class="cargando">Cargando pedido…</p>';
+    try {
+      const res = await fetch(
+        `/api/repartidor/pedidos/${encodeURIComponent(numero)}?clave=${encodeURIComponent(clave)}`,
+      );
+      if (!res.ok) throw new Error();
+      pintarDetalle(await res.json());
+    } catch {
+      detalleEl.innerHTML =
+        '<div class="tarjeta"><p>No pudimos cargar este pedido. Vuelve a la lista e intenta de nuevo.</p></div>';
+    }
+  }
+
+  function fotoItem(sku: string | null): string {
+    const ficha = sku ? FOTOS[sku] : null;
+    if (ficha?.image) {
+      return `<img class="item-foto" src="${ficha.image}" alt="" loading="lazy" />`;
+    }
+    return `<span class="item-foto item-emoji">${ficha?.emoji ?? '🪴'}</span>`;
+  }
+
+  function enlaceWhatsApp(telefono: string | null, texto: string): string | null {
+    if (!telefono) return null;
+    let digitos = telefono.replace(/\D/g, '');
+    if (digitos.length === 8) digitos = '507' + digitos;
+    if (digitos.length < 10) return null;
+    return `https://wa.me/${digitos}?text=${encodeURIComponent(texto)}`;
+  }
+
+  function pintarDetalle(p: any, whatsappServidor?: string | null) {
+    // Con whatsappServidor definido venimos de "agarrar": el pedido es mio.
+    const mio = whatsappServidor !== undefined ? true : esMio.get(p.numero) ?? false;
+    const entregado = p.estado_entrega === 'entregado';
+    const deOtro = p.repartidor && !mio && !entregado;
+
+    const items = (p.items ?? [])
+      .map(
+        (item: any) => `
+        <li class="item">
+          ${fotoItem(item.sku)}
+          <span class="item-nombre">${escapar(item.descripcion)}</span>
+          <span class="item-cant">× ${item.cantidad}</span>
+        </li>`,
+      )
+      .join('');
+
+    const telefono = p.cliente?.telefono ?? null;
+    const waCamino =
+      whatsappServidor ??
+      enlaceWhatsApp(
+        telefono,
+        `Hola${p.cliente?.nombre ? ' ' + p.cliente.nombre : ''}! Soy ${quienEl.textContent || 'tu repartidor'}, de Vivero Rose. ` +
+          `Tu pedido ${p.numero} va en camino. Puedes seguirlo aqui: ${location.origin}/pedido?n=${p.numero}`,
+      );
+
+    detalleEl.innerHTML = `
+      <div class="tarjeta">
+        <p class="pedido-linea1">
+          <span class="pedido-numero">${escapar(p.numero)}</span>
+          <span class="chip chip--${p.estado_entrega}">${ETIQUETA_ESTADO[p.estado_entrega] ?? p.estado_entrega}</span>
+        </p>
+        <p class="detalle-cliente">${escapar(p.cliente?.nombre ?? 'Cliente')}${p.cliente?.ciudad ? ' · ' + escapar(p.cliente.ciudad) : ''}</p>
+        ${
+          telefono
+            ? `<p class="detalle-contacto">
+                 <a class="btn btn--ghost" href="tel:${escapar(telefono)}">Llamar</a>
+                 ${waCamino ? `<a class="btn btn--ghost" href="${enlaceWhatsApp(telefono, `Hola, soy el repartidor de Vivero Rose, sobre tu pedido ${p.numero}:`)}" target="_blank" rel="noopener">WhatsApp</a>` : ''}
+               </p>`
+            : '<p class="suave">El pedido no tiene teléfono; la dirección va en la nota.</p>'
+        }
+        ${p.nota ? `<pre class="detalle-nota">${escapar(p.nota)}</pre>` : ''}
+        <ul class="items">${items}</ul>
+        <p class="detalle-total">Total: <strong>$${Number(p.total).toFixed(2)}</strong></p>
+        ${p.repartidor && !mio ? `<p class="suave">Lo lleva ${escapar(p.repartidor)}.</p>` : ''}
+      </div>
+      <div class="acciones" data-acciones></div>
+    `;
+
+    const acciones = detalleEl.querySelector<HTMLElement>('[data-acciones]')!;
+
+    if (entregado) {
+      acciones.innerHTML = '<p class="hecho">✅ Entregado</p>';
+      return;
+    }
+    if (deOtro) return;
+
+    if (!p.repartidor) {
+      const boton = document.createElement('button');
+      boton.className = 'btn btn--green btn-grande';
+      boton.type = 'button';
+      boton.textContent = 'Agarrar este pedido';
+      boton.addEventListener('click', () => agarrar(p.numero, boton));
+      acciones.appendChild(boton);
+      return;
+    }
+
+    // Es mio y sigue en la calle: avisar y entregar con foto.
+    if (waCamino) {
+      const wa = document.createElement('a');
+      wa.className = 'btn btn--whatsapp btn-grande';
+      wa.href = waCamino;
+      wa.target = '_blank';
+      wa.rel = 'noopener';
+      wa.textContent = 'Avisar “va en camino” por WhatsApp';
+      acciones.appendChild(wa);
+    }
+    acciones.insertAdjacentHTML(
+      'beforeend',
+      `<label class="btn btn--primary btn-grande btn-foto">
+         📷 Entregar con foto
+         <input type="file" accept="image/*" capture="environment" data-foto hidden />
+       </label>
+       <p class="suave foto-pista">La foto de la entrega es la prueba: sin foto el pedido no queda entregado.</p>
+       <p class="foto-estado" data-foto-estado hidden></p>`,
+    );
+    acciones
+      .querySelector<HTMLInputElement>('[data-foto]')!
+      .addEventListener('change', (e) => subirFoto(p, e.target as HTMLInputElement));
+  }
+
+  async function agarrar(numero: string, boton: HTMLButtonElement) {
+    boton.disabled = true;
+    boton.textContent = 'Agarrando…';
+    try {
+      const res = await fetch(`/api/repartidor/pedidos/${encodeURIComponent(numero)}/agarrar`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ clave }),
+      });
+      const datos = await res.json();
+      if (res.ok) {
+        esMio.set(numero, true);
+        pintarDetalle(datos.pedido, datos.whatsapp ?? null);
+        return;
+      }
+      if (res.status === 409 && datos.error === 'ya_agarrado') {
+        mensaje('Otro repartidor lo agarró primero. La lista se actualizó.');
+        volverALista();
+        return;
+      }
+      throw new Error();
+    } catch {
+      boton.disabled = false;
+      boton.textContent = 'Agarrar este pedido';
+      mensaje('No se pudo agarrar el pedido. Revisa tu señal e intenta de nuevo.');
+    }
+  }
+
+  // -- foto de entrega ------------------------------------------------------
+
+  // Las fotos de celular pesan 2–8 MB y las funciones de Vercel cortan cerca
+  // de 4.5 MB: se comprime en el navegador (~1600 px, JPEG 80%) antes de
+  // subir. Si el navegador no puede, sube la original y el limite lo pone el
+  // servidor.
+  async function comprimir(archivo: File): Promise<Blob> {
+    try {
+      const bitmap = await createImageBitmap(archivo);
+      const escala = Math.min(1, 1600 / Math.max(bitmap.width, bitmap.height));
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.round(bitmap.width * escala);
+      canvas.height = Math.round(bitmap.height * escala);
+      canvas.getContext('2d')!.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+      const blob = await new Promise<Blob | null>((listo) =>
+        canvas.toBlob(listo, 'image/jpeg', 0.8),
+      );
+      return blob ?? archivo;
+    } catch {
+      return archivo;
+    }
+  }
+
+  async function subirFoto(p: any, input: HTMLInputElement) {
+    const archivo = input.files?.[0];
+    if (!archivo) return;
+    const estado = detalleEl.querySelector<HTMLElement>('[data-foto-estado]')!;
+    estado.hidden = false;
+    estado.textContent = 'Subiendo la foto…';
+    try {
+      const foto = await comprimir(archivo);
+      const form = new FormData();
+      form.set('clave', clave);
+      form.set('foto', foto, 'entrega.jpg');
+      const res = await fetch(`/api/repartidor/pedidos/${encodeURIComponent(p.numero)}/foto`, {
+        method: 'POST',
+        body: form,
+      });
+      const datos = await res.json();
+      if (!res.ok) throw new Error(datos.message);
+      const acciones = detalleEl.querySelector<HTMLElement>('[data-acciones]')!;
+      acciones.innerHTML =
+        '<p class="hecho">✅ Entregado. ¡Buen trabajo!</p>' +
+        (datos.whatsapp
+          ? `<a class="btn btn--whatsapp btn-grande" href="${datos.whatsapp}" target="_blank" rel="noopener">
+               Avisar “entregado” y pedir la calificación
+             </a>`
+          : '');
+    } catch {
+      estado.textContent =
+        'La foto no subió (¿mala señal?). Vuelve a tocar “Entregar con foto”: reintentar es seguro.';
+      input.value = '';
+    }
+  }
+
+  function volverALista() {
+    vistaDetalle.hidden = true;
+    vistaLista.hidden = false;
+    cargarLista();
+  }
+
+  // -- avisos push ----------------------------------------------------------
+
+  function mostrarBandaPush() {
+    const soporta = 'serviceWorker' in navigator && 'PushManager' in window;
+    if (!soporta || localStorage.getItem('vr_push_activado')) return;
+    $('[data-banda-push]').hidden = false;
+  }
+
+  function base64aBytes(base64: string): Uint8Array {
+    const relleno = '='.repeat((4 - (base64.length % 4)) % 4);
+    const crudo = atob((base64 + relleno).replace(/-/g, '+').replace(/_/g, '/'));
+    return Uint8Array.from(crudo, (c) => c.charCodeAt(0));
+  }
+
+  async function activarAvisos() {
+    const estado = $('[data-push-estado]');
+    estado.hidden = false;
+    try {
+      const permiso = await Notification.requestPermission();
+      if (permiso !== 'granted') {
+        estado.textContent = 'Los avisos quedaron bloqueados en el navegador.';
+        return;
+      }
+      const registro = await navigator.serviceWorker.register('/sw-avisos.js');
+      await navigator.serviceWorker.ready;
+      const resClave = await fetch('/api/push/clave-publica');
+      if (!resClave.ok) {
+        estado.textContent = 'Los avisos no están configurados todavía en el servidor.';
+        return;
+      }
+      const { clave_publica } = await resClave.json();
+      const suscripcion = await registro.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: base64aBytes(clave_publica),
+      });
+      const res = await fetch('/api/push/suscribir', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ clave, suscripcion: suscripcion.toJSON() }),
+      });
+      if (res.status === 401) {
+        estado.textContent = 'Esta clave no puede recibir avisos: pide un enlace nuevo.';
+        return;
+      }
+      if (!res.ok) throw new Error();
+      localStorage.setItem('vr_push_activado', '1');
+      $('[data-banda-push]').hidden = true;
+      estado.textContent = '✅ Avisos activados en este teléfono.';
+    } catch {
+      estado.textContent = 'No se pudieron activar los avisos. Intenta de nuevo.';
+    }
+  }
+
+  // -- arranque -------------------------------------------------------------
+
+  $('[data-refrescar]').addEventListener('click', volverALista);
+  $('[data-volver]').addEventListener('click', volverALista);
+  $('[data-activar-push]').addEventListener('click', activarAvisos);
+  $('[data-cerrar-instalar]').addEventListener('click', () => {
+    localStorage.setItem('vr_instalar_visto', '1');
+    $('[data-instalar]').hidden = true;
+  });
+
+  const instalada = window.matchMedia('(display-mode: standalone)').matches;
+  if (!instalada && !localStorage.getItem('vr_instalar_visto')) {
+    $('[data-instalar]').hidden = false;
+  }
+
+  if (!clave) {
+    $('[data-sin-clave]').hidden = false;
+  } else {
+    cargarLista();
+  }
+</script>
+
+<!-- Global a proposito: la lista y el detalle se inyectan con innerHTML y el
+     CSS scoped de Astro no los alcanzaria. Todo va prefijado con .portal
+     (solo existe en esta pagina) para no tocar nada mas. -->
+<style is:global>
+  /* El flotante de WhatsApp del negocio no pinta nada aqui: los botones de
+     accion del repartidor viven abajo y chocarian. */
+  .wa-float { display: none !important; }
+
+  /* La banda de push y las vistas usan display propio: sin esto, el atributo
+     hidden perderia contra esas reglas. */
+  .portal [hidden] { display: none !important; }
+
+  .portal .portal-container { max-width: 34rem; }
+
+  .portal .portal-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.4rem;
+  }
+
+  .portal-kicker {
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
+    color: var(--ink-faint);
+    margin: 0 0 0.2rem;
+  }
+
+  .portal h1 { font-weight: 400; margin: 0; }
+
+  .portal-quien { color: var(--ink-soft); margin: 0.2rem 0 0; }
+
+  .portal .btn-refrescar { flex-shrink: 0; }
+
+  .portal .tarjeta {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-cart);
+    padding: 1.2rem 1.3rem;
+    margin-bottom: 0.9rem;
+  }
+
+  .portal .aviso-sin-clave code { font-size: 0.9em; }
+
+  .portal .banda-push {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background: var(--green-tint);
+    border: 1px solid rgba(21, 102, 47, 0.25);
+    border-radius: var(--radius-cart);
+    padding: 1rem 1.2rem;
+    margin-bottom: 0.9rem;
+  }
+
+  .portal .banda-push p { margin: 0; font-size: 0.92rem; }
+  .portal .banda-push .btn { flex-shrink: 0; }
+
+  .portal .push-estado { color: var(--ink-soft); font-size: 0.92rem; }
+
+  .portal .instalar-pista {
+    position: relative;
+    background: var(--surface-tint);
+    border-radius: var(--radius);
+    padding: 0.8rem 2.4rem 0.8rem 1rem;
+    font-size: 0.88rem;
+    color: var(--ink-soft);
+  }
+
+  .portal .cerrar-pista {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.6rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--ink-faint);
+    font-size: 0.9rem;
+  }
+
+  .portal-mensaje {
+    background: var(--amber-bg);
+    color: var(--amber-text);
+    border-radius: var(--radius);
+    padding: 0.8rem 1rem;
+    font-size: 0.92rem;
+  }
+
+  .portal .cargando { color: var(--ink-soft); }
+
+  .portal .bloque-titulo {
+    font-size: 0.8rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin: 1.4rem 0 0.6rem;
+    font-weight: 600;
+  }
+
+  .portal .pedido-card {
+    display: block;
+    width: 100%;
+    text-align: left;
+    cursor: pointer;
+    font: inherit;
+    color: inherit;
+  }
+
+  .portal .pedido-card:active { transform: scale(0.99); }
+
+  .portal .pedido-linea1,
+  .portal .pedido-linea2 {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.8rem;
+  }
+
+  .portal .pedido-linea1 { margin-bottom: 0.35rem; }
+
+  .portal .pedido-numero { font-weight: 600; font-size: 0.95rem; }
+
+  .portal .pedido-linea2 { color: var(--ink-soft); font-size: 0.9rem; }
+
+  .portal .pedido-total { font-weight: 600; color: var(--ink); }
+
+  .portal .chip {
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    padding: 0.2rem 0.6rem;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+
+  .portal .chip--listo { background: var(--green-tint); color: var(--green-deep); }
+  .portal .chip--saliendo { background: var(--green-tint); color: var(--green-deep); }
+  .portal .chip--en_camino { background: var(--card-dark); color: var(--green-light); }
+  .portal .chip--entregado { background: var(--surface-tint); color: var(--ink-soft); }
+  .portal .chip--retraso {
+    display: inline-block;
+    margin-top: 0.5rem;
+    background: var(--amber-bg);
+    color: var(--amber-text);
+  }
+
+  .portal .suave { color: var(--ink-faint); font-size: 0.85rem; margin: 0.4rem 0 0; }
+
+  .portal .volver {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font: inherit;
+    color: var(--ink);
+    padding: 0;
+    margin-bottom: 1rem;
+  }
+
+  .portal .detalle-cliente { margin: 0.3rem 0 0.8rem; color: var(--ink-soft); }
+
+  .portal .detalle-contacto { display: flex; gap: 0.6rem; margin: 0 0 1rem; }
+
+  .portal .detalle-nota {
+    white-space: pre-wrap;
+    word-break: break-word;
+    font: inherit;
+    font-size: 0.92rem;
+    background: var(--surface-tint);
+    border-radius: var(--radius);
+    padding: 0.9rem 1rem;
+    margin: 0 0 1rem;
+  }
+
+  .portal .items { list-style: none; padding: 0; margin: 0 0 1rem; }
+
+  .portal .item {
+    display: grid;
+    grid-template-columns: 44px minmax(0, 1fr) auto;
+    gap: 0.7rem;
+    align-items: center;
+    padding: 0.45rem 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .portal .item:last-child { border-bottom: none; }
+
+  .portal .item-foto {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    object-fit: cover;
+    background: var(--surface-2);
+  }
+
+  .portal .item-emoji {
+    display: grid;
+    place-items: center;
+    font-size: 1.4rem;
+  }
+
+  .portal .item-nombre { font-size: 0.92rem; }
+  .portal .item-cant { color: var(--ink-soft); font-size: 0.92rem; }
+
+  .portal .detalle-total { margin: 0; }
+
+  .portal .acciones { display: flex; flex-direction: column; gap: 0.7rem; }
+
+  .portal .btn-grande {
+    width: 100%;
+    padding: 0.95rem 1rem;
+    font-size: 1rem;
+    text-align: center;
+  }
+
+  .portal .btn-foto { cursor: pointer; }
+
+  .portal .foto-pista { margin: 0; }
+
+  .portal .foto-estado {
+    background: var(--amber-bg);
+    color: var(--amber-text);
+    border-radius: var(--radius);
+    padding: 0.7rem 0.9rem;
+    font-size: 0.9rem;
+    margin: 0;
+  }
+
+  .portal .hecho { font-size: 1.1rem; font-weight: 600; margin: 0; }
+</style>

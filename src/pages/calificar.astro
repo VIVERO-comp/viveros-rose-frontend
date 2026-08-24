@@ -1,0 +1,285 @@
+---
+// Calificacion de la entrega (y propina opcional). Se llega solo por el
+// WhatsApp posterior a la entrega, con ?n=VR-...: el numero es la
+// credencial, igual que en el rastreo. La propina por Yappy no pasa por la
+// tienda: aqui solo se registra que se eligio y se muestra el celular del
+// repartidor para enviarla directo.
+import Base from '../layouts/Base.astro';
+import { whatsappLink } from '../lib/site';
+---
+
+<Base
+  noindex
+  title="Califica tu entrega"
+  description="Cuéntanos cómo llegó tu pedido de Vivero Rose."
+  chrome="minimal"
+  minimalLinkHref="/"
+  minimalLinkLabel="Volver al inicio"
+>
+  <section class="section">
+    <div class="container calificar-container">
+      <h1>Califica tu entrega</h1>
+      <p class="page-sub" data-sub>Tu pedido <span data-numero></span></p>
+
+      <p class="mensaje" data-mensaje hidden></p>
+
+      <form class="tarjeta" data-formulario hidden>
+        <fieldset class="campo-estrellas">
+          <legend>¿Cómo llegó tu pedido?</legend>
+          <div class="estrellas" data-estrellas>
+            {[1, 2, 3, 4, 5].map((n) => (
+              <button type="button" data-valor={n} aria-label={`${n} de 5 estrellas`}>★</button>
+            ))}
+          </div>
+        </fieldset>
+
+        <fieldset class="campo-propina">
+          <legend>¿Quieres dejarle propina al repartidor?</legend>
+          <label class="opcion">
+            <input type="radio" name="propina" value="ninguno" checked />
+            <span>Esta vez no</span>
+          </label>
+          <label class="opcion">
+            <input type="radio" name="propina" value="yappy" />
+            <span>Sí, por Yappy (directo a su celular)</span>
+          </label>
+          <label class="opcion">
+            <input type="radio" name="propina" value="efectivo" />
+            <span>Ya le di en efectivo</span>
+          </label>
+          <div class="field monto" data-campo-monto hidden>
+            <label for="monto">Monto (USD)</label>
+            <input type="number" id="monto" min="0.25" step="0.25" placeholder="2.00" inputmode="decimal" />
+            <p class="field-error" data-error-monto hidden>Escribe el monto de la propina.</p>
+          </div>
+        </fieldset>
+
+        <p class="field-error" data-error hidden></p>
+        <button type="submit" class="btn btn--green btn-enviar">Enviar calificación</button>
+      </form>
+
+      <div class="tarjeta gracias" data-gracias hidden>
+        <p class="gracias-titulo">🌿 ¡Gracias por tu calificación!</p>
+        <p data-gracias-detalle></p>
+        <div data-yappy hidden>
+          <p>
+            Para enviar la propina, abre tu app de <strong>Yappy</strong> y mándala al celular
+            de <span data-repartidor-nombre></span>:
+          </p>
+          <p class="telefono-yappy"><strong data-repartidor-telefono></strong></p>
+        </div>
+        <a class="btn btn--ghost" href="/plantas">Seguir comprando</a>
+      </div>
+
+      <p class="lost-link" data-ayuda hidden>
+        ¿Algo salió mal con tu entrega? Escríbenos por
+        <a href={whatsappLink('Hola, tuve un problema con mi entrega.')} target="_blank" rel="noopener">WhatsApp</a>.
+      </p>
+    </div>
+  </section>
+</Base>
+
+<script>
+  const $ = <T extends HTMLElement>(sel: string) => document.querySelector<T>(sel)!;
+  const formulario = $('[data-formulario]') as unknown as HTMLFormElement;
+  const mensajeEl = $('[data-mensaje]');
+  const graciasEl = $('[data-gracias]');
+
+  const numero = new URLSearchParams(location.search).get('n') ?? '';
+  $('[data-numero]').textContent = numero;
+
+  let estrellas = 0;
+  let datosPedido: { repartidor: string | null; telefono_repartidor: string | null } | null = null;
+
+  function mensaje(texto: string) {
+    mensajeEl.textContent = texto;
+    mensajeEl.hidden = false;
+    $('[data-ayuda]').hidden = false;
+  }
+
+  function pintarEstrellas() {
+    document.querySelectorAll<HTMLButtonElement>('[data-estrellas] button').forEach((b) => {
+      b.classList.toggle('activa', Number(b.dataset.valor) <= estrellas);
+    });
+  }
+
+  function mostrarGracias(detalle: string, conYappy: boolean) {
+    formulario.hidden = true;
+    mensajeEl.hidden = true;
+    graciasEl.hidden = false;
+    $('[data-gracias-detalle]').textContent = detalle;
+    if (conYappy && datosPedido?.telefono_repartidor) {
+      $('[data-yappy]').hidden = false;
+      $('[data-repartidor-nombre]').textContent = datosPedido.repartidor ?? 'tu repartidor';
+      $('[data-repartidor-telefono]').textContent = datosPedido.telefono_repartidor;
+    }
+  }
+
+  async function cargar() {
+    if (!/^VR-\d{8}-[A-Z2-9]{4,12}$/.test(numero)) {
+      $('[data-sub]').hidden = true;
+      mensaje('Falta el número de pedido. Abre el enlace que te llegó por WhatsApp tras la entrega.');
+      return;
+    }
+    try {
+      const res = await fetch(`/api/calificaciones/${encodeURIComponent(numero)}`);
+      if (res.status === 404) {
+        mensaje('No encontramos un pedido con ese número.');
+        return;
+      }
+      if (!res.ok) throw new Error();
+      const datos = await res.json();
+      datosPedido = datos;
+      if (datos.calificada) {
+        mostrarGracias(`Este pedido ya tiene su calificación (${datos.estrellas} de 5). ¡Gracias!`, false);
+        return;
+      }
+      if (!datos.entregado) {
+        mensaje('Este pedido aún no está entregado. Podrás calificarlo cuando lo recibas.');
+        return;
+      }
+      formulario.hidden = false;
+    } catch {
+      mensaje('No pudimos cargar tu pedido en este momento. Intenta de nuevo en un rato.');
+    }
+  }
+
+  document.querySelectorAll<HTMLButtonElement>('[data-estrellas] button').forEach((b) => {
+    b.addEventListener('click', () => {
+      estrellas = Number(b.dataset.valor);
+      pintarEstrellas();
+    });
+  });
+
+  document.querySelectorAll<HTMLInputElement>('input[name="propina"]').forEach((radio) => {
+    radio.addEventListener('change', () => {
+      // El monto solo aplica a Yappy; con efectivo puede quedar sin fijar y
+      // "esta vez no" no lleva monto.
+      $('[data-campo-monto]').hidden = radio.value !== 'yappy' || !radio.checked;
+    });
+  });
+
+  formulario.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const error = $('[data-error]');
+    error.hidden = true;
+    if (!estrellas) {
+      error.textContent = 'Elige de 1 a 5 estrellas.';
+      error.hidden = false;
+      return;
+    }
+    const metodo = (document.querySelector('input[name="propina"]:checked') as HTMLInputElement).value;
+    let centavos = 0;
+    if (metodo === 'yappy') {
+      const monto = parseFloat(($('#monto') as HTMLInputElement).value);
+      if (!monto || monto <= 0) {
+        $('[data-error-monto]').hidden = false;
+        return;
+      }
+      centavos = Math.round(monto * 100);
+    }
+    const boton = formulario.querySelector<HTMLButtonElement>('.btn-enviar')!;
+    boton.disabled = true;
+    boton.textContent = 'Enviando…';
+    try {
+      const res = await fetch(`/api/calificaciones/${encodeURIComponent(numero)}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ estrellas, propina_centavos: centavos, metodo_propina: metodo }),
+      });
+      const datos = await res.json();
+      if (res.status === 409 && datos.error === 'already_rated') {
+        mostrarGracias('Este pedido ya tenía una calificación. ¡Gracias!', false);
+        return;
+      }
+      if (!res.ok) throw new Error();
+      mostrarGracias(
+        metodo === 'yappy'
+          ? 'Registramos tu calificación y tu propina de $' + (centavos / 100).toFixed(2) + '.'
+          : 'Registramos tu calificación.',
+        metodo === 'yappy',
+      );
+    } catch {
+      boton.disabled = false;
+      boton.textContent = 'Enviar calificación';
+      error.textContent = 'No se pudo enviar. Revisa tu conexión e intenta de nuevo.';
+      error.hidden = false;
+    }
+  });
+
+  cargar();
+</script>
+
+<style>
+  .calificar-container { max-width: 34rem; }
+
+  h1 { font-weight: 400; margin-bottom: 0.2rem; }
+
+  .page-sub { color: var(--ink-soft); margin: 0 0 2rem; }
+
+  .tarjeta {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-cart);
+    padding: 1.6rem;
+  }
+
+  .mensaje {
+    background: var(--surface-tint);
+    border-radius: var(--radius);
+    padding: 1rem 1.2rem;
+    color: var(--ink-soft);
+  }
+
+  fieldset { border: none; padding: 0; margin: 0 0 1.5rem; }
+
+  legend { font-weight: 600; margin-bottom: 0.7rem; padding: 0; }
+
+  .estrellas { display: flex; gap: 0.3rem; }
+
+  .estrellas button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 2.2rem;
+    line-height: 1;
+    color: var(--line-strong);
+    padding: 0.15rem;
+    transition: transform 0.12s var(--ease-out);
+  }
+
+  .estrellas button:active { transform: scale(0.9); }
+
+  .estrellas button.activa { color: var(--terracotta); }
+
+  .opcion {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 0.6rem;
+    padding: 0.4rem 0;
+    cursor: pointer;
+    font-weight: 400;
+  }
+
+  /* El input global mide 100% (campos de texto): un radio no. */
+  .opcion input { width: auto; margin: 0; }
+
+  .monto { margin-top: 0.7rem; max-width: 12rem; }
+
+  .btn-enviar { width: 100%; padding: 0.9rem 1rem; }
+
+  .gracias-titulo { font-size: 1.2rem; font-weight: 600; margin: 0 0 0.8rem; }
+
+  .telefono-yappy {
+    font-size: 1.3rem;
+    background: var(--green-tint);
+    border-radius: var(--radius);
+    padding: 0.7rem 1rem;
+    display: inline-block;
+  }
+
+  .gracias .btn { margin-top: 0.6rem; }
+
+  .lost-link { font-size: 0.95rem; color: var(--ink-soft); margin-top: 1.2rem; }
+</style>

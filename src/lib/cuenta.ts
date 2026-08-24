@@ -48,6 +48,24 @@ export async function llamarOrderApi(
   }
 }
 
+/**
+ * Reenvia un formulario multipart al order-api (la foto de entrega del
+ * repartidor): el JSON de llamarOrderApi no sirve para archivos.
+ */
+export async function llamarOrderApiForm(ruta: string, form: FormData): Promise<Response> {
+  const conf = config();
+  if (!conf) return sinConfigurar();
+  try {
+    return await fetch(`${conf.base}${ruta}`, {
+      method: 'POST',
+      headers: { 'X-API-Key': conf.clave },
+      body: form,
+    });
+  } catch {
+    return inalcanzable();
+  }
+}
+
 export function tokenDeSesion(cookies: AstroCookies): string | undefined {
   return cookies.get(SESION_COOKIE)?.value;
 }

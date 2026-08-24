@@ -58,6 +58,10 @@ const steps = [
             </li>
           ))}
         </ol>
+        <p class="tracking-delay" data-result-delay hidden>
+          Tu entrega está tardando más de lo previsto. Ya lo tenemos en la mira;
+          si quieres detalles, escríbenos por WhatsApp.
+        </p>
         <p class="tracking-message" data-result-message></p>
         <a class="btn btn--whatsapp" data-result-whatsapp target="_blank" rel="noopener">
           Preguntar por mi pedido
@@ -81,6 +85,7 @@ const steps = [
   const result = document.querySelector<HTMLElement>('.tracking-result');
   const numberEl = document.querySelector<HTMLElement>('[data-result-number]');
   const messageEl = document.querySelector<HTMLElement>('[data-result-message]');
+  const delayEl = document.querySelector<HTMLElement>('[data-result-delay]');
   const waLink = document.querySelector<HTMLAnchorElement>('[data-result-whatsapp]');
 
   // Estados del order-api -> paso del recorrido visual. Los pasos anteriores
@@ -103,6 +108,20 @@ const steps = [
     }
   }
 
+  // Odoo entrega fechas UTC sin zona ("2026-08-24 18:30:00"): se convierten
+  // a hora de Panama para mostrarlas.
+  function formatearFecha(fecha: string): string {
+    const utc = new Date(fecha.replace(' ', 'T') + 'Z');
+    if (Number.isNaN(utc.getTime())) return fecha;
+    return utc.toLocaleString('es-PA', {
+      timeZone: 'America/Panama',
+      day: 'numeric',
+      month: 'long',
+      hour: 'numeric',
+      minute: '2-digit',
+    });
+  }
+
   async function lookup(orderNumber: string) {
     if (numberEl) numberEl.textContent = orderNumber;
     if (waLink) {
@@ -114,17 +133,23 @@ const steps = [
       if (res.ok) {
         const data = await res.json();
         pintarProgreso(data.estado);
+        // El aviso ambar de retraso lo enciende la revision periodica del
+        // order-api (y Abraham lo apaga a mano cuando lo resuelve).
+        if (delayEl) delayEl.hidden = !(data.retraso && data.estado !== 'Entregado');
         if (messageEl) {
           messageEl.textContent =
             data.estado === 'Cancelado'
               ? 'Este pedido fue cancelado. Si crees que es un error, escríbenos:'
-              : `Estado actual: ${data.estado}`;
+              : data.estado === 'Entregado' && data.entregado_en
+                ? `Entregado el ${formatearFecha(data.entregado_en)}.`
+                : `Estado actual: ${data.estado}`;
         }
         result?.removeAttribute('hidden');
         return;
       }
       if (res.status === 404) {
         pintarProgreso('');
+        if (delayEl) delayEl.hidden = true;
         if (messageEl) {
           messageEl.textContent =
             'No encontramos un pedido con ese número. Revisa que esté completo (VR-fecha-código) o escríbenos:';
@@ -137,6 +162,7 @@ const steps = [
     }
 
     pintarProgreso('');
+    if (delayEl) delayEl.hidden = true;
     if (messageEl) {
       messageEl.textContent =
         'No pudimos consultar el estado en este momento. Consulta por WhatsApp con un solo clic:';
@@ -232,6 +258,15 @@ const steps = [
     display: block;
     font-size: 0.82rem;
     color: var(--ink-soft);
+  }
+
+  .tracking-delay {
+    background: var(--amber-bg);
+    color: var(--amber-text);
+    border-radius: 14px;
+    padding: 0.85rem 1.1rem;
+    font-size: 0.92rem;
+    margin: 0 0 1.15rem;
   }
 
   .tracking-message { color: var(--ink-soft); }

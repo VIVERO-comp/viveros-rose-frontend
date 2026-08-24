@@ -12,14 +12,13 @@ en `src/data/products.ts` ni en Odoo. Cuando Abraham decida si vende
 accesorios, se crean como productos con su SKU y la sección del carrito se
 cambia a los complementos del diseño.
 
-## Notificar a Abraham cada pedido nuevo
+## Notificar a Abraham cada pedido nuevo — resuelto el 24/08/2026
 
-Del flujo de pedido original solo queda esto. El resto ya está conectado: el
-checkout crea el pedido real en el order-api (número `VR-...`),
-`checkout/success` es la confirmación real, y `/pedido` y el panel del navbar
-consultan `GET /api/orders/{numero}`, que ya existe. El cliente recibe su
-correo de confirmación por SES, pero Abraham hoy se entera del pedido por
-Odoo o por el WhatsApp del cliente; falta una notificación interna.
+El order-api manda el correo de aviso a `CORREO_ADMIN` en cada pedido nuevo
+y en cada entrega con foto, y con las claves VAPID configuradas también el
+Web Push del dueño (se activa abriendo `/repartidor?clave=<clave del dueño>`
+y tocando "Activar avisos"). Queda aquí hasta verificarlo con pedidos
+reales.
 
 (El pendiente de CORS del stock proxy se resolvió en ese repo: la lectura de
 stock es pública, con CORS para los dominios de la tienda y límite por IP.)
