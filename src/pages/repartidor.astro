@@ -1,13 +1,20 @@
 ---
-// Portal del repartidor. Movil primero e instalable como app (manifest +
-// service worker): el enlace personal ...?clave=... que genera Odoo es la
-// unica credencial; se guarda en el navegador y todas las llamadas salen por
-// las funciones de servidor de este sitio (la clave nunca queda en HTML
-// servido a otros, la pagina es estatica y los datos llegan por fetch).
+// Portal del repartidor. Se siente app, no pagina: tres pantallas (Inicio,
+// Pedidos, Notificaciones) con navegacion fija abajo, movil primero y para
+// usarse con una mano en la calle. Instalable (manifest + service worker).
 //
-// Flujo: lista de pedidos activos -> detalle con direccion y contacto ->
-// "Agarrar" (candado atomico en Odoo) -> WhatsApp "va en camino" -> foto de
-// entrega (la foto ES el "Entregado") -> WhatsApp "califica tu compra".
+// La credencial sigue siendo el enlace personal ...?clave=... que genera
+// Odoo: se guarda en el navegador y todas las llamadas salen por las
+// funciones de servidor de este sitio (la clave nunca queda en HTML servido
+// a otros; la pagina es estatica y los datos llegan por fetch).
+//
+// Pantallas:
+//   INICIO  saludo, tarjeta de ganancias de hoy (pagos sellados en Odoo +
+//           propinas registradas al calificar), pendientes y recientes.
+//   PEDIDOS la lista de siempre: mis entregas, disponibles, los de otros;
+//           detalle -> agarrar -> WhatsApp -> foto de entrega.
+//   AVISOS  historial de avisos agrupado por dia, con el activador de
+//           Web Push arriba.
 import Base from '../layouts/Base.astro';
 import { products } from '../data/products';
 
@@ -25,17 +32,9 @@ const FOTOS_CATALOGO = Object.fromEntries(
   chrome="bare"
   manifest="/manifest-repartidor.webmanifest"
 >
-  <section class="section portal">
-    <div class="container portal-container">
-      <header class="portal-head">
-        <div>
-          <p class="portal-kicker">VIVERO ROSE</p>
-          <h1>Repartos</h1>
-          <p class="portal-quien" data-quien hidden></p>
-        </div>
-        <button class="btn btn--ghost btn-refrescar" data-refrescar type="button">Actualizar</button>
-      </header>
-
+  <div class="app">
+    <!-- Estados globales: valen para cualquier pantalla. -->
+    <div class="globales">
       <!-- Sin clave: solo se entra con el enlace personal. La app instalada
            en iPhone no comparte lo guardado por Safari y abre /repartidor
            pelado, asi que el enlace tambien se puede pegar a mano una vez. -->
@@ -60,10 +59,10 @@ const FOTOS_CATALOGO = Object.fromEntries(
         <p class="suave">Si no tienes el enlace, pide que te lo reenvíen desde el vivero.</p>
       </div>
 
-      <!-- La lista respondio 401: clave vieja (se genero un enlace mas nuevo)
-           o la clave del dueno, que solo sirve para los avisos. -->
+      <!-- El resumen o la lista respondieron 401: clave vieja (se genero un
+           enlace mas nuevo) o la clave del dueno, que solo sirve para avisos. -->
       <div class="tarjeta" data-modo-dueno hidden>
-        <p><strong>Esta clave no abre la lista de pedidos.</strong></p>
+        <p><strong>Esta clave no abre el portal de pedidos.</strong></p>
         <p>
           Si eres repartidor, se generó un enlace más nuevo y este quedó viejo:
           pide el enlace vigente (en Odoo se copia del campo de la ficha, sin
@@ -74,13 +73,12 @@ const FOTOS_CATALOGO = Object.fromEntries(
           Si este es el enlace del dueño, es normal: solo sirve para recibir los
           avisos de pedidos nuevos y retrasos en este teléfono — actívalos abajo.
         </p>
+        <div class="banda-push" data-banda-push-dueno hidden>
+          <p>Activa los avisos para que te suene el teléfono cuando pase algo.</p>
+          <button class="btn btn--green" data-activar-push-dueno type="button">Activar avisos</button>
+        </div>
+        <p class="push-estado" data-push-estado-dueno hidden></p>
       </div>
-
-      <div class="banda-push" data-banda-push hidden>
-        <p>Activa los avisos para que te suene el teléfono cuando haya un pedido listo.</p>
-        <button class="btn btn--green" data-activar-push type="button">Activar avisos</button>
-      </div>
-      <p class="push-estado" data-push-estado hidden></p>
 
       <p class="instalar-pista" data-instalar hidden>
         Instala esta página como app: en el menú del navegador elige
@@ -89,19 +87,88 @@ const FOTOS_CATALOGO = Object.fromEntries(
       </p>
 
       <p class="portal-mensaje" data-mensaje hidden></p>
+    </div>
 
-      <!-- Vista 1: la lista -->
+    <!-- Pantalla 1: INICIO -->
+    <section class="pantalla" data-pantalla="inicio">
+      <header class="inicio-head">
+        <p class="kicker">VIVERO ROSE · REPARTOS</p>
+        <h1 class="saludo">Hola<span data-nombre></span></h1>
+      </header>
+
+      <div class="tarjeta-ganancias">
+        <p class="ganancias-etiqueta">Ganado hoy</p>
+        <p class="ganancias-monto" data-ganado-hoy>—</p>
+        <p class="ganancias-detalle">
+          <span data-entregas-hoy>—</span>
+          <span class="ganancias-propinas" data-propinas-hoy hidden></span>
+        </p>
+      </div>
+
+      <h2 class="bloque-titulo">Por entregar hoy</h2>
+      <div class="pendientes">
+        <button class="pendiente-card" type="button" data-ir-pedidos>
+          <span class="pendiente-numero" data-mios>—</span>
+          <span class="pendiente-nombre">Mis entregas</span>
+        </button>
+        <button class="pendiente-card pendiente-card--choco" type="button" data-ir-pedidos>
+          <span class="pendiente-numero" data-disponibles>—</span>
+          <span class="pendiente-nombre">Disponibles</span>
+        </button>
+      </div>
+
+      <h2 class="bloque-titulo">Entregas recientes</h2>
+      <div data-recientes><p class="cargando">Cargando…</p></div>
+    </section>
+
+    <!-- Pantalla 2: PEDIDOS -->
+    <section class="pantalla" data-pantalla="pedidos" hidden>
+      <header class="pantalla-head">
+        <h1>Pedidos</h1>
+        <button class="btn btn--ghost btn-refrescar" data-refrescar type="button">Actualizar</button>
+      </header>
+
       <div data-vista-lista>
         <div data-lista></div>
       </div>
 
-      <!-- Vista 2: el detalle -->
       <div data-vista-detalle hidden>
         <button class="volver" data-volver type="button">← Todos los pedidos</button>
         <div data-detalle></div>
       </div>
-    </div>
-  </section>
+    </section>
+
+    <!-- Pantalla 3: NOTIFICACIONES -->
+    <section class="pantalla" data-pantalla="avisos" hidden>
+      <header class="pantalla-head">
+        <h1>Notificaciones</h1>
+      </header>
+
+      <div class="banda-push" data-banda-push hidden>
+        <p>Activa los avisos para que te suene el teléfono cuando haya un pedido listo.</p>
+        <button class="btn btn--green" data-activar-push type="button">Activar avisos</button>
+      </div>
+      <p class="push-estado" data-push-estado hidden></p>
+
+      <div data-avisos><p class="cargando">Cargando…</p></div>
+    </section>
+  </div>
+
+  <!-- Navegacion fija abajo, alcanzable con el pulgar. -->
+  <nav class="tabs" data-tabs aria-label="Pantallas">
+    <button class="tab tab--activa" type="button" data-tab="inicio" aria-label="Inicio">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg>
+      <span>Inicio</span>
+    </button>
+    <button class="tab" type="button" data-tab="pedidos" aria-label="Pedidos">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 8.5 12 3 3 8.5v7L12 21l9-5.5v-7Z"/><path d="M3 8.5 12 14l9-5.5"/><path d="M12 14v7"/></svg>
+      <span>Pedidos</span>
+    </button>
+    <button class="tab" type="button" data-tab="avisos" aria-label="Notificaciones">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 9a6 6 0 1 0-12 0c0 6-2 7-2 7h16s-2-1-2-7"/><path d="M10.3 20a2 2 0 0 0 3.4 0"/></svg>
+      <span>Avisos</span>
+    </button>
+  </nav>
 </Base>
 
 <script is:inline define:vars={{ FOTOS_CATALOGO }}>
@@ -115,7 +182,8 @@ const FOTOS_CATALOGO = Object.fromEntries(
   const vistaLista = $('[data-vista-lista]');
   const vistaDetalle = $('[data-vista-detalle]');
   const mensajeEl = $('[data-mensaje]');
-  const quienEl = $('[data-quien]');
+  const recientesEl = $('[data-recientes]');
+  const avisosEl = $('[data-avisos]');
 
   const FOTOS: Record<string, { image: string | null; emoji: string }> =
     (window as any).FOTOS_CATALOGO ?? {};
@@ -138,6 +206,10 @@ const FOTOS_CATALOGO = Object.fromEntries(
   }
   const clave = claveUrl || localStorage.getItem('vr_clave_repartidor') || '';
 
+  // Nombre del repartidor (lo devuelve el resumen o la lista): saludo del
+  // inicio y "Agarraste el pedido" en los avisos.
+  let nombreRepartidor = '';
+
   // Mapa numero -> es_mio de la ultima lista, para pintar el detalle.
   const esMio = new Map<string, boolean>();
 
@@ -152,6 +224,16 @@ const FOTOS_CATALOGO = Object.fromEntries(
     return div.innerHTML;
   }
 
+  const dinero = (centavos: number) => `$${(centavos / 100).toFixed(2)}`;
+
+  // Odoo devuelve fechas UTC sin zona ("2026-08-24 14:00:00").
+  function fechaOdoo(valor: string): Date {
+    return new Date(valor.replace(' ', 'T') + 'Z');
+  }
+
+  const hora = (fecha: Date) =>
+    fecha.toLocaleTimeString('es-PA', { hour: 'numeric', minute: '2-digit' });
+
   // Odoo 19 guarda la nota como HTML (<p>, <br>): se convierte a texto plano
   // conservando los saltos de linea, sin ejecutar nada del HTML.
   function notaComoTexto(nota: string): string {
@@ -160,38 +242,158 @@ const FOTOS_CATALOGO = Object.fromEntries(
     return (doc.body.textContent ?? '').trim();
   }
 
-  // -- lista ----------------------------------------------------------------
+  function usarNombre(nombre: string) {
+    nombreRepartidor = nombre;
+    const pila = nombre.trim().split(/\s+/)[0];
+    $('[data-nombre]').textContent = pila ? `, ${pila}` : '';
+  }
 
-  async function cargarLista() {
+  // La misma respuesta 401 para el resumen, la lista y los avisos: clave del
+  // dueno (solo sirve para push) o clave vieja.
+  function manejar401() {
+    $('[data-modo-dueno]').hidden = false;
+    $('[data-banda-push-dueno]').hidden = Boolean(localStorage.getItem('vr_push_activado'));
+    document.querySelectorAll<HTMLElement>('.pantalla, .tabs').forEach((el) => {
+      el.hidden = true;
+      el.style.display = el.classList.contains('tabs') ? 'none' : '';
+    });
+  }
+
+  // -- pantallas y navegacion -----------------------------------------------
+
+  type Pantalla = 'inicio' | 'pedidos' | 'avisos';
+  let pantallaActual: Pantalla = 'inicio';
+
+  // Entrada breve (opacity/transform): la clase de arranque se aplica, el
+  // reflow forzado la hace contar y al quitarla la transicion corre. Es
+  // sincrono a proposito: con requestAnimationFrame, un navegador que
+  // congele frames (pestana tapada, jank) dejaria la pantalla invisible.
+  function animarEntrada(el: HTMLElement, clase: string) {
+    el.classList.add(clase);
+    void el.offsetWidth;
+    el.classList.remove(clase);
+  }
+
+  const CARGADORES: Record<Pantalla, () => void> = {
+    inicio: cargarInicio,
+    pedidos: cargarLista,
+    avisos: cargarAvisos,
+  };
+
+  function cambiarPantalla(destino: Pantalla) {
     mensaje('');
-    // Sin clave no hay nada que pedir: la tarjeta de pegar el enlace es la
-    // unica salida (tambien cubre "Actualizar" sin clave guardada).
-    if (!clave) {
-      listaEl.innerHTML = '';
-      $('[data-sin-clave]').hidden = false;
+    document.querySelectorAll<HTMLElement>('[data-tab]').forEach((tab) => {
+      tab.classList.toggle('tab--activa', tab.getAttribute('data-tab') === destino);
+    });
+    document.querySelectorAll<HTMLElement>('[data-pantalla]').forEach((pantalla) => {
+      const activa = pantalla.getAttribute('data-pantalla') === destino;
+      if (activa && pantalla.hidden) {
+        pantalla.hidden = false;
+        animarEntrada(pantalla, 'pantalla-entrando');
+      } else if (!activa) {
+        pantalla.hidden = true;
+      }
+    });
+    // Cada pantalla se refresca al entrar (tambien al re-tocar su tab): en la
+    // calle los datos cambian rapido y no hay boton mas simple que ese.
+    pantallaActual = destino;
+    window.scrollTo(0, 0);
+    if (clave) CARGADORES[destino]();
+  }
+
+  document.querySelectorAll<HTMLElement>('[data-tab]').forEach((tab) => {
+    tab.addEventListener('click', () => cambiarPantalla(tab.getAttribute('data-tab') as Pantalla));
+  });
+  document.querySelectorAll<HTMLElement>('[data-ir-pedidos]').forEach((boton) => {
+    boton.addEventListener('click', () => cambiarPantalla('pedidos'));
+  });
+
+  // -- pantalla INICIO ------------------------------------------------------
+
+  async function cargarInicio() {
+    try {
+      const res = await fetch(`/api/repartidor/resumen?clave=${encodeURIComponent(clave)}`);
+      if (res.status === 401) {
+        manejar401();
+        return;
+      }
+      if (!res.ok) throw new Error();
+      pintarInicio(await res.json());
+    } catch {
+      recientesEl.innerHTML = '';
+      mensaje('No pudimos cargar tu resumen. Revisa tu señal e intenta de nuevo.');
+    }
+  }
+
+  function pintarInicio(datos: any) {
+    usarNombre(datos.repartidor ?? '');
+
+    const pago = datos.hoy?.pago_centavos ?? 0;
+    const propinas = datos.hoy?.propinas_centavos ?? 0;
+    const entregas = datos.hoy?.entregas ?? 0;
+    $('[data-ganado-hoy]').textContent = dinero(pago + propinas);
+    $('[data-entregas-hoy]').textContent =
+      entregas === 1 ? '1 entrega hoy' : `${entregas} entregas hoy`;
+    const propinasEl = $('[data-propinas-hoy]');
+    propinasEl.hidden = propinas <= 0;
+    propinasEl.textContent = propinas > 0 ? `· ${dinero(propinas)} en propinas` : '';
+
+    $('[data-mios]').textContent = String(datos.pendientes?.mios ?? 0);
+    $('[data-disponibles]').textContent = String(datos.pendientes?.disponibles ?? 0);
+
+    const recientes = datos.recientes ?? [];
+    if (!recientes.length) {
+      recientesEl.innerHTML =
+        '<div class="tarjeta vacio"><p>Aún no tienes entregas.</p>' +
+        '<p class="suave">Cuando entregues tu primer pedido aparecerá aquí.</p></div>';
       return;
     }
-    $('[data-sin-clave]').hidden = true;
-    $('[data-modo-dueno]').hidden = true;
+    recientesEl.innerHTML = recientes
+      .map((entrega: any) => {
+        const cuando = entrega.entregado_en
+          ? fechaOdoo(entrega.entregado_en).toLocaleDateString('es-PA', {
+              day: 'numeric',
+              month: 'short',
+            }) + ` · ${hora(fechaOdoo(entrega.entregado_en))}`
+          : '';
+        return `
+        <div class="tarjeta reciente">
+          <span class="reciente-datos">
+            <span class="reciente-cliente">${escapar(entrega.cliente ?? 'Cliente')}</span>
+            <span class="suave">${escapar(entrega.numero)}${cuando ? ' · ' + cuando : ''}</span>
+          </span>
+          <span class="reciente-montos">
+            <span class="reciente-pago">${dinero(entrega.pago_centavos ?? 0)}</span>
+            ${
+              entrega.propina_centavos > 0
+                ? `<span class="chip chip--propina">+${dinero(entrega.propina_centavos)} propina</span>`
+                : ''
+            }
+          </span>
+        </div>`;
+      })
+      .join('');
+  }
+
+  // -- pantalla PEDIDOS: lista ----------------------------------------------
+
+  async function cargarLista() {
+    vistaDetalle.hidden = true;
+    vistaLista.hidden = false;
     listaEl.innerHTML = '<p class="cargando">Cargando pedidos…</p>';
     try {
       const res = await fetch(`/api/repartidor/pedidos?clave=${encodeURIComponent(clave)}`);
       if (res.status === 401) {
         listaEl.innerHTML = '';
-        // Puede ser la clave del dueno (solo avisos) o una clave mala; el
-        // boton de avisos decide: si la suscripcion entra, era del dueno.
-        $('[data-modo-dueno]').hidden = false;
-        mostrarBandaPush();
+        manejar401();
         return;
       }
       if (!res.ok) throw new Error();
       const datos = await res.json();
-      quienEl.textContent = datos.repartidor;
-      quienEl.hidden = false;
+      usarNombre(datos.repartidor ?? '');
       esMio.clear();
       for (const p of datos.pedidos) esMio.set(p.numero, p.es_mio);
       pintarLista(datos.pedidos);
-      mostrarBandaPush();
     } catch {
       listaEl.innerHTML = '';
       mensaje('No pudimos cargar los pedidos. Revisa tu señal y toca “Actualizar”.');
@@ -242,11 +444,14 @@ const FOTOS_CATALOGO = Object.fromEntries(
     );
   }
 
-  // -- detalle --------------------------------------------------------------
+  // -- pantalla PEDIDOS: detalle --------------------------------------------
 
   async function abrirDetalle(numero: string) {
     vistaLista.hidden = true;
     vistaDetalle.hidden = false;
+    // El detalle entra desde la derecha, como una sub-pantalla.
+    animarEntrada(vistaDetalle, 'detalle-entrando');
+    window.scrollTo(0, 0);
     detalleEl.innerHTML = '<p class="cargando">Cargando pedido…</p>';
     try {
       const res = await fetch(
@@ -275,7 +480,7 @@ const FOTOS_CATALOGO = Object.fromEntries(
       .map((item: any) => `${item.cantidad}× ${item.descripcion}`)
       .join(', ');
     return (
-      `Hola${p.cliente?.nombre ? ' ' + p.cliente.nombre : ''}! Soy ${quienEl.textContent || 'tu repartidor'}, ` +
+      `Hola${p.cliente?.nombre ? ' ' + p.cliente.nombre : ''}! Soy ${nombreRepartidor || 'tu repartidor'}, ` +
       `de Vivero Rose, sobre tu pedido ${p.numero}${resumen ? ` (${resumen})` : ''}:`
     );
   }
@@ -310,7 +515,7 @@ const FOTOS_CATALOGO = Object.fromEntries(
       whatsappServidor ??
       enlaceWhatsApp(
         telefono,
-        `Hola${p.cliente?.nombre ? ' ' + p.cliente.nombre : ''}! Soy ${quienEl.textContent || 'tu repartidor'}, de Vivero Rose. ` +
+        `Hola${p.cliente?.nombre ? ' ' + p.cliente.nombre : ''}! Soy ${nombreRepartidor || 'tu repartidor'}, de Vivero Rose. ` +
           `Tu pedido ${p.numero} va en camino. Puedes seguirlo aqui: ${location.origin}/pedido?n=${p.numero}`,
       );
 
@@ -467,9 +672,91 @@ const FOTOS_CATALOGO = Object.fromEntries(
   }
 
   function volverALista() {
-    vistaDetalle.hidden = true;
-    vistaLista.hidden = false;
     cargarLista();
+  }
+
+  // -- pantalla AVISOS ------------------------------------------------------
+
+  const TITULO_AVISO: Record<string, (a: any) => string> = {
+    pedido_listo: () => 'Pedido nuevo listo para salir',
+    agarrado: (a) =>
+      a.detalle === nombreRepartidor
+        ? 'Agarraste el pedido'
+        : `${a.detalle ?? 'Otro repartidor'} agarró el pedido`,
+    retraso: () => 'Pedido con retraso',
+  };
+
+  const ICONO_AVISO: Record<string, string> = {
+    pedido_listo: '📦',
+    agarrado: '🤝',
+    retraso: '⏰',
+  };
+
+  function etiquetaDia(fecha: Date): string {
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    const dia = new Date(fecha);
+    dia.setHours(0, 0, 0, 0);
+    const dias = Math.round((hoy.getTime() - dia.getTime()) / 86400000);
+    if (dias === 0) return 'Hoy';
+    if (dias === 1) return 'Ayer';
+    return fecha.toLocaleDateString('es-PA', { weekday: 'long', day: 'numeric', month: 'long' });
+  }
+
+  async function cargarAvisos() {
+    mostrarBandaPush();
+    try {
+      const res = await fetch(`/api/repartidor/avisos?clave=${encodeURIComponent(clave)}`);
+      if (res.status === 401) {
+        avisosEl.innerHTML = '';
+        manejar401();
+        return;
+      }
+      if (!res.ok) throw new Error();
+      pintarAvisos((await res.json()).avisos ?? []);
+    } catch {
+      avisosEl.innerHTML = '';
+      mensaje('No pudimos cargar los avisos. Revisa tu señal e intenta de nuevo.');
+    }
+  }
+
+  function pintarAvisos(avisos: any[]) {
+    if (!avisos.length) {
+      avisosEl.innerHTML =
+        '<div class="tarjeta vacio"><p>Sin avisos por ahora.</p>' +
+        '<p class="suave">Aquí verás los pedidos nuevos, los que agarra cada quien y los retrasos.</p></div>';
+      return;
+    }
+    // Vienen del mas nuevo al mas viejo: se agrupan por dia conservando el orden.
+    const grupos: { etiqueta: string; avisos: any[] }[] = [];
+    for (const aviso of avisos) {
+      const etiqueta = etiquetaDia(new Date(aviso.creado_en));
+      const ultimo = grupos[grupos.length - 1];
+      if (ultimo && ultimo.etiqueta === etiqueta) ultimo.avisos.push(aviso);
+      else grupos.push({ etiqueta, avisos: [aviso] });
+    }
+    avisosEl.innerHTML = grupos
+      .map(
+        (grupo) =>
+          `<h2 class="bloque-titulo">${escapar(grupo.etiqueta)}</h2>` +
+          grupo.avisos
+            .map((aviso) => {
+              const titulo = (TITULO_AVISO[aviso.tipo] ?? (() => aviso.tipo))(aviso);
+              const extra =
+                aviso.tipo === 'pedido_listo' && aviso.detalle ? ` · ${aviso.detalle}` : '';
+              return `
+              <div class="tarjeta aviso aviso--${aviso.tipo}">
+                <span class="aviso-icono">${ICONO_AVISO[aviso.tipo] ?? '🔔'}</span>
+                <span class="aviso-datos">
+                  <span class="aviso-titulo">${escapar(titulo)}</span>
+                  <span class="suave">${escapar(aviso.numero)}${escapar(extra)}</span>
+                </span>
+                <span class="aviso-hora">${hora(new Date(aviso.creado_en))}</span>
+              </div>`;
+            })
+            .join(''),
+      )
+      .join('');
   }
 
   // -- avisos push ----------------------------------------------------------
@@ -486,8 +773,9 @@ const FOTOS_CATALOGO = Object.fromEntries(
     return Uint8Array.from(crudo, (c) => c.charCodeAt(0));
   }
 
-  async function activarAvisos() {
-    const estado = $('[data-push-estado]');
+  // La misma activacion sirve para el repartidor (pantalla de avisos) y para
+  // el dueno (tarjeta del 401): cambia donde se pinta el resultado.
+  async function activarAvisos(estado: HTMLElement, banda: HTMLElement) {
     estado.hidden = false;
     try {
       const permiso = await Notification.requestPermission();
@@ -518,7 +806,7 @@ const FOTOS_CATALOGO = Object.fromEntries(
       }
       if (!res.ok) throw new Error();
       localStorage.setItem('vr_push_activado', '1');
-      $('[data-banda-push]').hidden = true;
+      banda.hidden = true;
       estado.textContent = '✅ Avisos activados en este teléfono.';
     } catch {
       estado.textContent = 'No se pudieron activar los avisos. Intenta de nuevo.';
@@ -555,16 +843,20 @@ const FOTOS_CATALOGO = Object.fromEntries(
     // La clave guardada quedo vieja: se descarta y se pide la nueva.
     localStorage.removeItem('vr_clave_repartidor');
     $('[data-modo-dueno]').hidden = true;
-    $('[data-banda-push]').hidden = true;
     $('[data-sin-clave]').hidden = false;
     ($('[data-input-clave]') as unknown as HTMLInputElement).focus();
   });
 
   // -- arranque -------------------------------------------------------------
 
-  $('[data-refrescar]').addEventListener('click', volverALista);
+  $('[data-refrescar]').addEventListener('click', cargarLista);
   $('[data-volver]').addEventListener('click', volverALista);
-  $('[data-activar-push]').addEventListener('click', activarAvisos);
+  $('[data-activar-push]').addEventListener('click', () =>
+    activarAvisos($('[data-push-estado]'), $('[data-banda-push]')),
+  );
+  $('[data-activar-push-dueno]').addEventListener('click', () =>
+    activarAvisos($('[data-push-estado-dueno]'), $('[data-banda-push-dueno]')),
+  );
   $('[data-cerrar-instalar]').addEventListener('click', () => {
     localStorage.setItem('vr_instalar_visto', '1');
     $('[data-instalar]').hidden = true;
@@ -577,47 +869,219 @@ const FOTOS_CATALOGO = Object.fromEntries(
 
   if (!clave) {
     $('[data-sin-clave]').hidden = false;
+    document.querySelectorAll<HTMLElement>('.pantalla').forEach((el) => (el.hidden = true));
+    ($('[data-tabs]') as HTMLElement).style.display = 'none';
   } else {
-    cargarLista();
+    cargarInicio();
   }
 </script>
 
-<!-- Global a proposito: la lista y el detalle se inyectan con innerHTML y el
-     CSS scoped de Astro no los alcanzaria. Todo va prefijado con .portal
-     (solo existe en esta pagina) para no tocar nada mas. -->
+<!-- Global a proposito: las pantallas se inyectan con innerHTML y el CSS
+     scoped de Astro no las alcanzaria. Todo va prefijado con .app o .tabs
+     (solo existen en esta pagina) para no tocar nada mas. -->
 <style is:global>
-  /* El flotante de WhatsApp del negocio no pinta nada aqui: los botones de
-     accion del repartidor viven abajo y chocarian. */
-  .wa-float { display: none !important; }
-
-  /* La banda de push y las vistas usan display propio: sin esto, el atributo
-     hidden perderia contra esas reglas. */
-  .portal [hidden] { display: none !important; }
-
-  .portal .portal-container { max-width: 34rem; }
-
-  .portal .portal-head {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 1rem;
-    margin-bottom: 1.4rem;
+  /* El acento cafe/chocolate del portal: secundario junto al verde del
+     sitio (propinas, disponibles). Solo existe aqui. */
+  :root {
+    --choco: #6f4e33;
+    --choco-deep: #55391f;
+    --choco-tint: #efe5da;
+    --choco-claro: #e2c39e; /* propinas sobre la tarjeta oscura */
   }
 
-  .portal-kicker {
+  /* El flotante de WhatsApp del negocio no pinta nada aqui: chocaria con la
+     navegacion fija de abajo. */
+  .wa-float { display: none !important; }
+
+  /* Las vistas y bandas usan display propio: sin esto, el atributo hidden
+     perderia contra esas reglas. */
+  .app [hidden] { display: none !important; }
+
+  .app {
+    max-width: 34rem;
+    margin: 0 auto;
+    padding: 1.1rem 1.1rem calc(84px + env(safe-area-inset-bottom, 0px));
+  }
+
+  /* -- transiciones de pantalla (180 ms, solo opacity/transform) ---------- */
+
+  .app .pantalla {
+    transition: opacity 180ms var(--ease-out), transform 180ms var(--ease-out);
+  }
+
+  .app .pantalla-entrando {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  .app [data-vista-detalle] {
+    transition: opacity 220ms var(--ease-drawer), transform 220ms var(--ease-drawer);
+  }
+
+  .app .detalle-entrando {
+    opacity: 0;
+    transform: translateX(28px);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .app .pantalla,
+    .app [data-vista-detalle] {
+      transition: opacity 150ms ease;
+    }
+    .app .pantalla-entrando,
+    .app .detalle-entrando {
+      transform: none;
+    }
+  }
+
+  /* -- cabeceras ---------------------------------------------------------- */
+
+  .app .kicker {
     font-size: 0.72rem;
     letter-spacing: 0.14em;
     color: var(--ink-faint);
     margin: 0 0 0.2rem;
   }
 
-  .portal h1 { font-weight: 400; margin: 0; }
+  .app .inicio-head { margin-bottom: 1.1rem; }
 
-  .portal-quien { color: var(--ink-soft); margin: 0.2rem 0 0; }
+  .app .saludo {
+    font-weight: 400;
+    font-size: 1.7rem;
+    margin: 0;
+  }
 
-  .portal .btn-refrescar { flex-shrink: 0; }
+  .app .pantalla-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
 
-  .portal .tarjeta {
+  .app .pantalla-head h1 { font-weight: 400; font-size: 1.5rem; margin: 0; }
+
+  .app .btn-refrescar { flex-shrink: 0; }
+
+  /* -- tarjeta de ganancias (inicio) -------------------------------------- */
+
+  .app .tarjeta-ganancias {
+    background: var(--card-dark);
+    color: #fff;
+    border-radius: var(--radius-lg);
+    padding: 1.3rem 1.4rem 1.4rem;
+    margin-bottom: 1.2rem;
+  }
+
+  .app .ganancias-etiqueta {
+    font-size: 0.78rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--green-light);
+    margin: 0 0 0.3rem;
+  }
+
+  /* El numero que importa: grande, para leerlo de un vistazo en la calle. */
+  .app .ganancias-monto {
+    font-size: 2.9rem;
+    font-weight: 600;
+    line-height: 1.05;
+    margin: 0 0 0.45rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .app .ganancias-detalle {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    margin: 0;
+    font-size: 0.95rem;
+    color: rgba(255, 255, 255, 0.85);
+  }
+
+  .app .ganancias-propinas { color: var(--choco-claro); }
+
+  /* -- pendientes (inicio) ------------------------------------------------ */
+
+  .app .pendientes {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.8rem;
+    margin-bottom: 0.4rem;
+  }
+
+  .app .pendiente-card {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.15rem;
+    background: var(--green-tint);
+    color: var(--green-deep);
+    border: none;
+    border-radius: var(--radius-lg);
+    padding: 1rem 1.1rem;
+    font: inherit;
+    cursor: pointer;
+    text-align: left;
+    transition: transform 160ms var(--ease-out);
+  }
+
+  .app .pendiente-card:active { transform: scale(0.97); }
+
+  .app .pendiente-card--choco {
+    background: var(--choco-tint);
+    color: var(--choco-deep);
+  }
+
+  .app .pendiente-numero {
+    font-size: 2rem;
+    font-weight: 600;
+    line-height: 1.1;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .app .pendiente-nombre { font-size: 0.88rem; }
+
+  /* -- entregas recientes (inicio) ---------------------------------------- */
+
+  .app .reciente {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.8rem;
+  }
+
+  .app .reciente-datos {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    min-width: 0;
+  }
+
+  .app .reciente-cliente { font-weight: 600; font-size: 0.95rem; }
+
+  .app .reciente-montos {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.3rem;
+    flex-shrink: 0;
+  }
+
+  .app .reciente-pago {
+    font-weight: 600;
+    color: var(--green-deep);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .app .chip--propina {
+    background: var(--choco-tint);
+    color: var(--choco-deep);
+  }
+
+  /* -- tarjetas y lista de pedidos ---------------------------------------- */
+
+  .app .tarjeta {
     background: var(--surface);
     border: 1px solid var(--line);
     border-radius: var(--radius-cart);
@@ -625,20 +1089,20 @@ const FOTOS_CATALOGO = Object.fromEntries(
     margin-bottom: 0.9rem;
   }
 
-  .portal .aviso-sin-clave code { font-size: 0.9em; }
+  .app .aviso-sin-clave code { font-size: 0.9em; }
 
-  .portal .form-clave {
+  .app .form-clave {
     display: flex;
     gap: 0.6rem;
     margin: 0.9rem 0 0.5rem;
   }
 
-  .portal .form-clave input { min-width: 0; flex: 1; }
+  .app .form-clave input { min-width: 0; flex: 1; }
 
-  .portal .form-clave .btn { flex-shrink: 0; }
+  .app .form-clave .btn { flex-shrink: 0; }
 
   /* Boton que se lee como enlace, dentro del texto de la tarjeta. */
-  .portal .enlace-boton {
+  .app .enlace-boton {
     background: none;
     border: none;
     padding: 0;
@@ -648,7 +1112,7 @@ const FOTOS_CATALOGO = Object.fromEntries(
     cursor: pointer;
   }
 
-  .portal .banda-push {
+  .app .banda-push {
     display: flex;
     align-items: center;
     gap: 1rem;
@@ -656,15 +1120,15 @@ const FOTOS_CATALOGO = Object.fromEntries(
     border: 1px solid rgba(21, 102, 47, 0.25);
     border-radius: var(--radius-cart);
     padding: 1rem 1.2rem;
-    margin-bottom: 0.9rem;
+    margin: 0.9rem 0;
   }
 
-  .portal .banda-push p { margin: 0; font-size: 0.92rem; }
-  .portal .banda-push .btn { flex-shrink: 0; }
+  .app .banda-push p { margin: 0; font-size: 0.92rem; }
+  .app .banda-push .btn { flex-shrink: 0; }
 
-  .portal .push-estado { color: var(--ink-soft); font-size: 0.92rem; }
+  .app .push-estado { color: var(--ink-soft); font-size: 0.92rem; }
 
-  .portal .instalar-pista {
+  .app .instalar-pista {
     position: relative;
     background: var(--surface-tint);
     border-radius: var(--radius);
@@ -673,7 +1137,7 @@ const FOTOS_CATALOGO = Object.fromEntries(
     color: var(--ink-soft);
   }
 
-  .portal .cerrar-pista {
+  .app .cerrar-pista {
     position: absolute;
     top: 0.5rem;
     right: 0.6rem;
@@ -684,7 +1148,7 @@ const FOTOS_CATALOGO = Object.fromEntries(
     font-size: 0.9rem;
   }
 
-  .portal-mensaje {
+  .app .portal-mensaje {
     background: var(--amber-bg);
     color: var(--amber-text);
     border-radius: var(--radius);
@@ -692,9 +1156,9 @@ const FOTOS_CATALOGO = Object.fromEntries(
     font-size: 0.92rem;
   }
 
-  .portal .cargando { color: var(--ink-soft); }
+  .app .cargando { color: var(--ink-soft); }
 
-  .portal .bloque-titulo {
+  .app .bloque-titulo {
     font-size: 0.8rem;
     letter-spacing: 0.1em;
     text-transform: uppercase;
@@ -703,34 +1167,35 @@ const FOTOS_CATALOGO = Object.fromEntries(
     font-weight: 600;
   }
 
-  .portal .pedido-card {
+  .app .pedido-card {
     display: block;
     width: 100%;
     text-align: left;
     cursor: pointer;
     font: inherit;
     color: inherit;
+    transition: transform 160ms var(--ease-out);
   }
 
-  .portal .pedido-card:active { transform: scale(0.99); }
+  .app .pedido-card:active { transform: scale(0.98); }
 
-  .portal .pedido-linea1,
-  .portal .pedido-linea2 {
+  .app .pedido-linea1,
+  .app .pedido-linea2 {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 0.8rem;
   }
 
-  .portal .pedido-linea1 { margin-bottom: 0.35rem; }
+  .app .pedido-linea1 { margin-bottom: 0.35rem; }
 
-  .portal .pedido-numero { font-weight: 600; font-size: 0.95rem; }
+  .app .pedido-numero { font-weight: 600; font-size: 0.95rem; }
 
-  .portal .pedido-linea2 { color: var(--ink-soft); font-size: 0.9rem; }
+  .app .pedido-linea2 { color: var(--ink-soft); font-size: 0.9rem; }
 
-  .portal .pedido-total { font-weight: 600; color: var(--ink); }
+  .app .pedido-total { font-weight: 600; color: var(--ink); }
 
-  .portal .chip {
+  .app .chip {
     font-size: 0.72rem;
     font-weight: 600;
     letter-spacing: 0.04em;
@@ -739,20 +1204,20 @@ const FOTOS_CATALOGO = Object.fromEntries(
     white-space: nowrap;
   }
 
-  .portal .chip--listo { background: var(--green-tint); color: var(--green-deep); }
-  .portal .chip--saliendo { background: var(--green-tint); color: var(--green-deep); }
-  .portal .chip--en_camino { background: var(--card-dark); color: var(--green-light); }
-  .portal .chip--entregado { background: var(--surface-tint); color: var(--ink-soft); }
-  .portal .chip--retraso {
+  .app .chip--listo { background: var(--green-tint); color: var(--green-deep); }
+  .app .chip--saliendo { background: var(--green-tint); color: var(--green-deep); }
+  .app .chip--en_camino { background: var(--card-dark); color: var(--green-light); }
+  .app .chip--entregado { background: var(--surface-tint); color: var(--ink-soft); }
+  .app .chip--retraso {
     display: inline-block;
     margin-top: 0.5rem;
     background: var(--amber-bg);
     color: var(--amber-text);
   }
 
-  .portal .suave { color: var(--ink-faint); font-size: 0.85rem; margin: 0.4rem 0 0; }
+  .app .suave { color: var(--ink-faint); font-size: 0.85rem; margin: 0.4rem 0 0; }
 
-  .portal .volver {
+  .app .volver {
     background: none;
     border: none;
     cursor: pointer;
@@ -762,11 +1227,11 @@ const FOTOS_CATALOGO = Object.fromEntries(
     margin-bottom: 1rem;
   }
 
-  .portal .detalle-cliente { margin: 0.3rem 0 0.8rem; color: var(--ink-soft); }
+  .app .detalle-cliente { margin: 0.3rem 0 0.8rem; color: var(--ink-soft); }
 
-  .portal .detalle-contacto { display: flex; gap: 0.6rem; margin: 0 0 1rem; }
+  .app .detalle-contacto { display: flex; gap: 0.6rem; margin: 0 0 1rem; }
 
-  .portal .detalle-nota {
+  .app .detalle-nota {
     white-space: pre-wrap;
     word-break: break-word;
     font: inherit;
@@ -777,9 +1242,9 @@ const FOTOS_CATALOGO = Object.fromEntries(
     margin: 0 0 1rem;
   }
 
-  .portal .items { list-style: none; padding: 0; margin: 0 0 1rem; }
+  .app .items { list-style: none; padding: 0; margin: 0 0 1rem; }
 
-  .portal .item {
+  .app .item {
     display: grid;
     grid-template-columns: 44px minmax(0, 1fr) auto;
     gap: 0.7rem;
@@ -788,9 +1253,9 @@ const FOTOS_CATALOGO = Object.fromEntries(
     border-bottom: 1px solid var(--line);
   }
 
-  .portal .item:last-child { border-bottom: none; }
+  .app .item:last-child { border-bottom: none; }
 
-  .portal .item-foto {
+  .app .item-foto {
     width: 44px;
     height: 44px;
     border-radius: 10px;
@@ -798,31 +1263,31 @@ const FOTOS_CATALOGO = Object.fromEntries(
     background: var(--surface-2);
   }
 
-  .portal .item-emoji {
+  .app .item-emoji {
     display: grid;
     place-items: center;
     font-size: 1.4rem;
   }
 
-  .portal .item-nombre { font-size: 0.92rem; }
-  .portal .item-cant { color: var(--ink-soft); font-size: 0.92rem; }
+  .app .item-nombre { font-size: 0.92rem; }
+  .app .item-cant { color: var(--ink-soft); font-size: 0.92rem; }
 
-  .portal .detalle-total { margin: 0; }
+  .app .detalle-total { margin: 0; }
 
-  .portal .acciones { display: flex; flex-direction: column; gap: 0.7rem; }
+  .app .acciones { display: flex; flex-direction: column; gap: 0.7rem; }
 
-  .portal .btn-grande {
+  .app .btn-grande {
     width: 100%;
     padding: 0.95rem 1rem;
     font-size: 1rem;
     text-align: center;
   }
 
-  .portal .btn-foto { cursor: pointer; }
+  .app .btn-foto { cursor: pointer; }
 
-  .portal .foto-pista { margin: 0; }
+  .app .foto-pista { margin: 0; }
 
-  .portal .foto-estado {
+  .app .foto-estado {
     background: var(--amber-bg);
     color: var(--amber-text);
     border-radius: var(--radius);
@@ -831,5 +1296,95 @@ const FOTOS_CATALOGO = Object.fromEntries(
     margin: 0;
   }
 
-  .portal .hecho { font-size: 1.1rem; font-weight: 600; margin: 0; }
+  .app .hecho { font-size: 1.1rem; font-weight: 600; margin: 0; }
+
+  /* -- avisos ------------------------------------------------------------- */
+
+  .app .aviso {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    padding: 0.95rem 1.1rem;
+  }
+
+  .app .aviso-icono {
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+    border-radius: 12px;
+    font-size: 1.15rem;
+    background: var(--green-tint);
+  }
+
+  .app .aviso--agarrado .aviso-icono { background: var(--choco-tint); }
+  .app .aviso--retraso .aviso-icono { background: var(--amber-bg); }
+
+  .app .aviso-datos {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    min-width: 0;
+  }
+
+  .app .aviso-titulo { font-weight: 600; font-size: 0.93rem; }
+
+  .app .aviso-hora {
+    margin-left: auto;
+    flex-shrink: 0;
+    color: var(--ink-faint);
+    font-size: 0.8rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* -- navegacion fija ----------------------------------------------------- */
+
+  .tabs {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 20;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    max-width: 34rem;
+    margin: 0 auto;
+    background: var(--surface);
+    border-top: 1px solid var(--line);
+    padding: 0.35rem 0.4rem calc(0.35rem + env(safe-area-inset-bottom, 0px));
+  }
+
+  .tabs .tab {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.15rem;
+    background: none;
+    border: none;
+    border-radius: var(--radius);
+    padding: 0.45rem 0;
+    font: inherit;
+    font-size: 0.72rem;
+    color: var(--ink-faint);
+    cursor: pointer;
+    transition: transform 160ms var(--ease-out), color 160ms ease;
+  }
+
+  .tabs .tab:active { transform: scale(0.95); }
+
+  .tabs .tab svg { width: 23px; height: 23px; }
+
+  .tabs .tab--activa {
+    color: var(--green-deep);
+    font-weight: 600;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .app .pendiente-card:active,
+    .app .pedido-card:active,
+    .tabs .tab:active {
+      transform: none;
+    }
+  }
 </style>
