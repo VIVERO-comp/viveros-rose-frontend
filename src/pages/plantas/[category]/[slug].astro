@@ -7,18 +7,22 @@ import Base from '../../../layouts/Base.astro';
 import Icon from '../../../components/Icon.astro';
 import ProductCard from '../../../components/ProductCard.astro';
 import StockBadge from '../../../components/StockBadge.astro';
-import { compareAtPrice, formatPrice, getCategory, products } from '../../../data/products';
+import { compareAtPrice, formatPrice, getCategory, type Product } from '../../../data/products';
 import { collections, factsOf } from '../../../data/collections';
+import { productosPublicados } from '../../../lib/catalogo-build';
 import { SITE } from '../../../lib/site';
 
-export function getStaticPaths() {
-  return products.map((product) => ({
+// Solo los productos activos en Odoo generan pagina: un archivado no esta en
+// productosPublicados, asi que su URL da 404 (src/lib/catalogo-build.ts).
+export async function getStaticPaths() {
+  return (await productosPublicados()).map((product) => ({
     params: { category: product.category, slug: product.slug },
     props: { product },
   }));
 }
 
 const { product } = Astro.props;
+const publicados = await productosPublicados();
 const category = getCategory(product.category)!;
 const soldOut = product.available <= 0;
 const compareAt = soldOut ? null : compareAtPrice(product);
@@ -27,7 +31,7 @@ const whatsappMessage = `Hola, me interesa "${product.name}" (${product.sku}) qu
 // "Va bien con…": prioriza la misma categoria. No se filtra por available:
 // en los datos estaticos siempre es 0 (los badges de las tarjetas ya pintan
 // el stock real del proxy).
-const related = products
+const related = publicados
   .filter((p) => p.slug !== product.slug)
   .sort((a, b) => Number(b.category === product.category) - Number(a.category === product.category))
   .slice(0, 5);
@@ -45,12 +49,12 @@ const fotosGaleria = [product.image, product.imageHover, ...(product.gallery ?? 
 // ordenados por cuantas colecciones comparten. El desempate usa una semilla
 // del SKU para no quedar en orden alfabetico. No se filtra por available:
 // en los datos estaticos siempre es 0 y el stock real lo pinta el proxy.
-const coleccionesDe = (p: (typeof products)[number]) =>
+const coleccionesDe = (p: Product) =>
   collections.filter((c) => c.slug !== 'all' && c.test(factsOf(p)));
 const coleccionesDelProducto = new Set(coleccionesDe(product).map((c) => c.slug));
 const semillaSku = (sku: string) =>
   [...sku].reduce((suma, letra) => (suma * 31 + letra.charCodeAt(0)) % 997, 7);
-const similares = products
+const similares = publicados
   .filter((p) => p.slug !== product.slug)
   .map((p) => ({
     p,

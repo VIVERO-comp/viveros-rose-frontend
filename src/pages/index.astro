@@ -8,13 +8,16 @@ import Base from '../layouts/Base.astro';
 import Icon from '../components/Icon.astro';
 import NewsletterBand from '../components/NewsletterBand.astro';
 import ProductCard from '../components/ProductCard.astro';
-import { products } from '../data/products';
 import { collections } from '../data/collections';
 import { guides } from '../data/guides';
+import { productosPublicados } from '../lib/catalogo-build';
 import { whatsappLink } from '../lib/site';
 
-// Si un slug curado desaparece del catalogo (p.ej. al re-importar de Odoo),
-// se omite en vez de romper el build.
+// Catalogo publicado: sin los archivados en Odoo (src/lib/catalogo-build.ts).
+const products = await productosPublicados();
+
+// Si un slug curado desaparece del catalogo (p.ej. al re-importar de Odoo o
+// al archivarse el producto), se omite en vez de romper el build.
 const bySlugs = (slugs: string[]) =>
   slugs.map((slug) => products.find((p) => p.slug === slug)).filter((p) => p !== undefined);
 

@@ -7,9 +7,12 @@
 import Base from '../layouts/Base.astro';
 import Icon from '../components/Icon.astro';
 import ProductCard from '../components/ProductCard.astro';
-import { products } from '../data/products';
 import { factsOf } from '../data/collections';
+import { productosPublicados } from '../lib/catalogo-build';
 import { whatsappLink } from '../lib/site';
+
+// Catalogo publicado: sin los archivados en Odoo (src/lib/catalogo-build.ts).
+const products = await productosPublicados();
 
 const preguntas = [
   {

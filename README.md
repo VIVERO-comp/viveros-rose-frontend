@@ -59,6 +59,13 @@ ya estan conectados:
   (referencia interna de Odoo) es la llave hacia el stock proxy y el order-api.
   Descripcion, cuidados y parte de los precios siguen como placeholder hasta
   completarlos en Odoo.
+- **Productos archivados en Odoo**: en el build, `src/lib/catalogo-build.ts` consulta
+  el stock proxy y publica solo los productos que este reconoce (el proxy filtra por
+  `active`). Un archivado sale del catalogo, del buscador y del sitemap, y su pagina
+  deja de generarse (404). **Archivar un producto en Odoo NO lo quita del sitio al
+  instante: hace falta un rebuild/redeploy del frontend en Vercel.** Si el proxy no
+  responde durante el build, se publica el catalogo completo (con un aviso en el log
+  del build) antes que tumbar el deploy.
 - **Stock** (`vivero-rose-stock-proxy`): `src/lib/stock.ts` es el cliente; los badges
   muestran disponibilidad real via `PUBLIC_STOCK_PROXY_URL`.
 - **Pedidos y cuentas** (`vivero-rose-order-api`): las funciones de servidor en

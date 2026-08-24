@@ -8,8 +8,12 @@ import Base from '../../layouts/Base.astro';
 import Icon from '../../components/Icon.astro';
 import ProductCard from '../../components/ProductCard.astro';
 import NewsletterBand from '../../components/NewsletterBand.astro';
-import { products } from '../../data/products';
 import { collections, factsOf } from '../../data/collections';
+import { productosPublicados } from '../../lib/catalogo-build';
+
+// Catalogo publicado: sin los productos archivados en Odoo (filtro de build,
+// src/lib/catalogo-build.ts).
+const products = await productosPublicados();
 
 // Orden del sidebar segun el diseno (Shop Plantas).
 const sidebarSlugs = [

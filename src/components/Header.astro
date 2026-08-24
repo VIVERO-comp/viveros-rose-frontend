@@ -9,8 +9,12 @@
 // sesion saluda y lleva a /cuenta.
 import { SITE, whatsappLink } from '../lib/site';
 import { collections } from '../data/collections';
-import { products } from '../data/products';
+import { productosPublicados } from '../lib/catalogo-build';
 import Icon from './Icon.astro';
+
+// El buscador sugiere solo productos publicados: un archivado en Odoo no
+// debe aparecer ni enlazar a una pagina que ya no existe (catalogo-build).
+const products = await productosPublicados();
 
 const currentPath = Astro.url.pathname;
 
@@ -486,8 +490,9 @@ const menuTipos = [
   </aside>
 </div>
 
-<!-- Panel lateral: pedidos. Sin historial local todavia: se consulta por
-     numero de pedido en /pedido (no se muestran pedidos de ejemplo). -->
+<!-- Panel lateral: pedidos. La lista sale del servidor con la sesion
+     (/api/account/orders): asi se ven los mismos pedidos desde cualquier
+     dispositivo. Sin sesion queda la nota con el camino del numero. -->
 <div class="panel" data-panel="orders" hidden>
   <div class="panel-backdrop" data-panel-close></div>
   <aside class="panel-sheet" role="dialog" aria-label="Tus pedidos">
@@ -496,8 +501,8 @@ const menuTipos = [
       <button class="panel-close" data-panel-close>Cerrar <Icon name="x" size={16} /></button>
     </div>
     <div class="panel-body">
-      <div class="account-card account-card--left">
-        No hay pedidos guardados en este navegador. Consulta el estado de tu entrega con el número
+      <div class="account-card account-card--left" data-pedidos-lista>
+        Inicia sesión para ver tus pedidos aquí, o consulta el estado de tu entrega con el número
         de pedido que te enviamos por WhatsApp.
       </div>
       <div class="orders-legend">
@@ -752,6 +757,71 @@ const menuTipos = [
     }
   }
 
+  // ─── Panel "Tus pedidos": la lista del servidor, no del navegador ──────
+  // Con sesion (cookie httpOnly via /api/auth/me) se pintan los pedidos de
+  // /api/account/orders con el color de la leyenda; sin sesion queda la
+  // nota estatica. Se consulta al abrir el panel, una vez por visita.
+  const COLOR_ESTADO: Record<string, string> = {
+    Recibido: '#15662f',
+    Preparando: '#15662f',
+    'En camino': '#d97706',
+    Entregado: '#16a34a',
+  };
+  let pedidosConsultados = false;
+
+  async function pintarPanelPedidos() {
+    if (pedidosConsultados) return;
+    pedidosConsultados = true;
+    const lista = document.querySelector<HTMLElement>('[data-pedidos-lista]');
+    if (!lista) return;
+    try {
+      const sesion = await fetch('/api/auth/me');
+      if (!sesion.ok) return; // sin sesion: queda la nota estatica
+      const res = await fetch('/api/account/orders');
+      if (!res.ok) return;
+      const { pedidos } = (await res.json()) as {
+        pedidos: {
+          numero: string;
+          fecha: string;
+          total_centavos: number;
+          estado: string | null;
+          retraso: boolean;
+        }[];
+      };
+      if (!pedidos.length) {
+        lista.textContent = 'Todavía no tienes pedidos. Cuando compres, los verás aquí.';
+        return;
+      }
+      lista.classList.add('orders-lista');
+      lista.textContent = '';
+      for (const pedido of pedidos.slice(0, 5)) {
+        const fila = document.createElement('a');
+        fila.className = 'orders-item';
+        fila.href = `/pedido?n=${encodeURIComponent(pedido.numero)}`;
+        const color = pedido.retraso ? '#b91c1c' : COLOR_ESTADO[pedido.estado ?? ''];
+        const punto = color ? `<span class="dot" style="background:${color}"></span>` : '';
+        const fecha = new Date(pedido.fecha).toLocaleDateString('es-PA', {
+          day: 'numeric',
+          month: 'short',
+        });
+        fila.innerHTML =
+          `<span class="orders-item-numero">${punto}${pedido.numero}</span>` +
+          `<span class="orders-item-meta">${fecha} · $${(pedido.total_centavos / 100).toFixed(2)}` +
+          `${pedido.estado ? ` · ${pedido.estado}` : ''}${pedido.retraso ? ' · con retraso' : ''}</span>`;
+        lista.appendChild(fila);
+      }
+      if (pedidos.length > 5) {
+        const mas = document.createElement('a');
+        mas.className = 'panel-link';
+        mas.href = '/cuenta';
+        mas.textContent = `Ver los ${pedidos.length} pedidos en tu cuenta`;
+        lista.appendChild(mas);
+      }
+    } catch {
+      // sin red u Odoo caido: queda lo que alcanzo a pintarse
+    }
+  }
+
   document.querySelector('[data-cuenta-salir]')?.addEventListener('click', async () => {
     try {
       await fetch('/api/auth/logout', { method: 'POST' });
@@ -788,6 +858,7 @@ const menuTipos = [
       pintarPanelCuenta();
       pintarListasCuenta();
     }
+    if (name === 'orders') pintarPanelPedidos();
   }
 
   function closePanels() {
@@ -1829,6 +1900,34 @@ const menuTipos = [
   }
 
   .dot { width: 11px; height: 11px; border-radius: 50%; flex: none; }
+
+  /* Lista de pedidos del panel (con sesion): una fila por pedido, con el
+     punto del color de la leyenda de abajo. */
+  .orders-lista {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .orders-item {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    text-decoration: none;
+    color: inherit;
+  }
+  .orders-item:hover .orders-item-numero { text-decoration: underline; }
+  .orders-item-numero {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    font-size: 13px;
+  }
+  .orders-item-meta {
+    font-size: 12px;
+    color: rgba(27, 42, 31, 0.65);
+    padding-left: 19px;
+  }
 
   /* Punto de quiebre unificado del handoff: 768px */
   @media (max-width: 768px) {

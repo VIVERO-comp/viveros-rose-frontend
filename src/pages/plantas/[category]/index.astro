@@ -5,7 +5,8 @@
 import Base from '../../../layouts/Base.astro';
 import ProductCard from '../../../components/ProductCard.astro';
 import NewsletterBand from '../../../components/NewsletterBand.astro';
-import { categories, getProductsByCategory } from '../../../data/products';
+import { categories } from '../../../data/products';
+import { productosPublicados } from '../../../lib/catalogo-build';
 
 export function getStaticPaths() {
   return categories.map((cat) => ({
@@ -15,7 +16,8 @@ export function getStaticPaths() {
 }
 
 const { category } = Astro.props;
-const items = getProductsByCategory(category.slug);
+// Solo productos activos en Odoo (filtro de build, src/lib/catalogo-build.ts).
+const items = (await productosPublicados()).filter((p) => p.category === category.slug);
 ---
 
 <Base

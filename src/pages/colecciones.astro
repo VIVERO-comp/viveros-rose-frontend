@@ -5,7 +5,10 @@
 import Base from '../layouts/Base.astro';
 import NewsletterBand from '../components/NewsletterBand.astro';
 import { collections, factsOf } from '../data/collections';
-import { products } from '../data/products';
+import { productosPublicados } from '../lib/catalogo-build';
+
+// Conteos sobre el catalogo publicado (sin archivados en Odoo).
+const products = await productosPublicados();
 
 const tiles = collections.map((c) => {
   const count = products.filter((p) => c.test(factsOf(p))).length;

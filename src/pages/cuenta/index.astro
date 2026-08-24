@@ -51,7 +51,14 @@ import Base from '../../layouts/Base.astro';
     new Date(iso).toLocaleDateString('es-PA', { day: 'numeric', month: 'long', year: 'numeric' });
 
   interface Articulo { nombre: string; cantidad: number }
-  interface Pedido { numero: string; fecha: string; total_centavos: number; articulos: Articulo[] }
+  interface Pedido {
+    numero: string;
+    fecha: string;
+    total_centavos: number;
+    estado: string | null; // null cuando Odoo no respondio: la lista sale igual
+    retraso: boolean;
+    articulos: Articulo[];
+  }
 
   function pintarPedidos(pedidos: Pedido[]) {
     cargando.hidden = true;
@@ -77,7 +84,11 @@ import Base from '../../layouts/Base.astro';
           <span class="pedido-ver">Ver estado →</span>`;
         tarjeta.querySelector('.pedido-numero')!.textContent = pedido.numero;
         tarjeta.querySelector('.pedido-total')!.textContent = dinero(pedido.total_centavos);
-        tarjeta.querySelector('.pedido-fecha')!.textContent = fecha(pedido.fecha);
+        const cuando = tarjeta.querySelector('.pedido-fecha')!;
+        cuando.textContent = fecha(pedido.fecha);
+        if (pedido.estado) {
+          cuando.textContent += ` · ${pedido.estado}${pedido.retraso ? ' (con retraso)' : ''}`;
+        }
         tarjeta.querySelector('.pedido-resumen')!.textContent = resumen;
         return tarjeta;
       }),
