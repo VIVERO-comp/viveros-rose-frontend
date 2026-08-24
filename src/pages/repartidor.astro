@@ -260,6 +260,18 @@ const FOTOS_CATALOGO = Object.fromEntries(
     return `<span class="item-foto item-emoji">${ficha?.emoji ?? '🪴'}</span>`;
   }
 
+  // Mensaje de contacto con el detalle de lo pedido, para que el cliente
+  // sepa de que pedido le hablan sin buscar el numero.
+  function textoContacto(p: any): string {
+    const resumen = (p.items ?? [])
+      .map((item: any) => `${item.cantidad}× ${item.descripcion}`)
+      .join(', ');
+    return (
+      `Hola${p.cliente?.nombre ? ' ' + p.cliente.nombre : ''}! Soy ${quienEl.textContent || 'tu repartidor'}, ` +
+      `de Vivero Rose, sobre tu pedido ${p.numero}${resumen ? ` (${resumen})` : ''}:`
+    );
+  }
+
   function enlaceWhatsApp(telefono: string | null, texto: string): string | null {
     if (!telefono) return null;
     let digitos = telefono.replace(/\D/g, '');
@@ -305,7 +317,7 @@ const FOTOS_CATALOGO = Object.fromEntries(
           telefono
             ? `<p class="detalle-contacto">
                  <a class="btn btn--ghost" href="tel:${escapar(telefono)}">Llamar</a>
-                 ${waCamino ? `<a class="btn btn--ghost" href="${enlaceWhatsApp(telefono, `Hola, soy el repartidor de Vivero Rose, sobre tu pedido ${p.numero}:`)}" target="_blank" rel="noopener">WhatsApp</a>` : ''}
+                 ${waCamino ? `<a class="btn btn--ghost" href="${enlaceWhatsApp(telefono, textoContacto(p))}" target="_blank" rel="noopener">WhatsApp</a>` : ''}
                </p>`
             : '<p class="suave">El pedido no tiene teléfono; la dirección va en la nota.</p>'
         }
@@ -418,12 +430,16 @@ const FOTOS_CATALOGO = Object.fromEntries(
     estado.textContent = 'Subiendo la foto…';
     try {
       const foto = await comprimir(archivo);
-      const form = new FormData();
-      form.set('clave', clave);
-      form.set('foto', foto, 'entrega.jpg');
+      // Binario crudo con la clave en un header: un multipart desde el
+      // navegador muere en el 403 del chequeo CSRF de Astro tras el proxy
+      // de Vercel (el multipart hacia el order-api lo arma la funcion).
       const res = await fetch(`/api/repartidor/pedidos/${encodeURIComponent(p.numero)}/foto`, {
         method: 'POST',
-        body: form,
+        headers: {
+          'Content-Type': foto.type || 'image/jpeg',
+          'X-Clave-Repartidor': clave,
+        },
+        body: foto,
       });
       const datos = await res.json();
       if (!res.ok) throw new Error(datos.message);
