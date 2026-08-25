@@ -438,8 +438,9 @@ export const products: Product[] = [
   {
     sku: 'PLT-CHAVELITAS-01',
     slug: 'chavelitas',
+    // La foto que era del hover paso a ser la principal (la principal no
+    // existia en disco y la tarjeta salia vacia en reposo).
     image: '/fotos_productos/chavelitas.jpg',
-    imageHover: '/fotos_productos/chavelitas_hover.jpg',
     gallery: ['/fotos_productos/chavelitas_2.jpg', '/fotos_productos/chavelitas_3.jpg'],
     category: 'florales',
     name: 'Chavelitas',
