@@ -53,6 +53,8 @@ export const events: EventType[] = [
     metaTitle: 'Plantas para bodas y eventos sociales',
     metaDescription:
       'Montaje de plantas para bodas, cumpleaños y bautizos en Panamá: ceremonia, recepción y áreas de fotos, con entrega, colocación y retiro incluidos.',
+    heroPhoto: '/fotos_eventos/boda/carpa_jardin.jpg',
+    blockPhoto: '/fotos_eventos/bodas.jpg',
     galeria: [
       {
         src: '/fotos_eventos/boda/mesa_plantas.jpg',
@@ -63,8 +65,10 @@ export const events: EventType[] = [
         alt: 'Mesa de dulces de boda rodeada de palmas, hojas de platanera y follaje tropical sobre fondo oscuro',
       },
       {
-        src: '/fotos_eventos/boda/carpa_jardin.jpg',
-        alt: 'Recepción bajo carpa en un jardín con mesas redondas rodeadas de palmas, monsteras, orquídeas y anturios en maceta',
+        // La carpa pasó a ser el hero de esta misma página; aquí va la mesa
+        // de registro para no repetir la foto.
+        src: '/fotos_eventos/mesa_registro.jpg',
+        alt: 'Mesa de recepción de un evento rodeada de palmas, monsteras, orquídeas y bromelias en maceta',
       },
       {
         src: '/fotos_eventos/boda/terraza_coctel.jpg',
@@ -94,6 +98,8 @@ export const events: EventType[] = [
     metaTitle: 'Ambientación para ferias y activaciones',
     metaDescription:
       'Ambientación con plantas para stands, ferias y activaciones de marca en Panamá: material uniforme, montaje coordinado con producción y retiro al cierre.',
+    heroPhoto: '/fotos_eventos/ferias.jpg',
+    blockPhoto: '/fotos_eventos/alquiler.jpg',
     galeria: [
       {
         src: '/fotos_eventos/salon_gala.jpg',
