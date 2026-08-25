@@ -36,11 +36,7 @@ const esMasVendida = product.available >= 40;
          como el handoff). El emoji queda SIEMPRE pintado debajo de la foto:
          es lo que se ve si el producto no tiene fotos o si Cloudinary no
          responde (la capa de foto queda transparente y el emoji asoma). -->
-    <div
-      class="tile-photo"
-      data-medidas={product.image ? undefined : 'Foto 4:5 · 640×800'}
-      aria-hidden="true"
-    >
+    <div class="tile-photo" aria-hidden="true">
       {product.emoji}
       {product.image && (
         <>
@@ -79,7 +75,7 @@ const esMasVendida = product.available >= 40;
       </p>
       {product.scientificName && <p class="scientific">{product.scientificName}</p>}
       <div class="tile-bottom">
-        <StockBadge sku={product.sku} available={product.available} />
+        <StockBadge sku={product.sku} available={product.available} comprable={comprable} />
       </div>
     </div>
   </a>
@@ -304,23 +300,6 @@ const esMasVendida = product.available >= 40;
     .product-tile:hover .tile-photo-hover { opacity: 1; }
   }
 
-  /* La pastilla de medidas solo aparece en tarjetas que aun no tienen foto. */
-  .tile-photo[data-medidas]::after {
-    content: attr(data-medidas);
-    position: absolute;
-    left: 50%;
-    top: 12px;
-    transform: translateX(-50%);
-    font-size: 0.62rem;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: rgba(27, 42, 31, 0.55);
-    background: rgba(238, 245, 240, 0.85);
-    padding: 2px 8px;
-    border-radius: 999px;
-    white-space: nowrap;
-  }
-
   .tile-info {
     position: relative;
     padding: 11px 2px 0;
@@ -481,8 +460,6 @@ const esMasVendida = product.available >= 40;
     .tile-photo {
       font-size: 2.6rem;
     }
-
-    .tile-photo::after { display: none; }
 
     .tile-info {
       padding: 10px 2px 0;

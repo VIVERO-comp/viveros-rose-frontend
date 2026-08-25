@@ -86,7 +86,7 @@ const compareMap = Object.fromEntries(
                     <div class="addon-photo addon-photo--img" style={`background-image: url('${p.image}');`} aria-hidden="true" />
                   ) : (
                     <!-- FOTO PENDIENTE: producto {p.sku} — bloque de minimo 360×260 px -->
-                    <div class="addon-photo" data-medidas="Foto · 360×260" aria-hidden="true">{p.emoji}</div>
+                    <div class="addon-photo" aria-hidden="true">{p.emoji}</div>
                   )}
                   <div class="addon-info">
                     <p class="addon-name">{p.name}</p>
@@ -629,21 +629,6 @@ const compareMap = Object.fromEntries(
   .addon-photo--img {
     background-size: cover;
     background-position: center;
-  }
-
-  .addon-photo[data-medidas]::after {
-    content: attr(data-medidas);
-    position: absolute;
-    right: 8px;
-    bottom: 8px;
-    font-size: 0.58rem;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: rgba(27, 42, 31, 0.5);
-    background: rgba(238, 245, 240, 0.85);
-    padding: 2px 7px;
-    border-radius: 999px;
-    white-space: nowrap;
   }
 
   .addon-info {

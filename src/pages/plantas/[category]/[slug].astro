@@ -48,12 +48,11 @@ const related = publicados
   .sort((a, b) => Number(b.category === product.category) - Number(a.category === product.category))
   .slice(0, 5);
 
-const GALLERY_SIZE = 5;
-
 // Fotos reales de la galeria, desde Cloudinary (scripts/fotos.py mantiene el
 // orden: principal, hover, adicionales). Cada foto en dos tamanos: miniatura
 // cuadrada para la tira y grande para el visor principal (tambien cuadrado).
-// Si el producto aun no tiene fotos, quedan los huecos.
+// Sin fotos no hay tira ni flechas ni contador: solo el marco con el emoji
+// (las guias de desarrollo — cajas numeradas, medidas — no se publican).
 const fotosGaleria = fotosDe(product.sku).map((hash) => ({
   mini: urlFoto(product.sku, hash, { ancho: 160, ratio: '1:1' }),
   grande: urlFoto(product.sku, hash, { ancho: 960, ratio: '1:1' }),
@@ -187,34 +186,23 @@ const careTitle = `Cuidado de ${product.name.replace(/\s*\(.*\)$/, '').toLowerCa
 
 <Base title={product.name} description={product.description} whatsappMessage={whatsappMessage}>
   <div class="container product-hero">
-    <div class="gallery">
-      <div class="thumbs" data-thumbs>
-        {
-          fotosGaleria.length
-            ? fotosGaleria.map((foto, i) => (
-                <button
-                  class:list={['thumb', 'thumb--foto', { active: i === 0 }]}
-                  data-thumb={i}
-                  data-foto={foto.grande}
-                  style={`background-image: url('${foto.mini}'); background-size: cover; background-position: center;`}
-                  aria-label={`Ver foto ${i + 1}`}
-                />
-              ))
-            : Array.from({ length: GALLERY_SIZE }, (_, i) => (
-                <button
-                  class:list={['thumb', { active: i === 0 }]}
-                  data-thumb={i}
-                  aria-label={`Ver foto ${i + 1}`}
-                >
-                  <span class="thumb-num">{i + 1}</span>
-                </button>
-              ))
-        }
-      </div>
+    <div class:list={['gallery', { 'gallery--sin-fotos': !fotosGaleria.length }]}>
+      {fotosGaleria.length > 0 && (
+        <div class="thumbs" data-thumbs>
+          {fotosGaleria.map((foto, i) => (
+            <button
+              class:list={['thumb', 'thumb--foto', { active: i === 0 }]}
+              data-thumb={i}
+              data-foto={foto.grande}
+              style={`background-image: url('${foto.mini}'); background-size: cover; background-position: center;`}
+              aria-label={`Ver foto ${i + 1}`}
+            />
+          ))}
+        </div>
+      )}
       <div class="main-photo">
         <div
           class="main-photo-ph"
-          data-medidas={fotosGaleria.length ? undefined : 'Foto cuadrada · 1200×1200'}
           data-main-photo
           style={
             fotosGaleria.length
@@ -223,15 +211,21 @@ const careTitle = `Cuidado de ${product.name.replace(/\s*\(.*\)$/, '').toLowerCa
           }
         >
           {fotosGaleria.length ? '' : product.emoji}
-          <span class="main-photo-num" data-main-num>Foto 1 de {fotosGaleria.length || GALLERY_SIZE}</span>
+          {fotosGaleria.length > 0 && (
+            <span class="main-photo-num" data-main-num>Foto 1 de {fotosGaleria.length}</span>
+          )}
         </div>
-        <div class="soldout-stamp" data-soldout-stamp hidden={!soldOut}>Agotado</div>
-        <button class="photo-arrow photo-arrow--prev" data-gallery-prev aria-label="Foto anterior">
-          <Icon name="chevron-left" size={20} />
-        </button>
-        <button class="photo-arrow photo-arrow--next" data-gallery-next aria-label="Foto siguiente">
-          <Icon name="chevron-right" size={20} />
-        </button>
+        <div class="soldout-stamp" data-soldout-stamp hidden={!soldOut || !comprable}>Agotado</div>
+        {fotosGaleria.length > 1 && (
+          <>
+            <button class="photo-arrow photo-arrow--prev" data-gallery-prev aria-label="Foto anterior">
+              <Icon name="chevron-left" size={20} />
+            </button>
+            <button class="photo-arrow photo-arrow--next" data-gallery-next aria-label="Foto siguiente">
+              <Icon name="chevron-right" size={20} />
+            </button>
+          </>
+        )}
       </div>
     </div>
 
@@ -247,7 +241,7 @@ const careTitle = `Cuidado de ${product.name.replace(/\s*\(.*\)$/, '').toLowerCa
 
       <div class="price-row">
         <div class="price-group">
-          <StockBadge sku={product.sku} available={product.available} />
+          <StockBadge sku={product.sku} available={product.available} comprable={comprable} />
           <span class="compare" data-price-compare hidden={!comprable || !compareAt}>
             {compareAt ? formatPrice(compareAt) : ''}
           </span>
@@ -330,8 +324,11 @@ const careTitle = `Cuidado de ${product.name.replace(/\s*\(.*\)$/, '').toLowerCa
 
       <!-- Se renderizan AMBOS estados del panel y un script los alterna con
            el stock real del proxy (evento stock-actualizado de StockBadge):
-           el build estatico siempre trae available=0 y no puede decidir. -->
-      <div class="cta-block" data-cta-block hidden={soldOut}>
+           el build estatico siempre trae available=0 y no puede decidir.
+           Sin precio real ("Proximamente") el estado de agotado NO se
+           muestra: seria contradictorio, y el boton deshabilitado ya dice
+           todo. Misma regla en el script de abajo y en StockBadge. -->
+      <div class="cta-block" data-cta-block hidden={soldOut && comprable}>
         <button class="cta-outline" type="button" disabled title="No disponible por ahora">
           <Icon name="pencil" size={16} /> Personalizar tarjeta (+$5.00)
         </button>
@@ -350,7 +347,7 @@ const careTitle = `Cuidado de ${product.name.replace(/\s*\(.*\)$/, '').toLowerCa
           {comprable ? `Agregar al carrito — ${formatPrice(vigente)}` : 'Próximamente'}
         </button>
       </div>
-      <div class="soldout-box" data-soldout-box hidden={!soldOut}>
+      <div class="soldout-box" data-soldout-box hidden={!soldOut || !comprable}>
         <div class="soldout-title">Esta planta está agotada</div>
         <p>
           Sembramos tandas nuevas cada mes. Déjanos tu correo y te avisamos apenas vuelva al
@@ -365,8 +362,8 @@ const careTitle = `Cuidado de ${product.name.replace(/\s*\(.*\)$/, '').toLowerCa
 
       <div class="shipping-line">
         <Icon name="truck" size={18} class="assure-icon" />
-        <span data-shipping-out hidden={!soldOut}>Sembramos tandas nuevas cada mes</span>
-        <span data-shipping-in hidden={soldOut}>Entrega en Ciudad de Panamá en 24–48 h</span>
+        <span data-shipping-out hidden={!soldOut || !comprable}>Sembramos tandas nuevas cada mes</span>
+        <span data-shipping-in hidden={soldOut && comprable}>Entrega en Ciudad de Panamá en 24–48 h</span>
       </div>
 
       <script>
@@ -385,15 +382,22 @@ const careTitle = `Cuidado de ${product.name.replace(/\s*\(.*\)$/, '').toLowerCa
           const item = items.find((i) => i.sku === sku);
           if (!item) return;
           const agotado = item.available <= 0;
-          document.querySelector<HTMLElement>('[data-soldout-stamp]')!.hidden = !agotado;
-          document.querySelector<HTMLElement>('[data-cta-block]')!.hidden = agotado;
-          document.querySelector<HTMLElement>('[data-soldout-box]')!.hidden = !agotado;
-          document.querySelector<HTMLElement>('[data-shipping-out]')!.hidden = !agotado;
-          document.querySelector<HTMLElement>('[data-shipping-in]')!.hidden = agotado;
-
-          // Precios en vivo. Si el proxy no trajo precio (fallback
-          // degradado), se conserva lo que pinto el build.
+          // Sin precio real ("Proximamente") no se muestra NADA de agotado:
+          // la misma regla que el estado de build. Si el proxy no trajo
+          // precio (fallback degradado), manda lo que decidio el build (se
+          // lee del DOM: "Proximamente" oculto = comprable).
           const pv = precioVista(item);
+          const comprable = pv
+            ? pv.comprable
+            : document.querySelector<HTMLElement>('[data-price-soon]')!.hidden;
+          const mostrarAgotado = agotado && comprable;
+          document.querySelector<HTMLElement>('[data-soldout-stamp]')!.hidden = !mostrarAgotado;
+          document.querySelector<HTMLElement>('[data-cta-block]')!.hidden = mostrarAgotado;
+          document.querySelector<HTMLElement>('[data-soldout-box]')!.hidden = !mostrarAgotado;
+          document.querySelector<HTMLElement>('[data-shipping-out]')!.hidden = !mostrarAgotado;
+          document.querySelector<HTMLElement>('[data-shipping-in]')!.hidden = mostrarAgotado;
+
+          // Precios en vivo. Sin precio del proxy se conserva el build.
           if (!pv) return;
           const fmt = (n: number) => `$${n.toFixed(2)}`;
           const grupo = document.querySelector<HTMLElement>('.price-group')!;
@@ -478,7 +482,6 @@ const careTitle = `Cuidado de ${product.name.replace(/\s*\(.*\)$/, '').toLowerCa
     <div class="care-grid">
       <div
         class="care-photo"
-        data-medidas={product.image ? undefined : 'Foto cuadrada · 800×800'}
         style={
           product.image
             ? `background-image: url('${product.image}'); background-size: cover; background-position: center;`
@@ -771,11 +774,10 @@ const careTitle = `Cuidado de ${product.name.replace(/\s*\(.*\)$/, '').toLowerCa
 
   .thumb.active { border: 2px solid var(--green); }
 
-  .thumb-num {
-    font-size: 12px;
-    color: rgba(27, 42, 31, 0.45);
-    font-variant-numeric: tabular-nums;
-  }
+  /* Producto sin fotos: no hay carril de miniaturas, el marco del emoji
+     ocupa todo el ancho de la columna. */
+  .gallery--sin-fotos { grid-template-columns: minmax(0, 1fr); }
+  .gallery--sin-fotos .main-photo { grid-column: 1; }
 
   .main-photo {
     /* Con las miniaturas fuera de flujo, la foto se auto-colocaria en la
@@ -914,23 +916,6 @@ const careTitle = `Cuidado de ${product.name.replace(/\s*\(.*\)$/, '').toLowerCa
 
   @media (prefers-reduced-motion: reduce) {
     .sim-arrow:active { transform: translateY(-50%); }
-  }
-
-  /* La pastilla de medidas solo aparece cuando aun no hay fotos reales. */
-  .main-photo-ph[data-medidas]::after {
-    content: attr(data-medidas);
-    position: absolute;
-    left: 50%;
-    bottom: 12px;
-    transform: translateX(-50%);
-    font-size: 0.62rem;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: rgba(27, 42, 31, 0.5);
-    background: rgba(238, 245, 240, 0.85);
-    padding: 2px 8px;
-    border-radius: 999px;
-    white-space: nowrap;
   }
 
   .main-photo-num {
@@ -1359,22 +1344,6 @@ const careTitle = `Cuidado de ${product.name.replace(/\s*\(.*\)$/, '').toLowerCa
     align-items: center;
     justify-content: center;
     font-size: 4rem;
-  }
-
-  .care-photo[data-medidas]::after {
-    content: attr(data-medidas);
-    position: absolute;
-    left: 50%;
-    bottom: 18%;
-    transform: translateX(-50%);
-    font-size: 0.62rem;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: rgba(27, 42, 31, 0.5);
-    background: rgba(238, 245, 240, 0.85);
-    padding: 2px 8px;
-    border-radius: 999px;
-    white-space: nowrap;
   }
 
   .care-row { border-bottom: 1px solid var(--line); }

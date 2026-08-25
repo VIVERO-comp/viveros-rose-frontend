@@ -355,8 +355,7 @@ th {
 tr:last-child td { border-bottom: none; }
 
 /* Placeholder de imagen (hasta tener fotografia real). El handoff dibuja los
-   huecos de imagen planos en #dde9e0 (superficie hundida).
-   Cada uso lleva un data-medidas con el tamano de la foto que va ahi. */
+   huecos de imagen planos en #dde9e0 (superficie hundida). */
 .photo-placeholder {
   position: relative;
   aspect-ratio: 4 / 3;
@@ -367,21 +366,4 @@ tr:last-child td { border-bottom: none; }
   color: #14532a;
   font-family: var(--font-heading);
   font-size: 2.5rem;
-}
-
-.photo-placeholder::after {
-  content: attr(data-medidas);
-  position: absolute;
-  left: 50%;
-  bottom: 8px;
-  transform: translateX(-50%);
-  font-family: var(--font-ui);
-  font-size: 0.62rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: rgba(27, 42, 31, 0.5);
-  background: rgba(238, 245, 240, 0.85);
-  padding: 2px 8px;
-  border-radius: 999px;
-  white-space: nowrap;
 }

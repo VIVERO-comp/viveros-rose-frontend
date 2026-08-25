@@ -35,7 +35,6 @@ const tiles = collections.map((c) => {
             <div
               class="tile-photo"
               style={c.image ? `background-image: url('${c.image}'); background-size: cover; background-position: center;` : undefined}
-              data-medidas={c.image ? undefined : 'Foto 1:1 · 400×400'}
               aria-hidden="true"
             ></div>
             <span class="tile-name">{c.name}</span>
@@ -96,23 +95,6 @@ const tiles = collections.map((c) => {
     overflow: hidden;
     outline: 1px solid rgba(27, 42, 31, 0.12);
     background: var(--surface-2);
-  }
-
-  /* La pastilla de medidas solo aparece en tiles que aun no tienen foto. */
-  .tile-photo[data-medidas]::after {
-    content: attr(data-medidas);
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
-    font-size: 0.6rem;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: rgba(27, 42, 31, 0.5);
-    background: rgba(238, 245, 240, 0.85);
-    padding: 2px 7px;
-    border-radius: 999px;
-    white-space: nowrap;
   }
 
   .tile-name { font-size: 0.88rem; font-weight: 500; }

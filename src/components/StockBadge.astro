@@ -1,20 +1,38 @@
 ---
 // Badge de disponibilidad. El atributo data-sku permite que un script de
 // pagina lo actualice en el cliente con datos frescos del stock proxy.
+// Un producto sin precio real ("Proximamente") NO muestra estado de stock:
+// decir "Proximamente" y "Agotado" a la vez confunde, y el inventario de
+// algo que no se puede comprar es ruido. La misma regla se aplica en vivo
+// abajo con precioVista, la fuente que tambien alterna el precio.
 import { stockLabel, stockStatus } from '../lib/stock';
 
 interface Props {
   sku: string;
   available: number;
+  comprable?: boolean;
 }
 
-const { sku, available } = Astro.props;
+const { sku, available, comprable = true } = Astro.props;
 const status = stockStatus(available);
 ---
 
-<span class:list={['badge', `badge--${status === 'in-stock' ? 'in-stock' : status}`]} data-sku={sku} data-stock-badge>
+<span
+  class:list={['badge', `badge--${status === 'in-stock' ? 'in-stock' : status}`]}
+  data-sku={sku}
+  data-stock-badge
+  hidden={!comprable}
+>
   {stockLabel(available)}
 </span>
+
+<style>
+  /* Los consumidores estilizan .badge con :global; este guardia evita que
+     alguno anule el display:none del atributo hidden. */
+  .badge[hidden] {
+    display: none !important;
+  }
+</style>
 
 <script>
   // Refresco en cliente: consulta el stock proxy por todos los SKU visibles y
@@ -23,7 +41,7 @@ const status = stockStatus(available);
   // Al terminar emite "stock-actualizado" con los items, para que el resto de
   // la pagina (boton de la tarjeta, panel de compra de la ficha) siga la
   // MISMA fuente y no contradiga al badge.
-  import { fetchStock, stockLabel, stockStatus } from '../lib/stock';
+  import { fetchStock, precioVista, stockLabel, stockStatus } from '../lib/stock';
 
   async function refreshBadges() {
     const badges = Array.from(
@@ -40,6 +58,10 @@ const status = stockStatus(available);
       badge.textContent = stockLabel(item.available);
       badge.classList.remove('badge--in-stock', 'badge--low', 'badge--out');
       badge.classList.add(`badge--${status === 'in-stock' ? 'in-stock' : status}`);
+      // Sin precio real no hay badge (misma regla que el build); si el proxy
+      // no trajo precio (fallback degradado), se conserva el estado de build.
+      const pv = precioVista(item);
+      if (pv) badge.hidden = !pv.comprable;
     }
     document.dispatchEvent(new CustomEvent('stock-actualizado', { detail: { items } }));
   }

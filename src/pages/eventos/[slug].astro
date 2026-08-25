@@ -33,7 +33,6 @@ const { event } = Astro.props;
   <section class="ev-hero">
     <div
       class="ev-hero-photo"
-      data-medidas={event.heroPhoto ? undefined : 'Foto hero · 1920×600'}
       style={
         event.heroPhoto
           ? `background-image: url('${event.heroPhoto}'); background-size: cover; background-position: center;`
@@ -81,7 +80,6 @@ const { event } = Astro.props;
       </div>
       <div
         class="ev-photo"
-        data-medidas={event.blockPhoto ? undefined : 'Foto · 640×760'}
         style={
           event.blockPhoto
             ? `background-image: url('${event.blockPhoto}'); background-size: cover; background-position: center;`
@@ -104,7 +102,7 @@ const { event } = Astro.props;
           </div>
         ))}
         {Array.from({ length: Math.max(0, 4 - (event.galeria?.length ?? 0)) }).map(() => (
-          <div class="gallery-photo" data-medidas="Foto · 480×300" aria-hidden="true"></div>
+          <div class="gallery-photo" aria-hidden="true"></div>
         ))}
       </div>
     </div>
@@ -147,29 +145,6 @@ const { event } = Astro.props;
     position: absolute;
     inset: 0;
     background: linear-gradient(150deg, #2a4432, var(--card-dark) 70%);
-  }
-
-  .ev-hero-photo::after,
-  .ev-photo::after,
-  .gallery-photo[data-medidas]::after {
-    content: attr(data-medidas);
-    position: absolute;
-    right: 12px;
-    top: 12px;
-    z-index: 1;
-    font-size: 0.6rem;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: rgba(238, 245, 240, 0.7);
-    background: rgba(27, 42, 31, 0.55);
-    padding: 2px 8px;
-    border-radius: 999px;
-    white-space: nowrap;
-  }
-
-  .gallery-photo[data-medidas]::after {
-    color: rgba(27, 42, 31, 0.5);
-    background: rgba(238, 245, 240, 0.85);
   }
 
   .ev-hero-scrim {
