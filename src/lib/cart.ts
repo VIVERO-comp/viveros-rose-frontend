@@ -19,7 +19,14 @@ const STORAGE_KEY = 'pp-cart-v1';
 export function getCart(): CartItem[] {
   if (typeof localStorage === 'undefined') return [];
   try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '[]') as CartItem[];
+    const items = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '[]') as CartItem[];
+    // Migracion a Cloudinary: carritos guardados antes traen rutas viejas de
+    // /fotos_productos/ que ya no existen; sin imagen la miniatura cae al
+    // emoji en vez de quedar rota.
+    for (const item of items) {
+      if (item.image?.startsWith('/fotos_productos/')) item.image = undefined;
+    }
+    return items;
   } catch {
     return [];
   }

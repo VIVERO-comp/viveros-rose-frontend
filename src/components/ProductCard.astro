@@ -33,13 +33,16 @@ const esMasVendida = product.available >= 40;
 <article class="product-tile">
   <a href={url} class="tile-link">
     <!-- Foto del producto con la segunda foto en hover (opacity 0→1 en 0.4s,
-         como el handoff). Si el producto aun no tiene foto, queda el emoji. -->
+         como el handoff). El emoji queda SIEMPRE pintado debajo de la foto:
+         es lo que se ve si el producto no tiene fotos o si Cloudinary no
+         responde (la capa de foto queda transparente y el emoji asoma). -->
     <div
       class="tile-photo"
       data-medidas={product.image ? undefined : 'Foto 4:5 · 640×800'}
       aria-hidden="true"
     >
-      {product.image ? (
+      {product.emoji}
+      {product.image && (
         <>
           <div class="tile-photo-img" style={`background-image: url('${product.image}');`} />
           {product.imageHover && (
@@ -49,8 +52,6 @@ const esMasVendida = product.available >= 40;
             />
           )}
         </>
-      ) : (
-        product.emoji
       )}
       <div class="tile-flags">
         <span

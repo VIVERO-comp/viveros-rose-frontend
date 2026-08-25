@@ -1,0 +1,257 @@
+{
+  "fotos": {
+    "1305f8104fb1": {
+      "archivo": "albahaca-verde.jpg",
+      "descartada": false,
+      "fecha": "2026-08-18 20:14:00 +0000",
+      "orden": 1,
+      "principal": false,
+      "sku": "PL-ALBAHACA-VERDE",
+      "subida": true
+    },
+    "1d3c9c35477f": {
+      "archivo": "ruda.jpg",
+      "descartada": false,
+      "fecha": "2026-08-25 17:05:34 +0000",
+      "orden": 1,
+      "principal": false,
+      "sku": "PLT-RUDA-01",
+      "subida": true
+    },
+    "1f0ae67e6eec": {
+      "archivo": "cipre-rastrero.jpg",
+      "descartada": false,
+      "fecha": "2026-08-25 17:05:33 +0000",
+      "orden": 1,
+      "principal": false,
+      "sku": "PL-CIPRE-RASTRERO",
+      "subida": true
+    },
+    "238bbf18f754": {
+      "archivo": "suculenta-pequena.webp",
+      "descartada": false,
+      "fecha": "2026-08-18 20:18:19 +0000",
+      "orden": 1,
+      "principal": false,
+      "sku": "PL-SUCULENTA-PEQUENA",
+      "subida": true
+    },
+    "2ac87de5d7b3": {
+      "archivo": "bijao-tricolor.jpg",
+      "descartada": false,
+      "fecha": "2026-08-25 17:05:33 +0000",
+      "orden": 1,
+      "principal": false,
+      "sku": "PL-BIJAO-TRICOLOR",
+      "subida": true
+    },
+    "333b0a8b7616": {
+      "archivo": "aralias.jpg",
+      "descartada": false,
+      "fecha": "2026-08-25 17:05:32 +0000",
+      "orden": 1,
+      "principal": false,
+      "sku": "PL-ARALIAS",
+      "subida": true
+    },
+    "42ddbb442633": {
+      "archivo": "agave-gigante.jpg",
+      "descartada": false,
+      "fecha": "2026-08-18 20:14:00 +0000",
+      "orden": 1,
+      "principal": false,
+      "sku": "PL-AGAVE-GIGANTE",
+      "subida": true
+    },
+    "469bb0bc186b": {
+      "archivo": "chavelitas_2.jpg",
+      "descartada": false,
+      "fecha": "2026-08-18 20:47:04 +0000",
+      "orden": 2,
+      "principal": false,
+      "sku": "PLT-CHAVELITAS-01",
+      "subida": true
+    },
+    "52824bb1b60d": {
+      "archivo": "cipre-thuja.jpg",
+      "descartada": false,
+      "fecha": "2026-08-25 17:05:33 +0000",
+      "orden": 1,
+      "principal": false,
+      "sku": "PL-PINO-ROMANO",
+      "subida": true
+    },
+    "52f917904303": {
+      "archivo": "torenia.jpg",
+      "descartada": false,
+      "fecha": "2026-08-18 20:14:00 +0000",
+      "orden": 1,
+      "principal": false,
+      "sku": "PLT-TORENIA-01",
+      "subida": true
+    },
+    "53f7dcf654f4": {
+      "archivo": "albahaca-roja_hover.jpg",
+      "descartada": false,
+      "fecha": "2026-08-18 20:30:32 +0000",
+      "orden": 2,
+      "principal": false,
+      "sku": "PL-ALBAHACA-ROJA",
+      "subida": true
+    },
+    "54a39eca8beb": {
+      "archivo": "agave-gigante_hover.jpg",
+      "descartada": false,
+      "fecha": "2026-08-18 20:14:00 +0000",
+      "orden": 2,
+      "principal": false,
+      "sku": "PL-AGAVE-GIGANTE",
+      "subida": true
+    },
+    "5addc1d7f86d": {
+      "archivo": "calathea-cebrina.jpg",
+      "descartada": false,
+      "fecha": "2026-08-25 17:05:33 +0000",
+      "orden": 1,
+      "principal": false,
+      "sku": "PL-CALATHEA-CEBRINA",
+      "subida": true
+    },
+    "5bdd79d2a33d": {
+      "archivo": "albahaca-verde_hover.jpg",
+      "descartada": false,
+      "fecha": "2026-08-18 20:14:00 +0000",
+      "orden": 2,
+      "principal": false,
+      "sku": "PL-ALBAHACA-VERDE",
+      "subida": true
+    },
+    "60ff37433aa3": {
+      "archivo": "agave-gigante_2.jpg",
+      "descartada": false,
+      "fecha": "2014-06-25 03:12:51 +0000",
+      "orden": 3,
+      "principal": false,
+      "sku": "PL-AGAVE-GIGANTE",
+      "subida": true
+    },
+    "6a822182d2b8": {
+      "archivo": "chavelitas_3.jpg",
+      "descartada": false,
+      "fecha": "2026-08-18 20:47:04 +0000",
+      "orden": 3,
+      "principal": false,
+      "sku": "PLT-CHAVELITAS-01",
+      "subida": true
+    },
+    "6b38b506f314": {
+      "archivo": "millonaria-zamioculca.jpg",
+      "descartada": false,
+      "fecha": "2026-08-25 17:05:34 +0000",
+      "orden": 1,
+      "principal": false,
+      "sku": "PL-MILLONARIA-ZAMIOCULCA",
+      "subida": true
+    },
+    "6d8baee849f7": {
+      "archivo": "zamiculca-variegada.jpg",
+      "descartada": false,
+      "fecha": "2026-08-25 17:05:34 +0000",
+      "orden": 1,
+      "principal": false,
+      "sku": "PL-MILLONARIA-ZAMIOCULCA-BLANCA",
+      "subida": true
+    },
+    "74fffcb62968": {
+      "archivo": "anthurio-flor.jpg",
+      "descartada": false,
+      "fecha": "2026-08-25 17:05:34 +0000",
+      "orden": 1,
+      "principal": false,
+      "sku": "PL-ANTHURIO-FLOR",
+      "subida": true
+    },
+    "8e38c6b1a1b8": {
+      "archivo": "torenia_hover.jpg",
+      "descartada": false,
+      "fecha": "2026-08-18 20:14:00 +0000",
+      "orden": 2,
+      "principal": false,
+      "sku": "PLT-TORENIA-01",
+      "subida": true
+    },
+    "8e71f1236092": {
+      "archivo": "cactus-hueso-de-dragon.jpg",
+      "descartada": false,
+      "fecha": "2026-08-25 17:05:33 +0000",
+      "orden": 1,
+      "principal": false,
+      "sku": "PL-CACTUS-HUESO-DE-DRAGON",
+      "subida": true
+    },
+    "8f70bbe6cb35": {
+      "archivo": "albahaca-roja.jpg",
+      "descartada": false,
+      "fecha": "2026-08-18 20:14:00 +0000",
+      "orden": 1,
+      "principal": false,
+      "sku": "PL-ALBAHACA-ROJA",
+      "subida": true
+    },
+    "9a611c4b2ecd": {
+      "archivo": "clavel-chino.jpg",
+      "descartada": false,
+      "fecha": "2026-08-25 17:05:33 +0000",
+      "orden": 1,
+      "principal": false,
+      "sku": "PL-CLAVEL-CHINO",
+      "subida": true
+    },
+    "b52e2bbf79d6": {
+      "archivo": "romero.jpg",
+      "descartada": false,
+      "fecha": "2026-08-25 17:05:34 +0000",
+      "orden": 1,
+      "principal": false,
+      "sku": "PL-ROMERO",
+      "subida": true
+    },
+    "b7cda31558d6": {
+      "archivo": "bambu-entrenzas.jpg",
+      "descartada": false,
+      "fecha": "2026-08-25 17:05:32 +0000",
+      "orden": 1,
+      "principal": false,
+      "sku": "PL-BAMBU-ENTRENZAS",
+      "subida": true
+    },
+    "d0c799c6eac5": {
+      "archivo": "millonaria-zamioculca-negra.jpg",
+      "descartada": false,
+      "fecha": "2026-08-25 17:05:34 +0000",
+      "orden": 1,
+      "principal": false,
+      "sku": "PL-MILLONARIA-ZAMIOCULCA-NEGRA",
+      "subida": true
+    },
+    "ea80ccbca037": {
+      "archivo": "chavelitas.jpg",
+      "descartada": false,
+      "fecha": "2026-08-18 20:14:00 +0000",
+      "orden": 1,
+      "principal": false,
+      "sku": "PLT-CHAVELITAS-01",
+      "subida": true
+    },
+    "f4ae0f705ee2": {
+      "archivo": "torenia_2.jpg",
+      "descartada": false,
+      "fecha": "2026-08-18 20:47:04 +0000",
+      "orden": 3,
+      "principal": false,
+      "sku": "PLT-TORENIA-01",
+      "subida": true
+    }
+  },
+  "version": 1
+}

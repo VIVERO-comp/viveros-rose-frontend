@@ -20,7 +20,14 @@ const MAX_VISTOS = 8;
 function leer(key: string): ProductoGuardado[] {
   if (typeof localStorage === 'undefined') return [];
   try {
-    return JSON.parse(localStorage.getItem(key) ?? '[]') as ProductoGuardado[];
+    const items = JSON.parse(localStorage.getItem(key) ?? '[]') as ProductoGuardado[];
+    // Migracion a Cloudinary: guardados previos traen rutas viejas de
+    // /fotos_productos/ que ya no existen; sin imagen la miniatura cae al
+    // emoji en vez de quedar rota.
+    for (const item of items) {
+      if (item.image?.startsWith('/fotos_productos/')) item.image = undefined;
+    }
+    return items;
   } catch {
     return [];
   }

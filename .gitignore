@@ -22,3 +22,9 @@ pnpm-debug.log*
 
 # Material de referencia del diseno (handoff descomprimido), no es codigo.
 diseno-referencia/
+
+# Miniaturas que genera scripts/fotos.py para la pagina de revision.
+scripts/.miniaturas/
+
+# Bytecode de los scripts de Python.
+scripts/__pycache__/

@@ -9,6 +9,7 @@
 // stock real lo pinta el stock proxy en el navegador via data-sku.
 
 import { PRECIO_MINIMO_CENTAVOS } from '../lib/stock';
+import { fotosDe, urlFoto } from '../lib/fotos';
 
 export interface Category {
   slug: string;
@@ -44,11 +45,12 @@ export interface Product {
   // mascotas en vez de mostrar un dato inventado. Solo esta definido en las
   // especies cuya toxicidad es conocida; completar el resto con el equipo.
   petFriendly?: boolean;
-  // Foto del producto y foto alterna que aparece al pasar el cursor (hover
-  // de la tarjeta del handoff). Si faltan, la tarjeta muestra el emoji.
+  // Foto principal, hover de la tarjeta y galeria. NUNCA se escriben a mano:
+  // las pinta el bucle del final de este archivo con las URLs de Cloudinary
+  // que scripts/fotos.py deja en src/data/fotos.json. Si el producto no
+  // tiene fotos, la tarjeta muestra el emoji.
   image?: string;
   imageHover?: string;
-  // Fotos adicionales (galeria y fotos de clientes en la pagina de producto).
   gallery?: string[];
   // Porte de la planta tal como se vende (filtro "Tamano" del catalogo).
   // Valores iniciales estimados por el nombre/descripcion; revisar con el
@@ -83,9 +85,6 @@ export const products: Product[] = [
   {
     sku: 'PL-AGAVE-GIGANTE',
     slug: 'agave-gigante',
-    image: '/fotos_productos/agave-gigante.jpg',
-    imageHover: '/fotos_productos/agave-gigante_hover.jpg',
-    gallery: ['/fotos_productos/agave-gigante_2.jpg'],
     category: 'exterior',
     name: 'Agave gigante',
     scientificName: '',
@@ -128,8 +127,6 @@ export const products: Product[] = [
   {
     sku: 'PL-ALBAHACA-ROJA',
     slug: 'albahaca-roja',
-    image: '/fotos_productos/albahaca-roja.jpg',
-    imageHover: '/fotos_productos/albahaca-roja_hover.jpg',
     category: 'exterior',
     name: 'Albahaca roja',
     scientificName: '',
@@ -144,8 +141,6 @@ export const products: Product[] = [
   {
     sku: 'PL-ALBAHACA-VERDE',
     slug: 'albahaca-verde',
-    image: '/fotos_productos/albahaca-verde.jpg',
-    imageHover: '/fotos_productos/albahaca-verde_hover.jpg',
     category: 'exterior',
     name: 'Albahaca verde',
     scientificName: '',
@@ -244,7 +239,6 @@ export const products: Product[] = [
   {
     sku: 'PL-ANTHURIO-FLOR',
     slug: 'anthurio-flor',
-    image: '/fotos_productos/anthurio-flor.jpg',
     category: 'florales',
     name: 'Anthurio flor',
     scientificName: '',
@@ -287,7 +281,6 @@ export const products: Product[] = [
   {
     sku: 'PL-ARALIAS',
     slug: 'aralias',
-    image: '/fotos_productos/aralias.jpg',
     category: 'interior',
     name: 'Aralias',
     scientificName: '',
@@ -316,7 +309,6 @@ export const products: Product[] = [
   {
     sku: 'PL-BAMBU-ENTRENZAS',
     slug: 'bambu-entrenzas',
-    image: '/fotos_productos/bambu-entrenzas.jpg',
     category: 'exterior',
     name: 'Bambu entrenzas',
     scientificName: '',
@@ -331,7 +323,6 @@ export const products: Product[] = [
   {
     sku: 'PL-BIJAO-TRICOLOR',
     slug: 'bijao-tricolor',
-    image: '/fotos_productos/bijao-tricolor.jpg',
     category: 'interior',
     name: 'Bijao tricolor',
     scientificName: '',
@@ -374,7 +365,6 @@ export const products: Product[] = [
   {
     sku: 'PL-CACTUS-HUESO-DE-DRAGON',
     slug: 'cactus-hueso-de-dragon',
-    image: '/fotos_productos/cactus-hueso-de-dragon.jpg',
     category: 'interior',
     name: 'Cactus hueso de dragon',
     scientificName: '',
@@ -417,7 +407,6 @@ export const products: Product[] = [
   {
     sku: 'PL-CALATHEA-CEBRINA',
     slug: 'calathea-cebrina',
-    image: '/fotos_productos/calathea-cebrina.jpg',
     category: 'interior',
     name: 'Calathea cebrina',
     scientificName: '',
@@ -448,8 +437,6 @@ export const products: Product[] = [
     slug: 'chavelitas',
     // La foto que era del hover paso a ser la principal (la principal no
     // existia en disco y la tarjeta salia vacia en reposo).
-    image: '/fotos_productos/chavelitas.jpg',
-    gallery: ['/fotos_productos/chavelitas_2.jpg', '/fotos_productos/chavelitas_3.jpg'],
     category: 'florales',
     name: 'Chavelitas',
     scientificName: '',
@@ -506,7 +493,6 @@ export const products: Product[] = [
   {
     sku: 'PL-CIPRE-RASTRERO',
     slug: 'cipre-rastrero',
-    image: '/fotos_productos/cipre-rastrero.jpg',
     category: 'exterior',
     name: 'Cipre rastrero',
     scientificName: '',
@@ -521,7 +507,6 @@ export const products: Product[] = [
   {
     sku: 'PL-PINO-ROMANO',
     slug: 'cipre-thuja',
-    image: '/fotos_productos/cipre-thuja.jpg',
     category: 'exterior',
     name: 'Cipre thuja',
     scientificName: '',
@@ -536,7 +521,6 @@ export const products: Product[] = [
   {
     sku: 'PL-CLAVEL-CHINO',
     slug: 'clavel-chino',
-    image: '/fotos_productos/clavel-chino.jpg',
     category: 'florales',
     name: 'Clavel chino',
     scientificName: '',
@@ -1209,7 +1193,6 @@ export const products: Product[] = [
   {
     sku: 'PL-MILLONARIA-ZAMIOCULCA',
     slug: 'millonaria-zamioculca',
-    image: '/fotos_productos/millonaria-zamioculca.jpg',
     category: 'interior',
     name: 'Millonaria zamioculca',
     scientificName: '',
@@ -1224,7 +1207,6 @@ export const products: Product[] = [
   {
     sku: 'PL-MILLONARIA-ZAMIOCULCA-NEGRA',
     slug: 'millonaria-zamioculca-negra',
-    image: '/fotos_productos/millonaria-zamioculca-negra.jpg',
     category: 'interior',
     name: 'Millonaria zamioculca negra',
     scientificName: '',
@@ -1939,7 +1921,6 @@ export const products: Product[] = [
   {
     sku: 'PL-ROMERO',
     slug: 'romero',
-    image: '/fotos_productos/romero.jpg',
     category: 'exterior',
     name: 'Romero',
     scientificName: '',
@@ -1996,7 +1977,6 @@ export const products: Product[] = [
   {
     sku: 'PLT-RUDA-01',
     slug: 'ruda',
-    image: '/fotos_productos/ruda.jpg',
     category: 'exterior',
     name: 'Ruda',
     scientificName: '',
@@ -2067,7 +2047,6 @@ export const products: Product[] = [
   {
     sku: 'PL-SUCULENTA-PEQUENA',
     slug: 'suculenta-pequena',
-    image: '/fotos_productos/suculenta-pequena.webp',
     category: 'interior',
     name: 'Suculenta pequena',
     scientificName: '',
@@ -2124,9 +2103,6 @@ export const products: Product[] = [
   {
     sku: 'PLT-TORENIA-01',
     slug: 'torenia',
-    image: '/fotos_productos/torenia.jpg',
-    imageHover: '/fotos_productos/torenia_hover.jpg',
-    gallery: ['/fotos_productos/torenia_2.jpg'],
     category: 'florales',
     name: 'Torenia',
     scientificName: '',
@@ -2155,7 +2131,6 @@ export const products: Product[] = [
   {
     sku: 'PL-MILLONARIA-ZAMIOCULCA-BLANCA',
     slug: 'zamiculca-variegada',
-    image: '/fotos_productos/zamiculca-variegada.jpg',
     category: 'interior',
     name: 'Zamiculca variegada',
     scientificName: '',
@@ -2168,6 +2143,20 @@ export const products: Product[] = [
     size: 'mediana',
   },
 ];
+
+// Fotos de Cloudinary sobre el catalogo: scripts/fotos.py mantiene
+// src/data/fotos.json y aqui se pintan sobre cada producto (la primera foto
+// es la principal de la tarjeta, la segunda el hover y el resto la galeria).
+// Este bucle va FUERA del array a proposito: generar_catalogo.py regenera el
+// array completo y las fotos sobreviven esa regeneracion.
+const ANCHO_TARJETA = 640;
+for (const p of products) {
+  const fotos = fotosDe(p.sku);
+  if (!fotos.length) continue;
+  p.image = urlFoto(p.sku, fotos[0], { ancho: ANCHO_TARJETA });
+  p.imageHover = fotos[1] ? urlFoto(p.sku, fotos[1], { ancho: ANCHO_TARJETA }) : undefined;
+  p.gallery = fotos.slice(2).map((h) => urlFoto(p.sku, h, { ancho: ANCHO_TARJETA }));
+}
 
 export function getCategory(slug: string): Category | undefined {
   return categories.find((c) => c.slug === slug);

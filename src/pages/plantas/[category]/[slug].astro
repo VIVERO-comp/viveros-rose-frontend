@@ -17,6 +17,7 @@ import {
 } from '../../../data/products';
 import { collections, factsOf } from '../../../data/collections';
 import { productosPublicados } from '../../../lib/catalogo-build';
+import { fotosDe, urlFoto } from '../../../lib/fotos';
 import { SITE } from '../../../lib/site';
 
 // Solo los productos activos en Odoo generan pagina: un archivado no esta en
@@ -49,11 +50,14 @@ const related = publicados
 
 const GALLERY_SIZE = 5;
 
-// Fotos reales de la galeria (principal + la de estudio del hover + las
-// adicionales). Si el producto aun no tiene fotos, quedan los huecos.
-const fotosGaleria = [product.image, product.imageHover, ...(product.gallery ?? [])].filter(
-  (f): f is string => Boolean(f),
-);
+// Fotos reales de la galeria, desde Cloudinary (scripts/fotos.py mantiene el
+// orden: principal, hover, adicionales). Cada foto en dos tamanos: miniatura
+// cuadrada para la tira y grande para el visor principal (tambien cuadrado).
+// Si el producto aun no tiene fotos, quedan los huecos.
+const fotosGaleria = fotosDe(product.sku).map((hash) => ({
+  mini: urlFoto(product.sku, hash, { ancho: 160, ratio: '1:1' }),
+  grande: urlFoto(product.sku, hash, { ancho: 960, ratio: '1:1' }),
+}));
 
 // Similares del carrusel "Te podrian gustar": solo productos que comparten
 // coleccion con este ('all' no cuenta porque abarca todo el catalogo),
@@ -191,8 +195,8 @@ const careTitle = `Cuidado de ${product.name.replace(/\s*\(.*\)$/, '').toLowerCa
                 <button
                   class:list={['thumb', 'thumb--foto', { active: i === 0 }]}
                   data-thumb={i}
-                  data-foto={foto}
-                  style={`background-image: url('${foto}'); background-size: cover; background-position: center;`}
+                  data-foto={foto.grande}
+                  style={`background-image: url('${foto.mini}'); background-size: cover; background-position: center;`}
                   aria-label={`Ver foto ${i + 1}`}
                 />
               ))
@@ -214,7 +218,7 @@ const careTitle = `Cuidado de ${product.name.replace(/\s*\(.*\)$/, '').toLowerCa
           data-main-photo
           style={
             fotosGaleria.length
-              ? `background-image: url('${fotosGaleria[0]}'); background-size: cover; background-position: center;`
+              ? `background-image: url('${fotosGaleria[0].grande}'); background-size: cover; background-position: center;`
               : undefined
           }
         >
