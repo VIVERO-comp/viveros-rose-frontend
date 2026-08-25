@@ -1,8 +1,9 @@
 ---
-// Tarjeta de producto estilo tienda (referencia Lively Root): tarjeta clara
-// con la foto arriba, nombre y precio "Desde $" debajo, y el boton circular
-// para agregar al carrito sobre la foto. El StockBadge se conserva tal cual
-// (el stock proxy lo actualiza en el cliente via data-sku).
+// Tarjeta de producto sin caja (referencia Jomashop): la foto sobre fondo
+// gris claro ES la tarjeta, y el texto va directo sobre el fondo de la
+// pagina — nombre en gris, precio en negrita debajo. El boton circular de
+// agregar sigue sobre la foto. El StockBadge se conserva tal cual (el stock
+// proxy lo actualiza en el cliente via data-sku).
 import type { Product } from '../data/products';
 import { formatPrice } from '../data/products';
 import Icon from './Icon.astro';
@@ -47,10 +48,10 @@ const esMasVendida = product.available >= 40;
     </div>
     <div class="tile-info">
       <h3>{product.name}</h3>
+      <p class="price">Desde {formatPrice(product.price)}</p>
       {product.scientificName && <p class="scientific">{product.scientificName}</p>}
       <div class="tile-bottom">
         <StockBadge sku={product.sku} available={product.available} />
-        <p class="price">Desde {formatPrice(product.price)}</p>
       </div>
     </div>
   </a>
@@ -149,23 +150,15 @@ const esMasVendida = product.available >= 40;
 </script>
 
 <style>
+  /* Sin caja: la tarjeta es transparente y la foto redondeada hace de
+     superficie. El hover vive en la foto (crossfade) y en el nombre
+     (subrayado), ya no en un borde. */
   .product-tile {
     position: relative;
     height: 100%;
     display: flex;
     flex-direction: column;
-    border-radius: var(--radius-lg);
-    overflow: hidden;
-    outline: 1px solid var(--line);
-    background: #ffffff;
-  }
-
-  .product-tile { transition: outline-color 150ms ease; }
-
-  /* Hover solo con puntero fino: en tactil el tap dispararia estados
-     "pegados" de hover que no se quitan. */
-  @media (hover: hover) and (pointer: fine) {
-    .product-tile:hover { outline-color: var(--green); }
+    background: transparent;
   }
 
   .tile-link {
@@ -187,6 +180,9 @@ const esMasVendida = product.available >= 40;
     justify-content: center;
     font-size: 3.5rem;
     background: var(--surface-2);
+    border-radius: var(--radius);
+    overflow: hidden;
+    outline: 1px solid var(--line);
   }
 
   /* Etiqueta "Más vendida" sobre la foto, como la referencia. */
@@ -240,7 +236,7 @@ const esMasVendida = product.available >= 40;
 
   .tile-info {
     position: relative;
-    padding: 13.8px;
+    padding: 11px 2px 0;
     display: flex;
     flex-direction: column;
     align-items: flex-start;
@@ -262,12 +258,15 @@ const esMasVendida = product.available >= 40;
 
   /* Nombre con altura reservada para DOS lineas (y elipsis si necesita mas):
      ocupe una o dos, todas las tarjetas de la fila miden lo mismo. */
+  /* Nombre en gris con peso medio: deja de competir con el precio, que
+     ahora es lo mas oscuro de la tarjeta. Un paso mas oscuro que --ink-soft
+     (0.65) para que siga leyendose como texto principal. */
   h3 {
     font-size: 15px;
-    font-weight: 600;
+    font-weight: 500;
     line-height: 1.25;
     margin: 0;
-    color: var(--ink);
+    color: rgba(27, 42, 31, 0.82);
     max-width: 100%;
     display: -webkit-box;
     -webkit-line-clamp: 2;
@@ -296,7 +295,7 @@ const esMasVendida = product.available >= 40;
 
   .price {
     font-size: 15px;
-    font-weight: 600;
+    font-weight: 700;
     font-variant-numeric: tabular-nums;
     color: var(--ink);
     margin: 0;
@@ -360,62 +359,33 @@ const esMasVendida = product.available >= 40;
 
   .tile-fav:hover { background: #ffffff; }
 
+  /* Producto agotado: el boton de agregar esta oculto, asi que el corazon
+     sube a ocupar su lugar (el proxy de stock alterna [hidden] en vivo). */
+  .tile-add[hidden] + .tile-fav { top: 10px; }
+
   .tile-fav.activo {
     color: var(--green-deep);
   }
 
   .tile-fav.activo :global(svg) { fill: currentColor; }
 
-  /* Movil: tarjeta como la referencia de celular — foto arriba con esquinas
-     redondeadas y la info debajo, en texto oscuro sobre el fondo de la pagina
-     (ya no superpuesta sobre la foto con degradado). */
+  /* Movil: la misma tarjeta sin caja de la base, solo con tamanos menores
+     de texto, foto y botones. */
   @media (max-width: 768px) {
-    .product-tile {
-      aspect-ratio: auto;
-      border-radius: 0;
-      overflow: visible;
-      outline: none;
-      background: transparent;
-    }
-
-    /* Sigue siendo columna a toda altura: asi el bloque badge+precio queda
-       anclado abajo tambien en la grilla de 2 columnas del movil. */
-    .tile-link {
-      position: static;
-      height: 100%;
-      color: var(--ink);
-    }
-
-    .tile-link:hover { color: var(--ink); }
-
     .tile-photo {
-      position: relative;
-      inset: auto;
-      aspect-ratio: 4 / 5;
-      border-radius: var(--radius);
-      overflow: hidden;
-      outline: 1px solid var(--line);
       font-size: 2.6rem;
     }
 
     .tile-photo::after { display: none; }
-    .tile-overlay { display: none; }
 
     .tile-info {
       padding: 10px 2px 0;
       gap: 3px;
     }
 
-    h3 { font-size: 14px; color: var(--ink); }
-    .scientific { font-size: 11px; color: var(--ink-soft); }
-    .price { font-size: 13px; color: var(--ink); margin: 1px 0 0; }
-
-    /* El estado de stock baja al final de la info (como las etiquetas "Pet
-       Friendly" de la referencia) y recupera sus colores sobre fondo claro. */
-    .tile-info :global(.badge) { order: 4; margin-top: 3px; }
-    .tile-info :global(.badge--in-stock) { color: var(--green-deep); }
-    .tile-info :global(.badge--low) { color: var(--amber-note); }
-    .tile-info :global(.badge--out) { color: var(--ink-faint); }
+    h3 { font-size: 14px; }
+    .scientific { font-size: 11px; }
+    .price { font-size: 13px; margin: 1px 0 0; }
 
     .tile-add {
       width: 32px;
@@ -432,5 +402,7 @@ const esMasVendida = product.available >= 40;
       right: 8px;
       box-shadow: 0 2px 8px rgba(27, 42, 31, 0.18);
     }
+
+    .tile-add[hidden] + .tile-fav { top: 8px; }
   }
 </style>
