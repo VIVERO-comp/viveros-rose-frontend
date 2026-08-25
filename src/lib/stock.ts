@@ -14,6 +14,10 @@ export interface StockItem {
   warehouse?: string;
   updated_at: string;
   stale?: boolean;
+  // Precios en centavos (seccion de ofertas). El proxy los omite solo en su
+  // fallback degradado sin historia: si faltan, dejar en paz lo ya pintado.
+  price_cents?: number;
+  offer_price_cents?: number;
 }
 
 export type StockStatus = 'in-stock' | 'low' | 'out';
@@ -26,6 +30,39 @@ export const LOW_STOCK_THRESHOLD = 5;
 // fetchStock trocea la lista para que paginas como /plantas (147 SKUs)
 // puedan refrescar todas sus tarjetas.
 const MAX_SKUS_POR_CONSULTA = 50;
+
+// Piso de compra: un producto es comprable solo si lo que se cobra SUPERA
+// $1.00. Es el mismo umbral (y el mismo <=) que PRECIO_MINIMO_CENTAVOS del
+// order-api: cubre el 0 y el 1.0 por defecto de Odoo. Por debajo el producto
+// se muestra "Proximamente" — visible, en su lugar, pero sin comprar — y en
+// cuanto Abraham le pone precio real en Odoo pasa a comprable solo.
+export const PRECIO_MINIMO_CENTAVOS = 100;
+
+// Lo que la pagina debe mostrar y cobrar para un item del proxy, resuelto en
+// UN solo lugar: tarjeta, ficha y carrito leen de aqui para no contradecirse.
+export interface PrecioVista {
+  vigente: number; // dolares: lo que se cobra hoy (la oferta si esta activa)
+  regular: number | null; // dolares: el precio a tachar; null si no hay oferta
+  descuentoPct: number | null; // para la etiqueta "-25%" sobre la foto
+  comprable: boolean;
+}
+
+// Devuelve null cuando el item no trae precio (fallback degradado del proxy):
+// en ese caso no hay que tocar el precio que ya este pintado.
+export function precioVista(item: StockItem): PrecioVista | null {
+  if (typeof item.price_cents !== 'number') return null;
+  const oferta =
+    typeof item.offer_price_cents === 'number' && item.offer_price_cents < item.price_cents
+      ? item.offer_price_cents
+      : null;
+  const vigente = oferta ?? item.price_cents;
+  return {
+    vigente: vigente / 100,
+    regular: oferta !== null ? item.price_cents / 100 : null,
+    descuentoPct: oferta !== null ? Math.round(100 * (1 - oferta / item.price_cents)) : null,
+    comprable: vigente > PRECIO_MINIMO_CENTAVOS,
+  };
+}
 
 export function stockStatus(available: number): StockStatus {
   if (available <= 0) return 'out';

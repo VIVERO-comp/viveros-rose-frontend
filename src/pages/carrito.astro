@@ -5,21 +5,31 @@
 // (localStorage) sigue siendo src/lib/cart.ts, sin cambios.
 import Base from '../layouts/Base.astro';
 import Icon from '../components/Icon.astro';
-import { compareAtPrice, formatPrice, products } from '../data/products';
+import { compareAtPrice, esComprable, formatPrice, precioVigente } from '../data/products';
+import { productosPublicados } from '../lib/catalogo-build';
+
+// Catalogo publicado (con los precios reales de Odoo inyectados en build),
+// no products.ts crudo: asi las sugerencias y el mapa de ahorros usan el
+// precio verdadero y no el placeholder.
+const catalogo = await productosPublicados();
 
 // Sugerencias "Va bien con": candidatos del catalogo real, con los que ya
-// tienen foto primero. En build no hay stock (available estatico es 0, por
-// eso antes esta lista salia siempre vacia y el titulo quedaba flotando);
-// se renderizan ocultos y el stock del proxy decide en el cliente cuales de
-// estos se muestran (hasta 3). El diseno original sugeria sustrato/abono/
-// matera, pero esos accesorios no existen en el catalogo ni en Odoo.
-const suggestions = [...products]
+// tienen foto primero, y solo COMPRABLES (un producto "Proximamente" no se
+// puede sugerir para agregar). En build no hay stock (available estatico es
+// 0, por eso antes esta lista salia siempre vacia y el titulo quedaba
+// flotando); se renderizan ocultos y el stock del proxy decide en el
+// cliente cuales de estos se muestran (hasta 3). El diseno original sugeria
+// sustrato/abono/matera, pero esos accesorios no existen en el catalogo ni
+// en Odoo.
+const suggestions = catalogo
+  .filter(esComprable)
   .sort((a, b) => Number(Boolean(b.image)) - Number(Boolean(a.image)))
   .slice(0, 6);
 
-// Precio de lista por SKU (promo 15% exterior) para mostrar el ahorro.
+// Precio regular por SKU de los productos en oferta, para mostrar el ahorro
+// en cada linea del carrito.
 const compareMap = Object.fromEntries(
-  products
+  catalogo
     .map((p) => [p.sku, compareAtPrice(p)] as const)
     .filter(([, compare]) => compare !== null),
 );
@@ -80,14 +90,14 @@ const compareMap = Object.fromEntries(
                   )}
                   <div class="addon-info">
                     <p class="addon-name">{p.name}</p>
-                    <p class="addon-price">{formatPrice(p.price)}</p>
+                    <p class="addon-price">{formatPrice(precioVigente(p))}</p>
                     <button
                       type="button"
                       class="addon-add"
                       data-addon-add
                       data-sku={p.sku}
                       data-name={p.name}
-                      data-price={p.price}
+                      data-price={precioVigente(p)}
                       data-slug={p.slug}
                       data-category={p.category}
                       data-emoji={p.emoji}

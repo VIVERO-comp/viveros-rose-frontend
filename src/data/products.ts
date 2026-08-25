@@ -8,6 +8,8 @@
 // `available` queda en 0 porque el
 // stock real lo pinta el stock proxy en el navegador via data-sku.
 
+import { PRECIO_MINIMO_CENTAVOS } from '../lib/stock';
+
 export interface Category {
   slug: string;
   name: string;
@@ -21,7 +23,13 @@ export interface Product {
   category: string; // Category.slug
   name: string;
   scientificName: string;
-  price: number; // USD
+  price: number; // USD (precio REGULAR; el hardcodeado es placeholder y
+  // catalogo-build lo reemplaza en cada build con el list_price real de Odoo
+  // via el stock proxy)
+  // Precio de oferta en USD. Nunca se escribe a mano aqui: lo inyecta
+  // catalogo-build cuando el producto tiene la casilla "En oferta" en Odoo
+  // con una oferta valida (0 < oferta < regular).
+  offerPrice?: number;
   description: string;
   care: {
     light: string;
@@ -2177,11 +2185,28 @@ export function formatPrice(price: number): string {
   return `$${price.toFixed(2)}`;
 }
 
-// Promocion "temporada de lluvias": 15% de descuento en plantas de exterior
-// (barra de anuncio del diseno). DESACTIVADA mientras el catalogo tenga el
-// precio placeholder de $5: el tachado se veria falso. Cuando haya precios
-// reales con una oferta real, restaurar la linea comentada.
-export function compareAtPrice(_product: Product): number | null {
-  // return _product.category === 'exterior' ? Math.round((_product.price / 0.85) * 100) / 100 : null;
-  return null;
+// --- Ofertas y piso de compra (estado de BUILD) ---
+// Espejo en build de lib/stock.ts (precioVista): el estado inicial de la
+// pagina se pinta con estos helpers y el stock proxy lo refresca en el
+// navegador con la misma regla. Cambiar la regla = cambiarla en ambos.
+
+/** Lo que se cobra hoy: la oferta si es valida, el regular si no. */
+export function precioVigente(product: Product): number {
+  return product.offerPrice !== undefined && product.offerPrice < product.price
+    ? product.offerPrice
+    : product.price;
+}
+
+/** Precio regular a tachar junto al de oferta; null si no hay oferta real. */
+export function compareAtPrice(product: Product): number | null {
+  return product.offerPrice !== undefined && product.offerPrice < product.price
+    ? product.price
+    : null;
+}
+
+/** Comprable = el precio cobrado SUPERA el piso de $1.00 (la regla del
+ * order-api). Por debajo la tienda muestra "Proximamente": el producto se ve
+ * en su lugar normal del catalogo pero no se puede agregar al carrito. */
+export function esComprable(product: Product): boolean {
+  return Math.round(precioVigente(product) * 100) > PRECIO_MINIMO_CENTAVOS;
 }

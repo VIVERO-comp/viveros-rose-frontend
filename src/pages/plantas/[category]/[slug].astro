@@ -7,7 +7,14 @@ import Base from '../../../layouts/Base.astro';
 import Icon from '../../../components/Icon.astro';
 import ProductCard from '../../../components/ProductCard.astro';
 import StockBadge from '../../../components/StockBadge.astro';
-import { compareAtPrice, formatPrice, getCategory, type Product } from '../../../data/products';
+import {
+  compareAtPrice,
+  esComprable,
+  formatPrice,
+  getCategory,
+  precioVigente,
+  type Product,
+} from '../../../data/products';
 import { collections, factsOf } from '../../../data/collections';
 import { productosPublicados } from '../../../lib/catalogo-build';
 import { SITE } from '../../../lib/site';
@@ -25,7 +32,11 @@ const { product } = Astro.props;
 const publicados = await productosPublicados();
 const category = getCategory(product.category)!;
 const soldOut = product.available <= 0;
+// Estado inicial de precios (build, con los precios reales de catalogo-build);
+// el proxy los refresca en vivo con la misma regla (precioVista).
 const compareAt = soldOut ? null : compareAtPrice(product);
+const vigente = precioVigente(product);
+const comprable = esComprable(product);
 const whatsappMessage = `Hola, me interesa "${product.name}" (${product.sku}) que vi en plantaspanama.com.`;
 
 // "Va bien con…": prioriza la misma categoria. No se filtra por available:
@@ -233,8 +244,11 @@ const careTitle = `Cuidado de ${product.name.replace(/\s*\(.*\)$/, '').toLowerCa
       <div class="price-row">
         <div class="price-group">
           <StockBadge sku={product.sku} available={product.available} />
-          {compareAt && <span class="compare">{formatPrice(compareAt)}</span>}
-          <span class="price">{formatPrice(product.price)}</span>
+          <span class="compare" data-price-compare hidden={!comprable || !compareAt}>
+            {compareAt ? formatPrice(compareAt) : ''}
+          </span>
+          <span class="price" data-price-current hidden={!comprable}>{formatPrice(vigente)}</span>
+          <span class="price price-soon" data-price-soon hidden={comprable}>Próximamente</span>
         </div>
         <button
           class="fav-btn"
@@ -319,16 +333,17 @@ const careTitle = `Cuidado de ${product.name.replace(/\s*\(.*\)$/, '').toLowerCa
         </button>
         <button
           class="cta-add add-to-cart"
+          disabled={!comprable}
           data-sku={product.sku}
           data-name={product.name}
-          data-price={product.price}
+          data-price={vigente}
           data-slug={product.slug}
           data-category={product.category}
           data-emoji={product.emoji}
           data-image={product.image}
-          data-label={`Agregar al carrito — ${formatPrice(product.price)}`}
+          data-label={comprable ? `Agregar al carrito — ${formatPrice(vigente)}` : 'Próximamente'}
         >
-          Agregar al carrito — {formatPrice(product.price)}
+          {comprable ? `Agregar al carrito — ${formatPrice(vigente)}` : 'Próximamente'}
         </button>
       </div>
       <div class="soldout-box" data-soldout-box hidden={!soldOut}>
@@ -351,10 +366,12 @@ const careTitle = `Cuidado de ${product.name.replace(/\s*\(.*\)$/, '').toLowerCa
       </div>
 
       <script>
-        // Panel de compra segun el stock REAL: la misma fuente (stock proxy,
-        // via el evento de StockBadge) que pinta el badge de arriba. Asi la
-        // ficha no puede decir "En stock" y "agotada" a la vez.
-        import type { StockItem } from '../../../lib/stock';
+        // Panel de compra segun el stock Y los precios REALES: la misma
+        // fuente (stock proxy, via el evento de StockBadge) que pinta el
+        // badge de arriba. Asi la ficha no puede decir "En stock" y
+        // "agotada" a la vez, ni mostrar un precio distinto del que cobra
+        // el checkout.
+        import { precioVista, type StockItem } from '../../../lib/stock';
 
         document.addEventListener('stock-actualizado', (event) => {
           const badge = document.querySelector<HTMLElement>('.price-group [data-stock-badge]');
@@ -369,6 +386,29 @@ const careTitle = `Cuidado de ${product.name.replace(/\s*\(.*\)$/, '').toLowerCa
           document.querySelector<HTMLElement>('[data-soldout-box]')!.hidden = !agotado;
           document.querySelector<HTMLElement>('[data-shipping-out]')!.hidden = !agotado;
           document.querySelector<HTMLElement>('[data-shipping-in]')!.hidden = agotado;
+
+          // Precios en vivo. Si el proxy no trajo precio (fallback
+          // degradado), se conserva lo que pinto el build.
+          const pv = precioVista(item);
+          if (!pv) return;
+          const fmt = (n: number) => `$${n.toFixed(2)}`;
+          const grupo = document.querySelector<HTMLElement>('.price-group')!;
+          const actual = grupo.querySelector<HTMLElement>('[data-price-current]')!;
+          const tachado = grupo.querySelector<HTMLElement>('[data-price-compare]')!;
+          const proximamente = grupo.querySelector<HTMLElement>('[data-price-soon]')!;
+          proximamente.hidden = pv.comprable;
+          actual.hidden = !pv.comprable;
+          actual.textContent = fmt(pv.vigente);
+          tachado.hidden = agotado || !pv.comprable || pv.regular === null;
+          if (pv.regular !== null) tachado.textContent = fmt(pv.regular);
+
+          const boton = document.querySelector<HTMLButtonElement>('.add-to-cart');
+          if (!boton) return;
+          boton.disabled = !pv.comprable;
+          const etiqueta = pv.comprable ? `Agregar al carrito — ${fmt(pv.vigente)}` : 'Próximamente';
+          boton.dataset.label = etiqueta;
+          boton.textContent = etiqueta;
+          if (pv.comprable) boton.dataset.price = String(pv.vigente);
         });
       </script>
     </div>
@@ -980,6 +1020,15 @@ const careTitle = `Cuidado de ${product.name.replace(/\s*\(.*\)$/, '').toLowerCa
     font-variant-numeric: tabular-nums;
   }
 
+  /* Sin precio real en Odoo: "Próximamente" ocupa el lugar del precio. */
+  .price-soon {
+    color: var(--ink-faint);
+  }
+
+  .price-group [hidden] {
+    display: none;
+  }
+
   /* Corazon de favoritos junto al precio. */
   .fav-btn {
     width: 40px;
@@ -1137,6 +1186,14 @@ const careTitle = `Cuidado de ${product.name.replace(/\s*\(.*\)$/, '').toLowerCa
   }
 
   .cta-add:hover { background: var(--green-dark); }
+
+  /* "Proximamente": el boton queda visible pero apagado, sin hover. */
+  .cta-add:disabled {
+    background: var(--surface-2);
+    border-color: var(--line);
+    color: var(--ink-faint);
+    cursor: not-allowed;
+  }
 
   .soldout-box {
     margin-top: 22px;

@@ -9,6 +9,7 @@
 // sesion saluda y lleva a /cuenta.
 import { SITE, whatsappLink } from '../lib/site';
 import { collections } from '../data/collections';
+import { esComprable, precioVigente } from '../data/products';
 import { productosPublicados } from '../lib/catalogo-build';
 import Icon from './Icon.astro';
 
@@ -85,7 +86,10 @@ const indiceBusqueda = {
     n: p.name,
     c: p.scientificName || '',
     u: `/plantas/${p.category}/${p.slug}`,
-    p: p.price,
+    // Precio vigente (la oferta si esta activa); s=1 marca "Proximamente"
+    // (sin precio real en Odoo) para no sugerir "Desde $0.00".
+    p: precioVigente(p),
+    s: esComprable(p) ? 0 : 1,
     i: p.image ?? null,
     e: p.emoji,
   })),
@@ -538,7 +542,7 @@ const menuTipos = [
   const buscadorIndice = document.querySelector('[data-search-index]');
 
   if (buscadorIndice) {
-    interface ProductoIndice { n: string; c: string; u: string; p: number; i: string | null; e: string }
+    interface ProductoIndice { n: string; c: string; u: string; p: number; s: number; i: string | null; e: string }
     interface ColeccionIndice { n: string; s: string }
     const { productos, colecciones } = JSON.parse(buscadorIndice.textContent!) as {
       productos: ProductoIndice[];
@@ -579,7 +583,8 @@ const menuTipos = [
               ? `<span class="drop-thumb" style="background-image: url('${p.i}')"></span>`
               : `<span class="drop-thumb drop-thumb--emoji">${p.e}</span>`;
             const nombreCientifico = p.c ? `<span class="drop-sci">${escapar(p.c)}</span>` : '';
-            return `<a class="drop-row" href="${p.u}">${visual}<span class="drop-copy"><span class="drop-name">${escapar(p.n)}</span>${nombreCientifico}<span class="drop-price">Desde $${p.p.toFixed(2)}</span></span></a>`;
+            const precio = p.s ? 'Próximamente' : `Desde $${p.p.toFixed(2)}`;
+            return `<a class="drop-row" href="${p.u}">${visual}<span class="drop-copy"><span class="drop-name">${escapar(p.n)}</span>${nombreCientifico}<span class="drop-price">${precio}</span></span></a>`;
           })
           .join('');
         if (coincideProducto.length > 5) {

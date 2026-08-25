@@ -5,7 +5,7 @@
 // agregar sigue sobre la foto. El StockBadge se conserva tal cual (el stock
 // proxy lo actualiza en el cliente via data-sku).
 import type { Product } from '../data/products';
-import { formatPrice } from '../data/products';
+import { compareAtPrice, esComprable, formatPrice, precioVigente } from '../data/products';
 import Icon from './Icon.astro';
 import StockBadge from './StockBadge.astro';
 
@@ -16,6 +16,14 @@ interface Props {
 const { product } = Astro.props;
 const url = `/plantas/${product.category}/${product.slug}`;
 const outOfStock = product.available <= 0;
+
+// Estado inicial de precios (el de build, con los precios reales que inyecta
+// catalogo-build); el stock proxy lo refresca en el navegador con la misma
+// regla (precioVista de lib/stock.ts) via el evento stock-actualizado.
+const vigente = precioVigente(product);
+const regularTachado = compareAtPrice(product);
+const comprable = esComprable(product);
+const descuentoPct = regularTachado ? Math.round(100 * (1 - vigente / regularTachado)) : null;
 
 // "Mas vendida" usa la misma regla que la coleccion mas-vendidas.
 const esMasVendida = product.available >= 40;
@@ -44,11 +52,30 @@ const esMasVendida = product.available >= 40;
       ) : (
         product.emoji
       )}
-      {esMasVendida && <span class="tile-flag">Más vendida</span>}
+      <div class="tile-flags">
+        <span
+          class="tile-flag tile-flag--offer"
+          data-offer-flag
+          data-sku={product.sku}
+          hidden={!comprable || descuentoPct === null}
+        >
+          {descuentoPct !== null ? `-${descuentoPct}%` : ''}
+        </span>
+        {esMasVendida && <span class="tile-flag">Más vendida</span>}
+      </div>
     </div>
     <div class="tile-info">
       <h3>{product.name}</h3>
-      <p class="price">Desde {formatPrice(product.price)}</p>
+      <!-- Los tres estados del precio se renderizan siempre y el proxy los
+           alterna en vivo: "Proximamente" (sin precio real en Odoo), precio
+           vigente y regular tachado (solo con oferta valida). -->
+      <p class="price" data-price-line data-sku={product.sku}>
+        <span class="price-soon" data-price-soon hidden={comprable}>Próximamente</span>
+        <span data-price-current hidden={!comprable}>Desde {formatPrice(vigente)}</span>
+        <s class="compare" data-price-compare hidden={!comprable || !regularTachado}>
+          {regularTachado ? formatPrice(regularTachado) : ''}
+        </s>
+      </p>
       {product.scientificName && <p class="scientific">{product.scientificName}</p>}
       <div class="tile-bottom">
         <StockBadge sku={product.sku} available={product.available} />
@@ -56,16 +83,17 @@ const esMasVendida = product.available >= 40;
     </div>
   </a>
   <!-- El boton se renderiza siempre y se muestra u oculta con el stock REAL
-       del proxy (evento stock-actualizado); el estado de build (available
-       estatico, siempre 0) solo decide el estado inicial. -->
+       del proxy (evento stock-actualizado) Y con el precio: sin precio real
+       en Odoo ("Proximamente") no se puede agregar. El estado de build solo
+       decide el estado inicial. -->
   <button
     class="tile-add"
     aria-label={`Agregar ${product.name} al carrito`}
-    hidden={outOfStock}
+    hidden={outOfStock || !comprable}
     data-tile-add
     data-sku={product.sku}
     data-name={product.name}
-    data-price={product.price}
+    data-price={vigente}
     data-slug={product.slug}
     data-category={product.category}
     data-emoji={product.emoji}
@@ -79,7 +107,7 @@ const esMasVendida = product.available >= 40;
     data-tile-fav
     data-sku={product.sku}
     data-name={product.name}
-    data-price={product.price}
+    data-price={vigente}
     data-slug={product.slug}
     data-category={product.category}
     data-emoji={product.emoji}
@@ -94,16 +122,55 @@ const esMasVendida = product.available >= 40;
   // pagina y este script se incluye una sola vez).
   import { addToCart } from '../lib/cart';
   import { esFavorito, toggleFavorito } from '../lib/preferencias';
-  import type { StockItem } from '../lib/stock';
+  import { precioVista, type StockItem } from '../lib/stock';
 
-  // El boton de agregar sigue el stock real que reporta StockBadge, la misma
-  // fuente que pinta el badge de la tarjeta.
+  // Sin formatPrice de data/products: importarlo aqui meteria el catalogo
+  // entero al bundle del cliente.
+  const fmt = (n: number) => `$${n.toFixed(2)}`;
+
+  // La tarjeta sigue el stock Y los precios reales que reporta StockBadge,
+  // la misma fuente que pinta el badge. Cuando precioVista devuelve null
+  // (fallback del proxy sin precio) se deja lo que pinto el build.
   document.addEventListener('stock-actualizado', (event) => {
     const items = (event as CustomEvent<{ items: StockItem[] }>).detail.items;
-    const bySku = new Map(items.map((i) => [i.sku, i.available]));
+    const bySku = new Map(items.map((i) => [i.sku, i]));
+
+    document.querySelectorAll<HTMLElement>('[data-price-line][data-sku]').forEach((line) => {
+      const item = bySku.get(line.dataset.sku!);
+      const pv = item && precioVista(item);
+      if (!pv) return;
+      const soon = line.querySelector<HTMLElement>('[data-price-soon]')!;
+      const current = line.querySelector<HTMLElement>('[data-price-current]')!;
+      const compare = line.querySelector<HTMLElement>('[data-price-compare]')!;
+      soon.hidden = pv.comprable;
+      current.hidden = !pv.comprable;
+      current.textContent = `Desde ${fmt(pv.vigente)}`;
+      compare.hidden = !pv.comprable || pv.regular === null;
+      if (pv.regular !== null) compare.textContent = fmt(pv.regular);
+    });
+
+    document.querySelectorAll<HTMLElement>('[data-offer-flag][data-sku]').forEach((flag) => {
+      const item = bySku.get(flag.dataset.sku!);
+      const pv = item && precioVista(item);
+      if (!pv) return;
+      const conDescuento = pv.comprable && pv.descuentoPct !== null;
+      flag.hidden = !conDescuento;
+      if (conDescuento) flag.textContent = `-${pv.descuentoPct}%`;
+    });
+
     document.querySelectorAll<HTMLButtonElement>('[data-tile-add][data-sku]').forEach((btn) => {
-      const available = bySku.get(btn.dataset.sku!);
-      if (available !== undefined) btn.hidden = available <= 0;
+      const item = bySku.get(btn.dataset.sku!);
+      if (!item) return;
+      const pv = precioVista(item);
+      // Sin dato de precio manda solo el stock (como antes de las ofertas).
+      btn.hidden = item.available <= 0 || (pv !== null && !pv.comprable);
+      if (pv?.comprable) btn.dataset.price = String(pv.vigente);
+    });
+
+    document.querySelectorAll<HTMLButtonElement>('[data-tile-fav][data-sku]').forEach((btn) => {
+      const item = bySku.get(btn.dataset.sku!);
+      const pv = item && precioVista(item);
+      if (pv?.comprable) btn.dataset.price = String(pv.vigente);
     });
   });
 
@@ -185,11 +252,20 @@ const esMasVendida = product.available >= 40;
     outline: 1px solid var(--line);
   }
 
-  /* Etiqueta "Más vendida" sobre la foto, como la referencia. */
-  .tile-flag {
+  /* Etiquetas sobre la foto ("-25%" y "Más vendida"), apiladas en columna
+     para que puedan convivir sin taparse. */
+  .tile-flags {
     position: absolute;
     left: 10px;
     top: 10px;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .tile-flag {
     font-size: 0.62rem;
     font-weight: 600;
     letter-spacing: 0.08em;
@@ -198,6 +274,16 @@ const esMasVendida = product.available >= 40;
     background: rgba(255, 255, 255, 0.92);
     padding: 4px 10px;
     border-radius: 999px;
+  }
+
+  /* Descuento invertido (fondo verde) para distinguirse de "Más vendida". */
+  .tile-flag--offer {
+    color: #ffffff;
+    background: var(--green-deep);
+  }
+
+  .tile-flag--offer[hidden] {
+    display: none;
   }
 
   .tile-photo-img {
@@ -299,6 +385,25 @@ const esMasVendida = product.available >= 40;
     font-variant-numeric: tabular-nums;
     color: var(--ink);
     margin: 0;
+  }
+
+  /* Regular tachado junto al precio de oferta. */
+  .price .compare {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ink-faint);
+    margin-left: 4px;
+  }
+
+  /* Sin precio real en Odoo: "Próximamente" en lugar del precio, con el
+     mismo cuerpo para que la fila de tarjetas no baile. */
+  .price .price-soon {
+    font-weight: 600;
+    color: var(--ink-faint);
+  }
+
+  .price [hidden] {
+    display: none;
   }
 
   .tile-add {
