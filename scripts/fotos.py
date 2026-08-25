@@ -25,6 +25,15 @@
 #                   (para cambiar principales o descartar fotos viejas).
 #   --puerto N      puerto del servidor de revision (por defecto 8765).
 #
+# Borron y cuenta nueva (no necesitan carpeta):
+#   --reiniciar         vacia fotos-mapa.json y fotos.json: el sitio queda en
+#                       emoji tras el proximo build/deploy y la siguiente
+#                       corrida del script empieza de cero.
+#   --borrar-cloudinary elimina TODO lo que cuelga de productos/ en
+#                       Cloudinary. Correrlo DESPUES de desplegar el
+#                       fotos.json vacio, nunca antes: asi el sitio jamas
+#                       referencia fotos que ya no existen.
+#
 # Sin dependencias: usa solo la libreria estandar (la subida firmada de
 # Cloudinary es un POST multipart con firma SHA-1). Credenciales del .env
 # del frontend (CLOUDINARY_CLOUD_NAME / _API_KEY / _API_SECRET).
@@ -295,6 +304,64 @@ def subir_pendientes(env, mapa, rutas):
         print(f"  Subida {entrada['archivo']} -> {public_id}")
         guardar_mapa(mapa)  # progreso a salvo si la corrida se corta
     return subidas, sin_archivo
+
+
+def peticion_admin(env, metodo, ruta):
+    """Llamada a la Admin API con curl. Las credenciales van por stdin
+    (curl -K -) para que no aparezcan en la lista de procesos."""
+    config = f'user = "{env["CLOUDINARY_API_KEY"]}:{env["CLOUDINARY_API_SECRET"]}"\n'
+    resultado = subprocess.run(
+        [
+            "curl", "-sS", "--fail-with-body", "-X", metodo, "-K", "-",
+            f"https://api.cloudinary.com/v1_1/{env['CLOUDINARY_CLOUD_NAME']}{ruta}",
+        ],
+        input=config, capture_output=True, text=True, timeout=120,
+    )
+    if resultado.returncode != 0:
+        raise RuntimeError((resultado.stdout + resultado.stderr).strip()[:300])
+    return json.loads(resultado.stdout)
+
+
+def reiniciar(env):
+    """Borron y cuenta nueva local: vacia el mapeo y fotos.json. NO toca
+    Cloudinary (eso es --borrar-cloudinary, despues del deploy)."""
+    mapa = cargar_mapa()
+    subidas = sum(1 for e in mapa["fotos"].values() if e["subida"])
+    productos_con_foto = len(fotos_por_sku(mapa, solo_subidas=True))
+    vacio = {"version": 1, "fotos": {}}
+    guardar_mapa(vacio)
+    generar_fotos_json(env, vacio)
+    print("Reiniciado:")
+    print(f"  fotos-mapa.json vaciado ({len(mapa['fotos'])} fotos conocidas, {subidas} subidas)")
+    print(f"  fotos.json vaciado ({productos_con_foto} productos vuelven al emoji tras el proximo build/deploy)")
+    print("Las fotos siguen en Cloudinary: cuando el deploy este arriba,")
+    print("correr --borrar-cloudinary para eliminarlas de alla.")
+
+
+def borrar_cloudinary(env):
+    """Elimina todo lo que cuelga de productos/ en Cloudinary (recursos y
+    derivados). Pensado para DESPUES de desplegar el fotos.json vacio."""
+    fotos_json = {}
+    if os.path.exists(FOTOS_JSON_PATH):
+        with open(FOTOS_JSON_PATH, encoding="utf-8") as f:
+            fotos_json = json.load(f).get("porSku", {})
+    if fotos_json:
+        print("OJO: fotos.json todavia referencia fotos. El orden seguro es")
+        print("desplegar primero el fotos.json vacio (--reiniciar + deploy) y")
+        print("borrar en Cloudinary despues. Abortando sin borrar.")
+        sys.exit(1)
+    total = 0
+    while True:
+        r = peticion_admin(env, "DELETE", "/resources/image/upload?prefix=productos/")
+        total += sum(1 for v in r.get("deleted", {}).values() if v == "deleted")
+        if not r.get("partial"):
+            break
+    # La carpeta vacia (si el modo de carpetas de la cuenta la deja viva).
+    try:
+        peticion_admin(env, "DELETE", "/folders/productos")
+    except Exception:
+        pass
+    print(f"Eliminadas de Cloudinary: {total} fotos bajo productos/")
 
 
 def generar_fotos_json(env, mapa):
@@ -599,12 +666,29 @@ def servir_revision(mapa, rutas, productos, puerto):
 
 def main():
     parser = argparse.ArgumentParser(description="Fotos de productos en Cloudinary")
-    parser.add_argument("carpeta", help="Carpeta plana con las fotos del celular")
+    parser.add_argument("carpeta", nargs="?", help="Carpeta plana con las fotos del celular")
     parser.add_argument("--sin-revision", action="store_true")
     parser.add_argument("--solo-revision", action="store_true")
     parser.add_argument("--puerto", type=int, default=8765)
+    parser.add_argument("--reiniciar", action="store_true")
+    parser.add_argument("--borrar-cloudinary", action="store_true")
     args = parser.parse_args()
 
+    if args.reiniciar and args.borrar_cloudinary:
+        # Juntas violarian el orden seguro: el borrado remoto va DESPUES de
+        # desplegar el fotos.json vacio, no en el mismo paso que el vaciado.
+        parser.error("--reiniciar y --borrar-cloudinary van en pasos separados: "
+                     "primero --reiniciar + deploy, despues --borrar-cloudinary")
+    if args.reiniciar or args.borrar_cloudinary:
+        env = cargar_env()
+        if args.reiniciar:
+            reiniciar(env)
+        if args.borrar_cloudinary:
+            borrar_cloudinary(env)
+        return
+
+    if not args.carpeta:
+        parser.error("falta la carpeta de fotos (o una de --reiniciar / --borrar-cloudinary)")
     carpeta = os.path.expanduser(args.carpeta)
     if not os.path.isdir(carpeta):
         sys.exit(f"No existe la carpeta {carpeta}")
