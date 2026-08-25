@@ -354,6 +354,17 @@ const PAGE_SIZE = 16;
   // Estado inicial (coleccion de la URL o busqueda del navbar).
   apply();
 
+  // Offset del sidebar sticky de escritorio: la altura real del header
+  // (varia con el ancho y el zoom), medida y expuesta como variable CSS.
+  const headerEl = document.querySelector<HTMLElement>('.site-header');
+  const setHeaderAlto = () => {
+    if (headerEl) {
+      document.documentElement.style.setProperty('--header-alto', `${headerEl.offsetHeight}px`);
+    }
+  };
+  setHeaderAlto();
+  window.addEventListener('resize', setHeaderAlto);
+
   // Hoja de filtros del movil: el boton "Filtrar" abre el aside a pantalla
   // completa; "Ver resultados" o la X lo cierran. En escritorio el aside es
   // una columna normal y estos controles no se muestran.
@@ -478,6 +489,21 @@ const PAGE_SIZE = 16;
     display: flex;
     flex-direction: column;
     gap: 1.7rem;
+  }
+
+  /* Escritorio: el sidebar queda fijo bajo el header al hacer scroll
+     (referencia Jomashop). El offset usa la altura REAL del header, que el
+     script mide y expone en --header-alto (el header es sticky y su alto
+     varia con el ancho de la ventana). Si el sidebar es mas alto que la
+     ventana, tiene scroll interno. */
+  @media (min-width: 901px) {
+    .shop-aside {
+      position: sticky;
+      top: calc(var(--header-alto, 160px) + 18px);
+      align-self: start;
+      max-height: calc(100vh - var(--header-alto, 160px) - 36px);
+      overflow-y: auto;
+    }
   }
 
   /* Cabecera y controles de la hoja de filtros: solo existen en movil. */
@@ -763,6 +789,13 @@ const PAGE_SIZE = 16;
     cursor: pointer;
   }
 
+  /* Ritmo de espacio de la referencia (Jomashop, medido): columnas
+     apretadas y el aire entre las filas — no un gap parejo. */
+  .shop-grid {
+    column-gap: 12px;
+    row-gap: 34px;
+  }
+
   /* El envoltorio de datos se estira a la altura de la fila, y como celda
      unica de grid obliga a la tarjeta a llenarlo: sin esto cada tarjeta
      termina donde su contenido y la fila queda como una escalera. */
@@ -874,6 +907,13 @@ const PAGE_SIZE = 16;
     .result-count { flex: 1 0 100%; }
     .sort-row { display: none; }
     .view-toggles { display: flex; }
+
+    /* En celular las columnas se aprietan un poco mas y el aire sigue
+       entre filas. */
+    .shop-grid {
+      column-gap: 8px;
+      row-gap: 30px;
+    }
 
     .shop-grid.view-1 { grid-template-columns: 1fr; }
 
