@@ -12,7 +12,7 @@ import Icon from '../../components/Icon.astro';
 // Metodos de entrega del diseno: estandar $3 fijo (sin regla de envio
 // gratis desde $50), express $9 y retiro sin costo.
 const SHIPPING = [
-  { id: 'std', name: 'Entrega estándar', detail: '2–4 días hábiles · ciudad de Panamá', price: 3 },
+  { id: 'std', name: 'Entrega estándar', detail: '24–48 horas · ciudad de Panamá', price: 3 },
   { id: 'exp', name: 'Entrega express', detail: '24 horas · ciudad de Panamá', price: 9 },
   { id: 'pickup', name: 'Retiro en el vivero', detail: 'Ciudad de Panamá · Lun–Vie 9–5', price: 0 },
 ];
@@ -65,8 +65,8 @@ const GOOGLE_MAPS_KEY = import.meta.env.PUBLIC_GOOGLE_MAPS_KEY ?? '';
       <h1 class="visually-hidden">Checkout</h1>
       <div class="trust-row">
         <span><Icon name="package" size={22} class="trust-icon" /> Empaque seguro</span>
-        <span><Icon name="smile" size={22} class="trust-icon" /> Garantía 30 días</span>
-        <span><Icon name="truck" size={22} class="trust-icon" /> Entrega 2–4 días</span>
+        <span><Icon name="smile" size={22} class="trust-icon" /> Satisfacción del cliente</span>
+        <span><Icon name="truck" size={22} class="trust-icon" /> Entrega 24–48 h</span>
       </div>
 
       <form class="checkout-form" novalidate>
