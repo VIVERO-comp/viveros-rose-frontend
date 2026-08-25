@@ -1181,15 +1181,26 @@ const menuTipos = [
     border-top: 1px solid var(--line);
   }
 
+  /* Letra y separacion fluidas (clamp con vw): al achicar la ventana o subir
+     el zoom la fila se aprieta en vez de partirse en dos lineas, como el
+     navbar de Jomashop. El wrap queda solo como ultimo recurso. */
   .nav-inner {
     display: flex;
     align-items: center;
     flex-wrap: wrap;
-    gap: 4.6px 27.6px;
-    font-size: 12px;
+    gap: 4.6px clamp(9px, 1.8vw, 27.6px);
+    font-size: clamp(9.5px, 0.85vw + 1px, 12px);
     letter-spacing: 0.14em;
     text-transform: uppercase;
     white-space: nowrap;
+  }
+
+  @media (max-width: 1200px) {
+    .nav-inner { letter-spacing: 0.09em; }
+  }
+
+  @media (max-width: 940px) {
+    .nav-inner { letter-spacing: 0.06em; }
   }
 
   .nav-link {
@@ -1215,9 +1226,12 @@ const menuTipos = [
     border-left: 0;
     border-right: 0;
     font-family: var(--font-ui);
-    font-size: 12px;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
+    /* Hereda tamano y tracking de .nav-inner: un boton no los hereda solo,
+       y con valores fijos "Pedidos" quedaba mas grande que el resto y
+       empujaba la fila a dos lineas. */
+    font-size: inherit;
+    letter-spacing: inherit;
+    text-transform: inherit;
     cursor: pointer;
   }
 
