@@ -61,6 +61,20 @@ const PAGE_SIZE = 16;
           <Icon name="x" size={20} />
         </button>
       </div>
+
+      <!-- Orden como chips (referencia Jomashop movil): solo se ve en la
+           hoja del celular; en escritorio el orden sigue en el select de la
+           toolbar. Los chips mueven ese mismo select. -->
+      <div class="aside-sort">
+        <p class="aside-title">Ordenar por</p>
+        <div class="sort-chips">
+          <button type="button" class="sort-chip active" data-sort-value="featured">Destacadas</button>
+          <button type="button" class="sort-chip" data-sort-value="price-asc">Precio: menor a mayor</button>
+          <button type="button" class="sort-chip" data-sort-value="price-desc">Precio: mayor a menor</button>
+          <button type="button" class="sort-chip" data-sort-value="name">Nombre A–Z</button>
+        </div>
+      </div>
+
       <div>
         <p class="aside-title">Comprar por colección</p>
         <div class="aside-links">
@@ -105,9 +119,11 @@ const PAGE_SIZE = 16;
         </div>
         <button type="button" class="clear-filters" data-clear-filters hidden>Limpiar filtros</button>
       </div>
-      <button type="button" class="btn btn--green aside-apply" data-aside-close>
-        Ver resultados
-      </button>
+      <!-- Botonera fija abajo (referencia Jomashop movil): limpiar y cerrar. -->
+      <div class="aside-actions">
+        <button type="button" class="btn aside-limpiar" data-clear-filters>Limpiar todo</button>
+        <button type="button" class="btn btn--green" data-aside-close>Listo</button>
+      </div>
     </aside>
 
     <div class="shop-main">
@@ -294,7 +310,9 @@ const PAGE_SIZE = 16;
     if (noResults) noResults.hidden = matches > 0;
     if (showMoreWrap) showMoreWrap.hidden = matches <= visibleCount;
     clearButtons.forEach((b) => {
-      if (b.closest('[data-no-results]')) return;
+      // El "Limpiar todo" de la botonera movil se muestra siempre (como el
+      // Clear All de la referencia); solo el enlace del sidebar se esconde.
+      if (b.closest('[data-no-results]') || b.classList.contains('aside-limpiar')) return;
       b.hidden = !hasFilters;
     });
   }
@@ -351,6 +369,31 @@ const PAGE_SIZE = 16;
       asideEl?.classList.remove('open');
       document.body.style.overflow = '';
       filterToggle?.setAttribute('aria-expanded', 'false');
+    }),
+  );
+
+  // Chips de orden de la hoja movil (referencia Jomashop): mueven el mismo
+  // select de la toolbar, asi hay una sola fuente del orden.
+  const sortChips = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-sort-value]'));
+  const syncSortChips = () => {
+    sortChips.forEach((c) => c.classList.toggle('active', c.dataset.sortValue === sortSelect?.value));
+  };
+  sortChips.forEach((chip) =>
+    chip.addEventListener('click', () => {
+      if (!sortSelect) return;
+      sortSelect.value = chip.dataset.sortValue!;
+      sortCards();
+      syncSortChips();
+    }),
+  );
+  sortSelect?.addEventListener('change', syncSortChips);
+
+  // Acordeones de la hoja movil: los grupos de filtros arrancan cerrados y
+  // el titulo los abre/cierra. En escritorio (aside sin .open) no aplica.
+  document.querySelectorAll<HTMLElement>('.filter-group .filter-name').forEach((name) =>
+    name.addEventListener('click', () => {
+      if (!asideEl?.classList.contains('open')) return;
+      name.parentElement?.classList.toggle('abierto');
     }),
   );
 
@@ -439,7 +482,8 @@ const PAGE_SIZE = 16;
 
   /* Cabecera y controles de la hoja de filtros: solo existen en movil. */
   .aside-head { display: none; }
-  .aside-apply { display: none; }
+  .aside-sort { display: none; }
+  .aside-actions { display: none; }
 
   .aside-close {
     width: 36px;
@@ -523,12 +567,78 @@ const PAGE_SIZE = 16;
 
     .aside-head-title { font-size: 1.2rem; font-weight: 600; }
 
-    .shop-aside.open .aside-apply {
+    /* Orden como chips, arriba de todo (referencia Jomashop movil). */
+    .shop-aside.open .aside-sort { display: block; }
+
+    .sort-chips {
       display: flex;
-      justify-content: center;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .sort-chip {
+      font-family: var(--font-ui);
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--ink);
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 0.5rem 0.9rem;
+      cursor: pointer;
+    }
+
+    .sort-chip.active {
+      border: 1.5px solid var(--ink);
+      font-weight: 600;
+    }
+
+    /* Grupos de filtros como acordeones cerrados, con + / − a la derecha. */
+    .shop-aside.open .filter-groups { gap: 0; }
+
+    .shop-aside.open .filter-group {
+      border-bottom: 1px solid var(--line);
+      padding: 0.95rem 0;
+    }
+
+    .shop-aside.open .filter-name {
+      font-size: 0.95rem;
+      margin: 0;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .shop-aside.open .filter-name::after {
+      content: '+';
+      margin-left: auto;
+      font-size: 1.25rem;
+      font-weight: 400;
+      color: var(--ink-soft);
+      line-height: 1;
+    }
+
+    .shop-aside.open .filter-group.abierto .filter-name::after { content: '−'; }
+
+    .shop-aside.open .filter-group:not(.abierto) label { display: none; }
+
+    .shop-aside.open .filter-group.abierto .filter-name { margin-bottom: 0.55rem; }
+
+    /* Botonera fija abajo: Limpiar todo + Listo (Clear All / Done). */
+    .shop-aside.open .aside-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
       position: sticky;
-      bottom: 1.15rem;
-      margin-top: 0.55rem;
+      bottom: 0;
+      margin-top: auto;
+      padding: 0.85rem 0 0.3rem;
+      background: var(--bg);
+    }
+
+    .aside-limpiar {
+      background: var(--surface);
+      color: var(--ink);
+      border: 1px solid var(--line-strong);
     }
   }
 
@@ -688,9 +798,11 @@ const PAGE_SIZE = 16;
 
   .popular h2 { margin-bottom: 1.7rem; }
 
+  /* Las 5 colecciones en UNA fila: con auto-fill la quinta se caia sola a
+     una segunda fila en ventanas medianas. En celular siguen en 2 columnas. */
   .popular-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    grid-template-columns: repeat(5, minmax(0, 1fr));
     gap: 1.15rem;
   }
 
