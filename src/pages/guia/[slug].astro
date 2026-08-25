@@ -1,4 +1,7 @@
 ---
+// Pagina de una guia: encabezado con la foto en corte diagonal (texto a la
+// izquierda, foto a la derecha en escritorio; foto arriba con corte diagonal
+// en movil) y el cuerpo por secciones con listas y consejos del vivero.
 import Base from '../../layouts/Base.astro';
 import { guides } from '../../data/guides';
 
@@ -16,18 +19,54 @@ const { guide } = Astro.props;
   title={guide.title}
   description={`${guide.excerpt} Guía práctica del equipo del vivero Plantas Panama.`}
 >
-  <section class="section">
-    <div class="container">
-      <article class="guide">
+  <header class="guide-hero">
+    <div
+      class="guide-hero-photo"
+      style={`background-image: url('${guide.photo}');`}
+      role="img"
+      aria-label={guide.photoAlt}
+    ></div>
+    <div class="container guide-hero-inner">
+      <div class="guide-hero-copy">
         <nav class="breadcrumb" aria-label="Miga de pan">
-          <a href="/guia">Guias</a> / <span>{guide.title}</span>
+          <a href="/guia">Guías</a> / <span>{guide.title}</span>
         </nav>
         <h1>{guide.title}</h1>
-        {guide.body.map((paragraph) => <p>{paragraph}</p>)}
+        <p class="guide-excerpt">{guide.excerpt}</p>
+      </div>
+    </div>
+  </header>
+
+  <section class="section guide-body-section">
+    <div class="container">
+      <article class="guide">
+        {guide.intro.map((paragraph) => <p class="guide-intro">{paragraph}</p>)}
+
+        {guide.sections.map((section) => (
+          <section class="guide-section">
+            {section.heading && <h2>{section.heading}</h2>}
+            {section.paragraphs?.map((paragraph) => <p>{paragraph}</p>)}
+            {section.list && (
+              <ul>
+                {section.list.map((item) => <li>{item}</li>)}
+              </ul>
+            )}
+            {section.tip && (
+              <aside class="guide-tip">
+                <strong>Consejo del vivero</strong>
+                <p>{section.tip}</p>
+              </aside>
+            )}
+          </section>
+        ))}
 
         <div class="guide-cta card">
-          <p><strong>¿Buscas plantas para poner esto en practica?</strong></p>
-          <a href="/plantas" class="btn btn--green">Ver catalogo</a>
+          <p><strong>¿Buscas plantas para poner esto en práctica?</strong></p>
+          <div class="guide-cta-actions">
+            <a href="/plantas" class="btn btn--green">Ver catálogo</a>
+            {guide.cta && <a href={guide.cta.href} class="btn btn--ghost">{guide.cta.label}</a>}
+          </div>
+          {guide.cta && <p class="guide-cta-note">{guide.cta.note}</p>}
         </div>
       </article>
     </div>
@@ -35,25 +74,153 @@ const { guide } = Astro.props;
 </Base>
 
 <style>
-  .guide {
-    max-width: 42rem;
+  /* Encabezado con foto diagonal. Movil primero: foto arriba con el borde
+     inferior en diagonal, texto debajo. */
+  .guide-hero {
+    position: relative;
+    background: var(--card-dark);
+    overflow: hidden;
+  }
+
+  .guide-hero-photo {
+    height: 230px;
+    background-size: cover;
+    background-position: center;
+    clip-path: polygon(0 0, 100% 0, 100% 82%, 0 100%);
+  }
+
+  .guide-hero-copy {
+    padding: 1.4rem 0 2rem;
   }
 
   .breadcrumb {
-    font-size: 0.9rem;
-    color: var(--ink-soft);
-    margin-bottom: 1rem;
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.75);
+    margin-bottom: 0.8rem;
+  }
+
+  .breadcrumb a {
+    color: var(--green-light);
+  }
+
+  .guide-hero h1 {
+    color: #eef5f0;
+    font-weight: 600;
+    font-size: clamp(1.7rem, 3.6vw, 2.6rem);
+    margin: 0 0 0.6rem;
+  }
+
+  .guide-excerpt {
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 1.05rem;
+    margin: 0;
+    max-width: 36rem;
+  }
+
+  /* Escritorio: texto a la izquierda y la foto ocupa la mitad derecha con el
+     corte diagonal hacia el texto. */
+  @media (min-width: 860px) {
+    .guide-hero {
+      min-height: 320px;
+      display: flex;
+      align-items: center;
+    }
+
+    .guide-hero-photo {
+      position: absolute;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      width: 52%;
+      height: auto;
+      clip-path: polygon(22% 0, 100% 0, 100% 100%, 0 100%);
+    }
+
+    .guide-hero-inner {
+      position: relative;
+      width: 100%;
+    }
+
+    .guide-hero-copy {
+      max-width: 46%;
+      padding: 3rem 0;
+    }
+  }
+
+  .guide {
+    max-width: 42rem;
   }
 
   .guide p {
     font-size: 1.05rem;
   }
 
+  .guide-intro {
+    color: var(--ink);
+  }
+
+  .guide-section {
+    margin-top: 2.2rem;
+  }
+
+  .guide-section h2 {
+    font-size: 1.35rem;
+    margin: 0 0 0.7rem;
+  }
+
+  .guide-section ul {
+    margin: 0.6rem 0 0;
+    padding-left: 1.2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+  }
+
+  .guide-section li {
+    font-size: 1.02rem;
+    color: var(--ink);
+  }
+
+  .guide-tip {
+    margin-top: 1.2rem;
+    padding: 1rem 1.25rem;
+    background: var(--green-tint);
+    border-left: 4px solid var(--green);
+    border-radius: 0 var(--radius) var(--radius) 0;
+  }
+
+  .guide-tip strong {
+    display: block;
+    font-size: 0.8rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--green-deep);
+    margin-bottom: 0.35rem;
+  }
+
+  .guide-tip p {
+    margin: 0;
+    font-size: 1rem;
+  }
+
   .guide-cta {
-    margin-top: 2.5rem;
+    margin-top: 2.8rem;
     padding: 1.75rem;
     text-align: center;
     background: var(--green-tint);
     border-color: transparent;
+  }
+
+  .guide-cta-actions {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 0.7rem;
+  }
+
+  .guide-cta-note {
+    margin: 0.9rem 0 0;
+    font-size: 0.92rem;
+    color: var(--ink-soft);
   }
 </style>

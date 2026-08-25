@@ -1,15 +1,9 @@
 ---
 // Indice de guias: hero oscuro compacto (mismo patron que /servicios y
-// /eventos) con la foto de "plant care", y tarjetas con la foto de cada guia.
+// /eventos) con la foto de "plant care", y tarjetas con la foto de cada guia
+// (definida en guides.ts).
 import Base from '../../layouts/Base.astro';
 import { guides } from '../../data/guides';
-
-// Foto de cada guia (las mismas que usa la seccion de guias del home).
-const fotosGuias: Record<string, string> = {
-  'riego-en-clima-panameno': '/fotos_homepage/guia_de_cuidado.jpg',
-  'plantas-para-apartamento': '/fotos_homepage/top_plantas.webp',
-  'preparar-jardin-temporada-lluviosa': '/fotos_homepage/cuidar_de_lluvia.jpeg',
-};
 ---
 
 <Base
@@ -35,11 +29,7 @@ const fotosGuias: Record<string, string> = {
         <a href={`/guia/${guide.slug}`} class="card guide-card">
           <div
             class="guide-card-photo"
-            style={
-              fotosGuias[guide.slug]
-                ? `background-image: url('${fotosGuias[guide.slug]}'); background-size: cover; background-position: center;`
-                : undefined
-            }
+            style={`background-image: url('${guide.photo}'); background-size: cover; background-position: center;`}
             aria-hidden="true"
           ></div>
           <div class="guide-card-copy">

@@ -81,12 +81,6 @@ const typeTiles: HomeTile[] = [
 const mainGuide = guides[0];
 const otherGuides = guides.slice(1);
 
-// Miniaturas de las guias laterales, por slug del catalogo de guias.
-const guideThumbs: Record<string, string> = {
-  'plantas-para-apartamento': '/fotos_homepage/top_plantas.webp',
-  'preparar-jardin-temporada-lluviosa': '/fotos_homepage/cuidar_de_lluvia.jpeg',
-};
-
 const clubMessage = whatsappLink('Hola, quiero unirme al Club Vivero Rose.');
 const paisajismoMessage = whatsappLink('Hola, quiero cotizar un proyecto de paisajismo.');
 ---
@@ -305,11 +299,7 @@ const paisajismoMessage = whatsappLink('Hola, quiero cotizar un proyecto de pais
             <a href={`/guia/${g.slug}`} class="guide-row">
               <div
                 class="guide-thumb"
-                style={
-                  guideThumbs[g.slug]
-                    ? `background-image: url('${guideThumbs[g.slug]}'); background-size: cover; background-position: center;`
-                    : undefined
-                }
+                style={`background-image: url('${g.photo}'); background-size: cover; background-position: center;`}
                 aria-hidden="true"
               />
               <div>

@@ -43,5 +43,8 @@ export default defineConfig({
   redirects: {
     // La antigua pagina de paisajismo vive ahora en su mini pagina de servicio.
     '/paisajismo': '/servicios/paisajismo',
+    // La guia de apartamentos se convirtio en "Las mejores plantas para
+    // comprar en Panama" con slug nuevo.
+    '/guia/plantas-para-apartamento': '/guia/mejores-plantas-panama',
   },
 });
