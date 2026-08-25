@@ -236,6 +236,7 @@ export const products: Product[] = [
   {
     sku: 'PL-ANTHURIO-FLOR',
     slug: 'anthurio-flor',
+    image: '/fotos_productos/anthurio-flor.jpg',
     category: 'florales',
     name: 'Anthurio flor',
     scientificName: '',
@@ -278,6 +279,7 @@ export const products: Product[] = [
   {
     sku: 'PL-ARALIAS',
     slug: 'aralias',
+    image: '/fotos_productos/aralias.jpg',
     category: 'interior',
     name: 'Aralias',
     scientificName: '',
@@ -306,6 +308,7 @@ export const products: Product[] = [
   {
     sku: 'PL-BAMBU-ENTRENZAS',
     slug: 'bambu-entrenzas',
+    image: '/fotos_productos/bambu-entrenzas.jpg',
     category: 'exterior',
     name: 'Bambu entrenzas',
     scientificName: '',
@@ -320,6 +323,7 @@ export const products: Product[] = [
   {
     sku: 'PL-BIJAO-TRICOLOR',
     slug: 'bijao-tricolor',
+    image: '/fotos_productos/bijao-tricolor.jpg',
     category: 'interior',
     name: 'Bijao tricolor',
     scientificName: '',
@@ -362,6 +366,7 @@ export const products: Product[] = [
   {
     sku: 'PL-CACTUS-HUESO-DE-DRAGON',
     slug: 'cactus-hueso-de-dragon',
+    image: '/fotos_productos/cactus-hueso-de-dragon.jpg',
     category: 'interior',
     name: 'Cactus hueso de dragon',
     scientificName: '',
@@ -404,6 +409,7 @@ export const products: Product[] = [
   {
     sku: 'PL-CALATHEA-CEBRINA',
     slug: 'calathea-cebrina',
+    image: '/fotos_productos/calathea-cebrina.jpg',
     category: 'interior',
     name: 'Calathea cebrina',
     scientificName: '',
@@ -491,6 +497,7 @@ export const products: Product[] = [
   {
     sku: 'PL-CIPRE-RASTRERO',
     slug: 'cipre-rastrero',
+    image: '/fotos_productos/cipre-rastrero.jpg',
     category: 'exterior',
     name: 'Cipre rastrero',
     scientificName: '',
@@ -505,6 +512,7 @@ export const products: Product[] = [
   {
     sku: 'PL-PINO-ROMANO',
     slug: 'cipre-thuja',
+    image: '/fotos_productos/cipre-thuja.jpg',
     category: 'exterior',
     name: 'Cipre thuja',
     scientificName: '',
@@ -519,6 +527,7 @@ export const products: Product[] = [
   {
     sku: 'PL-CLAVEL-CHINO',
     slug: 'clavel-chino',
+    image: '/fotos_productos/clavel-chino.jpg',
     category: 'florales',
     name: 'Clavel chino',
     scientificName: '',
@@ -1191,6 +1200,7 @@ export const products: Product[] = [
   {
     sku: 'PL-MILLONARIA-ZAMIOCULCA',
     slug: 'millonaria-zamioculca',
+    image: '/fotos_productos/millonaria-zamioculca.jpg',
     category: 'interior',
     name: 'Millonaria zamioculca',
     scientificName: '',
@@ -1205,6 +1215,7 @@ export const products: Product[] = [
   {
     sku: 'PL-MILLONARIA-ZAMIOCULCA-NEGRA',
     slug: 'millonaria-zamioculca-negra',
+    image: '/fotos_productos/millonaria-zamioculca-negra.jpg',
     category: 'interior',
     name: 'Millonaria zamioculca negra',
     scientificName: '',
@@ -1919,6 +1930,7 @@ export const products: Product[] = [
   {
     sku: 'PL-ROMERO',
     slug: 'romero',
+    image: '/fotos_productos/romero.jpg',
     category: 'exterior',
     name: 'Romero',
     scientificName: '',
@@ -1975,6 +1987,7 @@ export const products: Product[] = [
   {
     sku: 'PLT-RUDA-01',
     slug: 'ruda',
+    image: '/fotos_productos/ruda.jpg',
     category: 'exterior',
     name: 'Ruda',
     scientificName: '',
@@ -2133,6 +2146,7 @@ export const products: Product[] = [
   {
     sku: 'PL-MILLONARIA-ZAMIOCULCA-BLANCA',
     slug: 'zamiculca-variegada',
+    image: '/fotos_productos/zamiculca-variegada.jpg',
     category: 'interior',
     name: 'Zamiculca variegada',
     scientificName: '',
