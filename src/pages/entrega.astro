@@ -5,6 +5,7 @@
 // inventar una tabla de zonas.
 import Base from '../layouts/Base.astro';
 import Icon from '../components/Icon.astro';
+import { ENVIO_GRATIS_DESDE } from '../lib/envio';
 import { whatsappLink } from '../lib/site';
 ---
 
@@ -26,6 +27,9 @@ import { whatsappLink } from '../lib/site';
           <p class="ship-name">Entrega estándar</p>
           <p class="ship-detail">24–48 horas · ciudad de Panamá</p>
           <p class="ship-price">$3.00</p>
+          {ENVIO_GRATIS_DESDE !== null && (
+            <p class="ship-promo">Gratis en compras desde ${ENVIO_GRATIS_DESDE}</p>
+          )}
         </div>
         <div class="ship-option">
           <p class="ship-name">Entrega express</p>
@@ -89,6 +93,7 @@ import { whatsappLink } from '../lib/site';
   .ship-name { font-size: 15px; font-weight: 600; margin: 0; }
   .ship-detail { font-size: 13px; color: var(--ink-soft); margin: 4px 0 9px; }
   .ship-price { font-size: 17px; font-weight: 600; font-variant-numeric: tabular-nums; margin: 0; }
+  .ship-promo { font-size: 13px; font-weight: 600; color: var(--green-deep); margin: 4px 0 0; }
 
   .pending-note {
     display: flex;

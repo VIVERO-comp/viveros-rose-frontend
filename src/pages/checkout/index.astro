@@ -9,8 +9,9 @@
 import Base from '../../layouts/Base.astro';
 import Icon from '../../components/Icon.astro';
 
-// Metodos de entrega del diseno: estandar $3 fijo (sin regla de envio
-// gratis desde $50), express $9 y retiro sin costo.
+// Metodos de entrega del diseno: estandar $3 (gratis desde el umbral de
+// src/lib/envio.ts, la misma regla del order-api), express $9 y retiro sin
+// costo. El precio real siempre lo decide el order-api; aqui solo se espeja.
 const SHIPPING = [
   { id: 'std', name: 'Entrega estándar', detail: '24–48 horas · ciudad de Panamá', price: 3 },
   { id: 'exp', name: 'Entrega express', detail: '24 horas · ciudad de Panamá', price: 9 },
@@ -157,7 +158,7 @@ const GOOGLE_MAPS_KEY = import.meta.env.PUBLIC_GOOGLE_MAPS_KEY ?? '';
                   <span class="option-detail">{s.detail}</span>
                 </span>
               </span>
-              <span class="option-price">{s.price === 0 ? 'Gratis' : `$${s.price.toFixed(2)}`}</span>
+              <span class="option-price" data-ship-price-label={s.id}>{s.price === 0 ? 'Gratis' : `$${s.price.toFixed(2)}`}</span>
             </label>
           ))}
         </div>
@@ -234,6 +235,7 @@ const GOOGLE_MAPS_KEY = import.meta.env.PUBLIC_GOOGLE_MAPS_KEY ?? '';
 
 <script>
   import { getCart, cartTotal } from '../../lib/cart';
+  import { envioGratis } from '../../lib/envio';
   import { whatsappLink } from '../../lib/site';
 
   const money = (n: number) => `$${n.toFixed(2)}`;
@@ -269,9 +271,13 @@ const GOOGLE_MAPS_KEY = import.meta.env.PUBLIC_GOOGLE_MAPS_KEY ?? '';
   }
 
   function selectedShipping() {
+    // La promocion de envio gratis (src/lib/envio.ts) aplica solo a la
+    // entrega estandar; el precio definitivo igual lo decide el order-api.
     const radio = document.querySelector<HTMLInputElement>('input[name="envio"]:checked');
+    const base = Number(radio?.dataset.shipPrice ?? 0);
+    const gratis = radio?.value === 'std' && envioGratis(cartTotal());
     return {
-      price: Number(radio?.dataset.shipPrice ?? 0),
+      price: gratis ? 0 : base,
       name: radio?.dataset.shipName ?? 'Entrega estándar',
     };
   }
@@ -290,6 +296,12 @@ const GOOGLE_MAPS_KEY = import.meta.env.PUBLIC_GOOGLE_MAPS_KEY ?? '';
     if (totalEl) totalEl.textContent = money(total);
     const toggleTotal = document.querySelector<HTMLElement>('[data-toggle-total]');
     if (toggleTotal) toggleTotal.textContent = money(total);
+
+    // La opcion estandar anuncia la promocion: $3 tachado y "Gratis".
+    const etiquetaStd = document.querySelector<HTMLElement>('[data-ship-price-label="std"]');
+    if (etiquetaStd) {
+      etiquetaStd.innerHTML = envioGratis(subtotal) ? '<s>$3.00</s> Gratis' : '$3.00';
+    }
   }
 
   document

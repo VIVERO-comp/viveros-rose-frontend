@@ -423,6 +423,13 @@ const menuTipos = [
       <div data-cart-lines></div>
     </div>
     <div class="panel-foot" data-cart-foot hidden>
+      <!-- Progreso hacia el envio gratis (regla en src/lib/envio.ts). -->
+      <div class="envio-promo" data-panel-envio hidden>
+        <p class="envio-promo-texto" data-panel-envio-texto></p>
+        <div class="envio-promo-barra" role="presentation">
+          <span class="envio-promo-avance" data-panel-envio-avance></span>
+        </div>
+      </div>
       <div class="subtotal-row">
         <span>Subtotal</span>
         <span class="subtotal" data-cart-subtotal>$0.00</span>
@@ -531,6 +538,7 @@ const menuTipos = [
 
 <script>
   import { cartCount, cartTotal, getCart, removeFromCart, setQty } from '../lib/cart';
+  import { ENVIO_GRATIS_DESDE, faltaParaEnvioGratis } from '../lib/envio';
   import { getFavoritos, getVistos } from '../lib/preferencias';
   import type { ProductoGuardado } from '../lib/preferencias';
 
@@ -646,7 +654,27 @@ const menuTipos = [
     const items = getCart();
     emptyEl.hidden = items.length > 0;
     footEl.hidden = items.length === 0;
-    if (subtotalEl) subtotalEl.textContent = money(cartTotal());
+    const subtotal = cartTotal();
+    if (subtotalEl) subtotalEl.textContent = money(subtotal);
+
+    // Anuncio del envio gratis: mismo progreso que en /carrito.
+    const promoBox = document.querySelector<HTMLElement>('[data-panel-envio]');
+    const promoTexto = document.querySelector<HTMLElement>('[data-panel-envio-texto]');
+    const promoAvance = document.querySelector<HTMLElement>('[data-panel-envio-avance]');
+    if (promoBox && promoTexto && promoAvance) {
+      if (ENVIO_GRATIS_DESDE === null || items.length === 0) {
+        promoBox.hidden = true;
+      } else {
+        promoBox.hidden = false;
+        const falta = faltaParaEnvioGratis(subtotal);
+        promoBox.classList.toggle('envio-promo--ganado', falta === 0);
+        promoTexto.textContent =
+          falta === 0
+            ? '🎉 Tu pedido tiene envío gratis'
+            : `Te faltan ${money(falta)} para el envío gratis`;
+        promoAvance.style.width = `${Math.min(100, (subtotal / ENVIO_GRATIS_DESDE) * 100)}%`;
+      }
+    }
 
     linesEl.replaceChildren(
       ...items.map((item) => {
@@ -1611,6 +1639,37 @@ const menuTipos = [
     justify-content: space-between;
     align-items: baseline;
     font-size: 15px;
+  }
+
+  /* Progreso hacia el envio gratis (mismo anuncio que /carrito). */
+  .envio-promo {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+  }
+
+  .envio-promo-texto {
+    font-size: 13px;
+    font-weight: 600;
+    color: rgba(27, 42, 31, 0.7);
+    margin: 0;
+  }
+
+  .envio-promo--ganado .envio-promo-texto { color: var(--green-deep); }
+
+  .envio-promo-barra {
+    height: 6px;
+    border-radius: 999px;
+    background: rgba(27, 42, 31, 0.12);
+    overflow: hidden;
+  }
+
+  .envio-promo-avance {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: var(--green-deep);
+    transition: width 320ms var(--ease-out);
   }
 
   .subtotal { font-size: 22px; font-weight: 600; font-variant-numeric: tabular-nums; }

@@ -120,6 +120,13 @@ const compareMap = Object.fromEntries(
             </summary>
             <div class="summary-body">
               <p class="summary-title">Resumen</p>
+              <!-- Progreso hacia el envio gratis (regla en src/lib/envio.ts). -->
+              <div class="envio-promo" data-envio-promo hidden>
+                <p class="envio-promo-texto" data-envio-promo-texto></p>
+                <div class="envio-promo-barra" role="presentation">
+                  <span class="envio-promo-avance" data-envio-promo-avance></span>
+                </div>
+              </div>
               <!-- Lineas del pedido: foto (emoji por ahora), cantidad y precio. -->
               <div class="summary-items" data-summary-lines></div>
               <!-- Codigo de descuento: aun no hay backend de cupones. -->
@@ -150,6 +157,7 @@ const compareMap = Object.fromEntries(
 
 <script>
   import { addToCart, cartCount, cartTotal, getCart, removeFromCart, setQty } from '../lib/cart';
+  import { ENVIO_GRATIS_DESDE, envioGratis, faltaParaEnvioGratis } from '../lib/envio';
   import { fetchStock } from '../lib/stock';
 
   const GIFT_KEY = 'pp-gift-v1';
@@ -286,8 +294,30 @@ const compareMap = Object.fromEntries(
     if (savingsRow) savingsRow.hidden = savings <= 0;
     if (savingsEl) savingsEl.textContent = `– ${money(savings)}`;
     if (shipEl) {
-      // Envio estandar fijo ($3); sin regla de "gratis desde $50" por ahora.
-      shipEl.textContent = subtotal === 0 ? '—' : 'Se calcula al pagar';
+      // Con la promocion ganada ya se puede prometer "Gratis" (la entrega
+      // estandar); si no, el costo depende del metodo y se decide al pagar.
+      shipEl.textContent =
+        subtotal === 0 ? '—' : envioGratis(subtotal) ? 'Gratis' : 'Se calcula al pagar';
+    }
+
+    // Barra de progreso hacia el envio gratis: empuja a completar el umbral
+    // y celebra cuando se alcanza. Oculta con la promocion apagada.
+    const promoBox = document.querySelector<HTMLElement>('[data-envio-promo]');
+    const promoTexto = document.querySelector<HTMLElement>('[data-envio-promo-texto]');
+    const promoAvance = document.querySelector<HTMLElement>('[data-envio-promo-avance]');
+    if (promoBox && promoTexto && promoAvance) {
+      if (ENVIO_GRATIS_DESDE === null || subtotal === 0) {
+        promoBox.hidden = true;
+      } else {
+        promoBox.hidden = false;
+        const falta = faltaParaEnvioGratis(subtotal);
+        promoBox.classList.toggle('envio-promo--ganado', falta === 0);
+        promoTexto.textContent =
+          falta === 0
+            ? '🎉 Tu pedido tiene envío gratis'
+            : `Te faltan ${money(falta)} para el envío gratis`;
+        promoAvance.style.width = `${Math.min(100, (subtotal / ENVIO_GRATIS_DESDE) * 100)}%`;
+      }
     }
 
     // Estado de las sugerencias segun el carrito.
@@ -674,6 +704,37 @@ const compareMap = Object.fromEntries(
   }
 
   .summary-title { font-size: 1.25rem; font-weight: 600; margin: 0; }
+
+  /* Progreso hacia el envio gratis. */
+  .envio-promo {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .envio-promo-texto {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--ink-soft);
+    margin: 0;
+  }
+
+  .envio-promo--ganado .envio-promo-texto { color: var(--green-deep); }
+
+  .envio-promo-barra {
+    height: 6px;
+    border-radius: 999px;
+    background: rgba(27, 42, 31, 0.12);
+    overflow: hidden;
+  }
+
+  .envio-promo-avance {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: var(--green-deep);
+    transition: width 320ms var(--ease-out);
+  }
 
   /* Barra del colapsable (solo movil). */
   .summary-toggle {
