@@ -1,7 +1,7 @@
 ---
 // Home del handoff (Home Plantas Panama.dc.html): hero con acuarela, franja
 // de garantias, "Recien del vivero", tarjetas de interior/patio, colecciones
-// y tipos, banda del quiz, "Las mas vendidas", Club Vivero Rose, paisajismo,
+// y tipos, banda del quiz, "Las mas vendidas", paisajismo,
 // guias y newsletter. El catalogo sigue siendo src/data/products.ts
 // y las tarjetas conservan su StockBadge conectado al stock proxy.
 import Base from '../layouts/Base.astro';
@@ -81,7 +81,6 @@ const typeTiles: HomeTile[] = [
 const mainGuide = guides[0];
 const otherGuides = guides.slice(1);
 
-const clubMessage = whatsappLink('Hola, quiero unirme al Club Vivero Rose.');
 const paisajismoMessage = whatsappLink('Hola, quiero cotizar un proyecto de paisajismo.');
 ---
 
@@ -243,23 +242,6 @@ const paisajismoMessage = whatsappLink('Hola, quiero cotizar un proyecto de pais
     <div class="cards-4">
       {bestsellers.map((p) => <ProductCard product={p} />)}
     </div>
-  </section>
-
-  <section class="container home-section">
-    <hr class="section-rule" />
-    <div class="club-grid">
-      <div class="club-photo" style="background-image: url('/fotos_homepage/club.jpg'); background-size: cover; background-position: center;" aria-hidden="true"></div>
-      <div>
-        <p class="kicker">Programa de lealtad</p>
-        <h2>Club Vivero Rose</h2>
-        <p class="club-copy">
-          Recordatorios de riego según la temporada, precios de socio en cada pedido y aviso
-          anticipado cuando sale una tanda nueva del vivero.
-        </p>
-        <a href={clubMessage} class="btn btn--green" target="_blank" rel="noopener">Quiero unirme</a>
-      </div>
-    </div>
-    <hr class="section-rule section-rule--after" />
   </section>
 
   <section id="paisajismo" class="container home-section--tight">
@@ -684,39 +666,12 @@ const paisajismoMessage = whatsappLink('Hola, quiero cotizar un proyecto de pais
     margin: 0 0 22px;
   }
 
-  /* Club */
-  .club-grid {
-    display: grid;
-    grid-template-columns: 1fr 1.4fr;
-    gap: 55px;
-    align-items: center;
-  }
-
-  .club-photo {
-    position: relative;
-    border-radius: var(--radius-photo);
-    overflow: hidden;
-    outline: 1px solid rgba(27, 42, 31, 0.12);
-    background: var(--surface-2);
-    min-height: 280px;
-  }
-
   .kicker {
     font-size: 11px;
     letter-spacing: 0.18em;
     text-transform: uppercase;
     color: var(--green-deep);
     margin: 0 0 13.8px;
-  }
-
-  .club-grid h2 { font-size: 36px; line-height: 1.1; margin: 0 0 13.8px; }
-
-  .club-copy {
-    font-size: 16px;
-    line-height: 1.65;
-    color: rgba(27, 42, 31, 0.75);
-    max-width: 38rem;
-    margin-bottom: 9.2px;
   }
 
   /* Paisajismo: banda oscura con la foto en diagonal, como ObraBand. */
@@ -939,8 +894,7 @@ const paisajismoMessage = whatsappLink('Hola, quiero cotizar un proyecto de pais
     }
 
     .section-head h2,
-    .tiles-title,
-    .club-grid h2 { font-size: 25px; }
+    .tiles-title { font-size: 25px; }
 
     .quiz-grid {
       grid-template-columns: 1fr;
@@ -949,8 +903,6 @@ const paisajismoMessage = whatsappLink('Hola, quiero cotizar un proyecto de pais
     }
     .quiz-photo img { width: min(260px, 70vw); }
     .quiz-card { max-width: none; width: 100%; }
-
-    .club-grid { grid-template-columns: 1fr; gap: 27.6px; }
 
     .paisajismo-band { padding: 27.6px; }
     .paisajismo-photo { display: none; }
