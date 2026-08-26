@@ -721,6 +721,11 @@ const menuTipos = [
   // la tienda de referencia): la confirmacion es ver el articulo adentro.
   document.addEventListener('cart:added', () => openPanel('cart'));
 
+  // Al marcar el corazon se abre el panel de cuenta, donde vive la lista de
+  // favoritos: misma confirmacion que el carrito. Quitar un favorito no lo
+  // abre (el evento solo se emite al agregar).
+  document.addEventListener('favoritos:added', () => openPanel('account'));
+
   // Listas del panel de cuenta: vistos recientemente y favoritos (localStorage).
   function pintarListaCuenta(el: HTMLElement | null, productos: ProductoGuardado[], vacio: string) {
     if (!el) return;

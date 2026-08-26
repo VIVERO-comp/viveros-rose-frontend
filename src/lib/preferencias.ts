@@ -59,5 +59,8 @@ export function toggleFavorito(p: ProductoGuardado): boolean {
   const nuevos = existe ? favoritos.filter((f) => f.sku !== p.sku) : [p, ...favoritos];
   localStorage.setItem(FAVORITOS_KEY, JSON.stringify(nuevos));
   document.dispatchEvent(new CustomEvent('favoritos:updated'));
+  // Solo al MARCAR (no al quitar): el header abre el panel de cuenta para
+  // confirmar que quedo guardado, igual que cart:added abre el carrito.
+  if (!existe) document.dispatchEvent(new CustomEvent('favoritos:added'));
   return !existe;
 }
