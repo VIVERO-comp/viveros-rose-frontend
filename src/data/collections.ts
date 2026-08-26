@@ -6,6 +6,7 @@
 // Product) y en el navegador (sobre data-atributos de las tarjetas).
 
 import type { Product } from './products';
+import { ventasTotales } from './ventas';
 
 export interface ProductFacts {
   name: string;
@@ -16,6 +17,7 @@ export interface ProductFacts {
   price: number;
   size: string; // pequena | mediana | grande | '' si no esta definido
   pet: string; // 'si' | 'no' | '' si no esta definido (no se inventa)
+  ventas: number; // unidades vendidas reales (src/data/ventas.ts)
 }
 
 export function factsOf(p: Product): ProductFacts {
@@ -28,6 +30,7 @@ export function factsOf(p: Product): ProductFacts {
     price: p.price,
     size: p.size ?? '',
     pet: p.petFriendly === undefined ? '' : p.petFriendly ? 'si' : 'no',
+    ventas: ventasTotales(p),
   };
 }
 
@@ -52,7 +55,8 @@ export const collections: CollectionDef[] = [
     image: '/fotos_colecciones/mas-vendidas.jpeg',
     name: 'Las más vendidas',
     blurb: 'Lo que más sale del vivero cada semana.',
-    test: (p) => p.available >= 40,
+    // Ventas reales (src/data/ventas.ts), ya no el proxy de stock >= 40.
+    test: (p) => p.ventas > 0,
   },
   {
     slug: 'recien',

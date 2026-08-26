@@ -31,6 +31,10 @@ export interface Product {
   // catalogo-build cuando el producto tiene la casilla "En oferta" en Odoo
   // con una oferta valida (0 < oferta < regular).
   offerPrice?: number;
+  // Unidades vendidas totales (manuales de ventas.ts + confirmadas en Odoo).
+  // Nunca se escribe a mano aqui: lo inyecta catalogo-build; sin proxy queda
+  // ausente y ventasTotales() cae a las manuales.
+  ventas?: number;
   description: string;
   care: {
     light: string;

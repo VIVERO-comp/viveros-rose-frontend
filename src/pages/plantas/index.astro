@@ -9,11 +9,25 @@ import Icon from '../../components/Icon.astro';
 import ProductCard from '../../components/ProductCard.astro';
 import NewsletterBand from '../../components/NewsletterBand.astro';
 import { collections, factsOf } from '../../data/collections';
+import { esComprable, type Product } from '../../data/products';
+import { ventasTotales } from '../../data/ventas';
 import { productosPublicados } from '../../lib/catalogo-build';
 
 // Catalogo publicado: sin los productos archivados en Odoo (filtro de build,
 // src/lib/catalogo-build.ts).
-const products = await productosPublicados();
+//
+// Orden "Destacadas": ventas y stock mandan, no el alfabeto. Comprables con
+// stock primero, ordenados por unidades vendidas reales (src/data/ventas.ts)
+// y luego por stock; despues los agotados y al final los "Proximamente".
+// Empates en alfabetico. El cliente conserva este orden en data-index, asi
+// que volver a "Destacadas" desde otro orden regresa exactamente aqui.
+const rango = (p: Product) => (esComprable(p) ? (p.available > 0 ? 0 : 1) : 2);
+const products = (await productosPublicados()).slice().sort((a, b) => {
+  if (rango(a) !== rango(b)) return rango(a) - rango(b);
+  if (ventasTotales(b) !== ventasTotales(a)) return ventasTotales(b) - ventasTotales(a);
+  if (b.available !== a.available) return b.available - a.available;
+  return a.name.localeCompare(b.name);
+});
 
 // Orden del sidebar segun el diseno (Shop Plantas).
 const sidebarSlugs = [
@@ -171,6 +185,7 @@ const PAGE_SIZE = 16;
               data-price={f.price}
               data-size={f.size}
               data-pet={f.pet}
+              data-ventas={f.ventas}
             >
               <ProductCard product={product} />
             </div>
@@ -266,6 +281,7 @@ const PAGE_SIZE = 16;
       price: Number(card.dataset.price ?? 0),
       size: card.dataset.size ?? '',
       pet: card.dataset.pet ?? '',
+      ventas: Number(card.dataset.ventas ?? 0),
     };
   }
 

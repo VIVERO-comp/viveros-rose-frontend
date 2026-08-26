@@ -18,6 +18,9 @@ export interface StockItem {
   // fallback degradado sin historia: si faltan, dejar en paz lo ya pintado.
   price_cents?: number;
   offer_price_cents?: number;
+  // Unidades vendidas en pedidos confirmados de Odoo; catalogo-build las
+  // suma a las ventas manuales (src/data/ventas.ts) para ordenar el catalogo.
+  sold_units?: number;
 }
 
 export type StockStatus = 'in-stock' | 'low' | 'out';

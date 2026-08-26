@@ -9,7 +9,9 @@ import Icon from '../components/Icon.astro';
 import NewsletterBand from '../components/NewsletterBand.astro';
 import ProductCard from '../components/ProductCard.astro';
 import { collections } from '../data/collections';
+import { esComprable } from '../data/products';
 import { guides } from '../data/guides';
+import { ventasTotales } from '../data/ventas';
 import { productosPublicados } from '../lib/catalogo-build';
 import { ENVIO_GRATIS_DESDE } from '../lib/envio';
 import { whatsappLink } from '../lib/site';
@@ -44,7 +46,15 @@ const filaDeCuatro = (slugs: string[]) => {
 };
 
 const featured = filaDeCuatro(['monstera-deliciosa', 'rosa', 'lavanda', 'ficus-lyrata']);
-const bestsellers = filaDeCuatro(['ixora', 'palma-abanico', 'cactus-mediano', 'jazmin-blanco-enano']);
+
+// "Las mas vendidas" reales: los 4 con mas unidades vendidas (ventas.ts)
+// que se puedan comprar hoy. Directo, sin la preferencia por foto de
+// filaDeCuatro: aqui el ranking es el contenido de la fila.
+const bestsellers = products
+  .filter((p) => ventasTotales(p) > 0 && esComprable(p) && p.available > 0 && !usados.has(p.slug))
+  .sort((a, b) => ventasTotales(b) - ventasTotales(a))
+  .slice(0, 4);
+for (const p of bestsellers) usados.add(p.slug);
 
 const colName = (slug: string) => collections.find((c) => c.slug === slug)!.name;
 

@@ -15,6 +15,7 @@
 // con productos de mas a un deploy caido por una dependencia externa.
 
 import { products, type Product } from '../data/products';
+import { ventasDe } from '../data/ventas';
 import type { StockItem } from './stock';
 
 const PROXY_URL = import.meta.env.PUBLIC_STOCK_PROXY_URL as string | undefined;
@@ -46,16 +47,27 @@ async function itemsDelProxy(): Promise<Map<string, StockItem> | null> {
   return porSku;
 }
 
-// Precios de Odoo sobre el producto del catalogo. Si el proxy no trajo
-// precio (fallback degradado), el producto queda con su precio de
-// products.ts, igual que cuando el proxy entero no responde.
+// Precios y stock de Odoo sobre el producto del catalogo. El stock real del
+// build alimenta el orden "Destacadas" del catalogo (y los umbrales de las
+// colecciones mas-vendidas/recien); el StockBadge lo refresca igual en el
+// navegador. Si el proxy no trajo precio (fallback degradado), el producto
+// queda con su precio de products.ts, igual que cuando el proxy entero no
+// responde.
 function conPrecios(producto: Product, item: StockItem): Product {
-  if (typeof item.price_cents !== 'number') return producto;
+  const actualizado = {
+    ...producto,
+    available: item.available,
+    // Ventas totales: las manuales (ventas a supers, src/data/ventas.ts)
+    // mas las confirmadas en Odoo (tienda en linea). Cuando se empiece a
+    // registrar TODO en Odoo, vaciar ventas.ts para no contar doble.
+    ventas: ventasDe(producto.sku) + (item.sold_units ?? 0),
+  };
+  if (typeof item.price_cents !== 'number') return actualizado;
   const oferta =
     typeof item.offer_price_cents === 'number' && item.offer_price_cents < item.price_cents
       ? item.offer_price_cents / 100
       : undefined;
-  return { ...producto, price: item.price_cents / 100, offerPrice: oferta };
+  return { ...actualizado, price: item.price_cents / 100, offerPrice: oferta };
 }
 
 /** Catalogo publicado: products.ts menos los archivados en Odoo, con los
