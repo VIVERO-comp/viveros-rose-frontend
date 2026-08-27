@@ -162,6 +162,15 @@
       "sku": "PL-FICUS-LYRATA",
       "subida": true
     },
+    "51dc67075729": {
+      "archivo": "cipre-thuja.jpeg",
+      "descartada": false,
+      "fecha": "2026-08-27 15:09:43 +0000",
+      "orden": 1,
+      "principal": false,
+      "sku": "PL-PINO-ROMANO",
+      "subida": true
+    },
     "582fecd58698": {
       "archivo": "palma zica.jpeg",
       "descartada": false,
@@ -182,11 +191,11 @@
     },
     "6f595012aa8d": {
       "archivo": "cipre thuja.jpeg",
-      "descartada": false,
+      "descartada": true,
       "fecha": "2026-08-26 21:58:28 +0000",
       "orden": 1,
       "principal": false,
-      "sku": "PL-PINO-ROMANO",
+      "sku": null,
       "subida": true
     },
     "76db66709cc2": {
