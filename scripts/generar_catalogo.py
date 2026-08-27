@@ -24,6 +24,16 @@ PRECIO_PLACEHOLDER = 5
 
 NO_PLANTAS = {"MACETA-001"}  # referencias del export que no son plantas
 
+# Slugs de URL fijados a mano, por SKU (Referencia interna de Odoo). El slug
+# normal se deriva del nombre del producto; este mapa lo sobrescribe para los
+# SKU listados, de modo que la URL publica no dependa de como este escrito el
+# nombre en Odoo (y un rename de URL sobreviva a las regeneraciones). Para
+# fijar otro slug, agregar una entrada 'SKU': 'slug-deseado'.
+SLUGS_FIJOS = {
+    "PL-POTHOS": "potos",
+    "PL-PHOTOS-MULTI-RAMA": "potos-multi-rama",
+}
+
 # Palabras clave (sobre el nombre sin acentos, en mayusculas) -> categoria del
 # sitio. Aproximacion inicial; las categorias se afinan a mano despues.
 FLORALES = [
@@ -125,12 +135,23 @@ for r in filas:
     nombre_mayus = sin_acentos(nombre_raw).upper()
     cat = categoria(nombre_mayus)
     nombre = nombre_bonito(nombre_raw)
-    slug = slug_de(nombre_raw)
-    if slug in slugs_vistos:
-        slugs_vistos[slug] += 1
-        slug = f"{slug}-{slugs_vistos[slug]}"
-    else:
+    if ref in SLUGS_FIJOS:
+        # Un slug fijado nunca se desambigua con sufijo: si choca con otro
+        # slug ya emitido, hay que resolverlo a mano en SLUGS_FIJOS.
+        slug = SLUGS_FIJOS[ref]
+        if slug in slugs_vistos:
+            raise SystemExit(
+                f"ERROR: el slug fijo '{slug}' ({ref}) choca con el de otro "
+                "producto; corregir SLUGS_FIJOS antes de regenerar."
+            )
         slugs_vistos[slug] = 1
+    else:
+        slug = slug_de(nombre_raw)
+        if slug in slugs_vistos:
+            slugs_vistos[slug] += 1
+            slug = f"{slug}-{slugs_vistos[slug]}"
+        else:
+            slugs_vistos[slug] = 1
     precio, es_placeholder = precio_de(r[COL_PRECIO])
     if es_placeholder:
         sin_precio.append(ref)

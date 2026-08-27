@@ -46,5 +46,10 @@ export default defineConfig({
     // La guia de apartamentos se convirtio en "Las mejores plantas para
     // comprar en Panama" con slug nuevo.
     '/guia/plantas-para-apartamento': '/guia/mejores-plantas-panama',
+    // El pothos paso a llamarse "potos" en la URL (nombre en espanol).
+    // "photus" fue una grafia de Odoo que estuvo publicada hasta ago-2026.
+    '/plantas/interior/pothos': '/plantas/interior/potos',
+    '/plantas/interior/photus': '/plantas/interior/potos',
+    '/plantas/interior/photos-multi-rama': '/plantas/interior/potos-multi-rama',
   },
 });

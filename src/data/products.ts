@@ -1546,7 +1546,7 @@ export const products: Product[] = [
   },
   {
     sku: 'PL-PHOTOS-MULTI-RAMA',
-    slug: 'photos-multi-rama',
+    slug: 'potos-multi-rama',
     category: 'interior',
     name: 'Photos multi rama',
     scientificName: '',
@@ -1672,7 +1672,7 @@ export const products: Product[] = [
   },
   {
     sku: 'PL-POTHOS',
-    slug: 'pothos',
+    slug: 'potos',
     category: 'interior',
     name: 'Pothos',
     scientificName: '',
