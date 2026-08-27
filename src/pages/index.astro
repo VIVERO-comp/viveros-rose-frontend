@@ -54,6 +54,20 @@ const bestsellers = products
   .filter((p) => ventasTotales(p) > 0 && esComprable(p) && p.available > 0 && !usados.has(p.slug))
   .sort((a, b) => ventasTotales(b) - ventasTotales(a))
   .slice(0, 4);
+// La grilla es de 4 puestos fijos: si las ventas reales no alcanzan (p. ej.
+// un mas vendido quedo archivado o sin stock), se completa con otros
+// comprables con stock, primero los que ya tienen foto.
+if (bestsellers.length < 4) {
+  const relleno = products.filter(
+    (p) => esComprable(p) && p.available > 0 && !usados.has(p.slug) && !bestsellers.includes(p),
+  );
+  bestsellers.push(
+    ...[...relleno.filter((p) => p.image), ...relleno.filter((p) => !p.image)].slice(
+      0,
+      4 - bestsellers.length,
+    ),
+  );
+}
 for (const p of bestsellers) usados.add(p.slug);
 
 const colName = (slug: string) => collections.find((c) => c.slug === slug)!.name;
