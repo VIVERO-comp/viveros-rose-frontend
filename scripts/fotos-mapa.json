@@ -1,4 +1,410 @@
 {
-  "fotos": {},
+  "fotos": {
+    "01f835488b10": {
+      "archivo": "ficus-elastica.jpg",
+      "descartada": false,
+      "fecha": "2026-08-26 21:49:40 +0000",
+      "orden": 1,
+      "principal": false,
+      "sku": "PL-FICUS-ELASTICA",
+      "subida": true
+    },
+    "027e6e32cdfd": {
+      "archivo": "palma-madagascar.jpg",
+      "descartada": false,
+      "fecha": "2026-08-26 21:52:16 +0000",
+      "orden": 1,
+      "principal": false,
+      "sku": "PL-PALMA-MADAGASCAR",
+      "subida": true
+    },
+    "0bbfcefc57be": {
+      "archivo": "lengua-de-suegra-enana.jpeg",
+      "descartada": false,
+      "fecha": "2026-08-26 21:56:50 +0000",
+      "orden": 1,
+      "principal": false,
+      "sku": "PL-LENGUA-DE-SUEGRA-ENANA",
+      "subida": true
+    },
+    "18f7ae9f65e4": {
+      "archivo": "jazmin-blanco-enano.jpg",
+      "descartada": false,
+      "fecha": "2026-08-26 21:52:54 +0000",
+      "orden": 1,
+      "principal": false,
+      "sku": "PL-JAZMIN-BLANCO-ENANO",
+      "subida": true
+    },
+    "1a1ea7e67b93": {
+      "archivo": "albahaca-roja.jpeg",
+      "descartada": true,
+      "fecha": "2026-08-27 14:53:11 +0000",
+      "orden": 1,
+      "principal": false,
+      "sku": null,
+      "subida": true
+    },
+    "1ca6c3fd21f6": {
+      "archivo": "plant-alcancel.jpg",
+      "descartada": false,
+      "fecha": "2026-08-26 21:53:14 +0000",
+      "orden": null,
+      "principal": false,
+      "sku": null,
+      "subida": false
+    },
+    "1df576063aff": {
+      "archivo": "cactus hueso de dragon.jpeg",
+      "descartada": false,
+      "fecha": "2026-08-26 21:59:32 +0000",
+      "orden": 1,
+      "principal": false,
+      "sku": "PL-CACTUS-HUESO-DE-DRAGON",
+      "subida": true
+    },
+    "215d5da20753": {
+      "archivo": "suculentas-grande.jpeg",
+      "descartada": false,
+      "fecha": "2026-08-26 21:59:04 +0000",
+      "orden": 1,
+      "principal": false,
+      "sku": "PL-SUCULENTAS-GRANDE",
+      "subida": true
+    },
+    "253c22f0869f": {
+      "archivo": "jade.jpeg",
+      "descartada": false,
+      "fecha": "2026-08-26 21:57:12 +0000",
+      "orden": 1,
+      "principal": false,
+      "sku": "PLT-JADE-01",
+      "subida": true
+    },
+    "29debd6f2508": {
+      "archivo": "calathea cebrina.jpeg",
+      "descartada": false,
+      "fecha": "2026-08-26 21:58:52 +0000",
+      "orden": 1,
+      "principal": false,
+      "sku": "PL-CALATHEA-CEBRINA",
+      "subida": true
+    },
+    "2b5e5f3b4a31": {
+      "archivo": "pothos.jpeg",
+      "descartada": false,
+      "fecha": "2026-08-26 21:54:32 +0000",
+      "orden": 1,
+      "principal": false,
+      "sku": "PL-POTHOS",
+      "subida": true
+    },
+    "2daab0b5a783": {
+      "archivo": "kalanchoe.jpeg",
+      "descartada": false,
+      "fecha": "2026-08-26 21:56:34 +0000",
+      "orden": 1,
+      "principal": false,
+      "sku": "PL-KALANCHOE",
+      "subida": true
+    },
+    "39477335ae22": {
+      "archivo": "albahaca-roja.jpeg",
+      "descartada": false,
+      "fecha": "2026-08-26 22:00:32 +0000",
+      "orden": 1,
+      "principal": false,
+      "sku": "PL-ALBAHACA-ROJA",
+      "subida": true
+    },
+    "3abb5e90ac5f": {
+      "archivo": "anturio.jpeg",
+      "descartada": false,
+      "fecha": "2026-08-26 22:00:10 +0000",
+      "orden": 1,
+      "principal": false,
+      "sku": "PL-ANTHURIO-FLOR",
+      "subida": true
+    },
+    "3b9fc79a25b5": {
+      "archivo": "palma-bismarkia-mediana.jpg",
+      "descartada": false,
+      "fecha": "2026-08-27 14:52:48 +0000",
+      "orden": 1,
+      "principal": false,
+      "sku": "PL-PALMA-BISMARKIA-MEDIANA",
+      "subida": true
+    },
+    "3cd7e4b43d15": {
+      "archivo": "monstera-deliciosa.jpg",
+      "descartada": false,
+      "fecha": "2026-08-26 21:50:50 +0000",
+      "orden": 1,
+      "principal": false,
+      "sku": "PL-MONSTERA-DELICIOSA",
+      "subida": true
+    },
+    "3e9b9379a399": {
+      "archivo": "palma-abanico.jpeg",
+      "descartada": false,
+      "fecha": "2026-08-26 21:55:50 +0000",
+      "orden": 1,
+      "principal": false,
+      "sku": "PL-PALMA-ABANICO",
+      "subida": true
+    },
+    "473aee587cda": {
+      "archivo": "ficus-lyrata.jpg",
+      "descartada": false,
+      "fecha": "2026-08-26 21:49:56 +0000",
+      "orden": 1,
+      "principal": false,
+      "sku": "PL-FICUS-LYRATA",
+      "subida": true
+    },
+    "582fecd58698": {
+      "archivo": "palma zica.jpeg",
+      "descartada": false,
+      "fecha": "2026-08-26 21:57:32 +0000",
+      "orden": 1,
+      "principal": false,
+      "sku": "PL-PALMA-ZICA",
+      "subida": true
+    },
+    "5e8b0df021aa": {
+      "archivo": "pino montesuma.jpeg",
+      "descartada": false,
+      "fecha": "2026-08-26 21:54:48 +0000",
+      "orden": 1,
+      "principal": false,
+      "sku": "PL-PINO-MONTESUMA",
+      "subida": true
+    },
+    "6f595012aa8d": {
+      "archivo": "cipre thuja.jpeg",
+      "descartada": false,
+      "fecha": "2026-08-26 21:58:28 +0000",
+      "orden": 1,
+      "principal": false,
+      "sku": "PL-PINO-ROMANO",
+      "subida": true
+    },
+    "76db66709cc2": {
+      "archivo": "lengua-de-suegra-enana-2.jpg",
+      "descartada": false,
+      "fecha": "2026-08-26 21:53:26 +0000",
+      "orden": 12,
+      "principal": false,
+      "sku": "PL-LENGUA-DE-SUEGRA-ENANA",
+      "subida": true
+    },
+    "7798a5e8d79e": {
+      "archivo": "lengua-de-suegra-mini.jpeg",
+      "descartada": false,
+      "fecha": "2026-08-26 21:56:58 +0000",
+      "orden": 1,
+      "principal": false,
+      "sku": "PL-LENGUA-DE-SUEGRA-MINI",
+      "subida": true
+    },
+    "7e07209d103d": {
+      "archivo": "bismarkia normal.jpg",
+      "descartada": true,
+      "fecha": "2026-08-26 21:51:52 +0000",
+      "orden": null,
+      "principal": false,
+      "sku": null,
+      "subida": false
+    },
+    "8c822e07d824": {
+      "archivo": "coleos.jpeg",
+      "descartada": false,
+      "fecha": "2026-08-26 22:01:18 +0000",
+      "orden": 1,
+      "principal": false,
+      "sku": "PL-COLEOS",
+      "subida": true
+    },
+    "8f64655e0282": {
+      "archivo": "bijao tricolor.jpeg",
+      "descartada": false,
+      "fecha": "2026-08-26 21:59:48 +0000",
+      "orden": 1,
+      "principal": false,
+      "sku": "PL-BIJAO-TRICOLOR",
+      "subida": true
+    },
+    "98d20e11c51f": {
+      "archivo": "albahaca-verde.jpeg",
+      "descartada": false,
+      "fecha": "2026-08-27 14:58:00 +0000",
+      "orden": 1,
+      "principal": false,
+      "sku": "PL-ALBAHACA-VERDE",
+      "subida": true
+    },
+    "9d091d10862a": {
+      "archivo": "mini jade.jpeg",
+      "descartada": false,
+      "fecha": "2026-08-26 21:57:04 +0000",
+      "orden": 1,
+      "principal": false,
+      "sku": "PL-MINI-JADE",
+      "subida": true
+    },
+    "a0e10f7d29dc": {
+      "archivo": "palma-bismarkia-grande.jpg",
+      "descartada": false,
+      "fecha": "2026-08-27 14:52:48 +0000",
+      "orden": 1,
+      "principal": false,
+      "sku": "PL-PALMA-BISMARKIA-GRANDE",
+      "subida": true
+    },
+    "a163d864940e": {
+      "archivo": "crinum-asiatico-variegado.jpeg",
+      "descartada": false,
+      "fecha": "2026-08-26 21:57:46 +0000",
+      "orden": 1,
+      "principal": false,
+      "sku": "PL-CRINUM-ASIATICO-VARIEGADO",
+      "subida": true
+    },
+    "b53f60917a47": {
+      "archivo": "alocasia lava roja.jpeg",
+      "descartada": false,
+      "fecha": "2026-08-26 22:00:22 +0000",
+      "orden": null,
+      "principal": false,
+      "sku": null,
+      "subida": false
+    },
+    "b74eaf1402e1": {
+      "archivo": "pino-hindu.jpg",
+      "descartada": false,
+      "fecha": "2026-08-26 21:52:24 +0000",
+      "orden": 1,
+      "principal": false,
+      "sku": "PL-PINO-HINDU",
+      "subida": true
+    },
+    "bc93bd32129e": {
+      "archivo": "croto-mamy-amarillo.jpg",
+      "descartada": false,
+      "fecha": "2026-08-26 21:52:42 +0000",
+      "orden": 1,
+      "principal": false,
+      "sku": "PL-CROTO-MAMY-AMARILLO",
+      "subida": true
+    },
+    "beeaaf274d6e": {
+      "archivo": "cactus-pequeno.jpeg",
+      "descartada": false,
+      "fecha": "2026-08-26 21:59:24 +0000",
+      "orden": 1,
+      "principal": false,
+      "sku": "PL-CACTUS-PEQUENO",
+      "subida": true
+    },
+    "c2bf7eddfd94": {
+      "archivo": "monstera-adansonii.jpg",
+      "descartada": false,
+      "fecha": "2026-08-26 21:50:56 +0000",
+      "orden": 1,
+      "principal": false,
+      "sku": "PL-MONSTERA-ADANSONII",
+      "subida": true
+    },
+    "c54eb3be1972": {
+      "archivo": "ficus-triangular-grande.jpg",
+      "descartada": false,
+      "fecha": "2026-08-26 21:50:40 +0000",
+      "orden": 1,
+      "principal": false,
+      "sku": "PL-FICUS-TRIANGULAR-GRANDE",
+      "subida": true
+    },
+    "c5885cc086a0": {
+      "archivo": "clavel chino.jpeg",
+      "descartada": false,
+      "fecha": "2026-08-26 21:58:10 +0000",
+      "orden": 1,
+      "principal": false,
+      "sku": "PL-CLAVEL-CHINO",
+      "subida": true
+    },
+    "e3128ed07d26": {
+      "archivo": "ficus-lyrata-3-ramas-hasta-175cm.jpg",
+      "descartada": false,
+      "fecha": "2026-08-26 21:49:04 +0000",
+      "orden": 1,
+      "principal": false,
+      "sku": "PL-FICUS-LYRATA-3-RAMAS",
+      "subida": true
+    },
+    "e7dd11ae1488": {
+      "archivo": "bambu entrenzas.jpeg",
+      "descartada": false,
+      "fecha": "2026-08-26 22:00:00 +0000",
+      "orden": 1,
+      "principal": false,
+      "sku": "PL-BAMBU-ENTRENZAS",
+      "subida": true
+    },
+    "e865722f3a21": {
+      "archivo": "albahaca-verde.jpeg",
+      "descartada": true,
+      "fecha": "2026-08-27 14:53:11 +0000",
+      "orden": 1,
+      "principal": false,
+      "sku": null,
+      "subida": true
+    },
+    "ead76ccf6693": {
+      "archivo": "palma multiple.jpeg",
+      "descartada": false,
+      "fecha": "2026-08-26 21:55:38 +0000",
+      "orden": 1,
+      "principal": false,
+      "sku": "PL-PALMA-MULTIPLE",
+      "subida": true
+    },
+    "f15676a48344": {
+      "archivo": "palma-bismarkia-pequena.jpg",
+      "descartada": false,
+      "fecha": "2026-08-27 14:52:48 +0000",
+      "orden": 1,
+      "principal": false,
+      "sku": "PL-PALMA-BISMARKIA-PEQUENA",
+      "subida": true
+    },
+    "f212acbfea6a": {
+      "archivo": "dracaena-roja.jpeg",
+      "descartada": false,
+      "fecha": "2026-08-26 22:01:26 +0000",
+      "orden": 1,
+      "principal": false,
+      "sku": "PL-DRACAENA-ROJA",
+      "subida": true
+    },
+    "f35bf487bf59": {
+      "archivo": "suculenta-pequena.jpeg",
+      "descartada": false,
+      "fecha": "2026-08-26 21:59:14 +0000",
+      "orden": 1,
+      "principal": false,
+      "sku": "PL-SUCULENTA-PEQUENA",
+      "subida": true
+    },
+    "fa416c7b9195": {
+      "archivo": "clavelito.jpeg",
+      "descartada": false,
+      "fecha": "2026-08-26 21:58:02 +0000",
+      "orden": 1,
+      "principal": false,
+      "sku": "PL-CLAVELITO",
+      "subida": true
+    }
+  },
   "version": 1
 }

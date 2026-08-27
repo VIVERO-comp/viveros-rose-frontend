@@ -1,4 +1,124 @@
 {
   "cloud": "yb93cnmu",
-  "porSku": {}
+  "macetasPorSku": {},
+  "porSku": {
+    "PL-ALBAHACA-ROJA": [
+      "39477335ae22"
+    ],
+    "PL-ALBAHACA-VERDE": [
+      "98d20e11c51f"
+    ],
+    "PL-ANTHURIO-FLOR": [
+      "3abb5e90ac5f"
+    ],
+    "PL-BAMBU-ENTRENZAS": [
+      "e7dd11ae1488"
+    ],
+    "PL-BIJAO-TRICOLOR": [
+      "8f64655e0282"
+    ],
+    "PL-CACTUS-HUESO-DE-DRAGON": [
+      "1df576063aff"
+    ],
+    "PL-CACTUS-PEQUENO": [
+      "beeaaf274d6e"
+    ],
+    "PL-CALATHEA-CEBRINA": [
+      "29debd6f2508"
+    ],
+    "PL-CLAVEL-CHINO": [
+      "c5885cc086a0"
+    ],
+    "PL-CLAVELITO": [
+      "fa416c7b9195"
+    ],
+    "PL-COLEOS": [
+      "8c822e07d824"
+    ],
+    "PL-CRINUM-ASIATICO-VARIEGADO": [
+      "a163d864940e"
+    ],
+    "PL-CROTO-MAMY-AMARILLO": [
+      "bc93bd32129e"
+    ],
+    "PL-DRACAENA-ROJA": [
+      "f212acbfea6a"
+    ],
+    "PL-FICUS-ELASTICA": [
+      "01f835488b10"
+    ],
+    "PL-FICUS-LYRATA": [
+      "473aee587cda"
+    ],
+    "PL-FICUS-LYRATA-3-RAMAS": [
+      "e3128ed07d26"
+    ],
+    "PL-FICUS-TRIANGULAR-GRANDE": [
+      "c54eb3be1972"
+    ],
+    "PL-JAZMIN-BLANCO-ENANO": [
+      "18f7ae9f65e4"
+    ],
+    "PL-KALANCHOE": [
+      "2daab0b5a783"
+    ],
+    "PL-LENGUA-DE-SUEGRA-ENANA": [
+      "0bbfcefc57be",
+      "76db66709cc2"
+    ],
+    "PL-LENGUA-DE-SUEGRA-MINI": [
+      "7798a5e8d79e"
+    ],
+    "PL-MINI-JADE": [
+      "9d091d10862a"
+    ],
+    "PL-MONSTERA-ADANSONII": [
+      "c2bf7eddfd94"
+    ],
+    "PL-MONSTERA-DELICIOSA": [
+      "3cd7e4b43d15"
+    ],
+    "PL-PALMA-ABANICO": [
+      "3e9b9379a399"
+    ],
+    "PL-PALMA-BISMARKIA-GRANDE": [
+      "a0e10f7d29dc"
+    ],
+    "PL-PALMA-BISMARKIA-MEDIANA": [
+      "3b9fc79a25b5"
+    ],
+    "PL-PALMA-BISMARKIA-PEQUENA": [
+      "f15676a48344"
+    ],
+    "PL-PALMA-MADAGASCAR": [
+      "027e6e32cdfd"
+    ],
+    "PL-PALMA-MULTIPLE": [
+      "ead76ccf6693"
+    ],
+    "PL-PALMA-ZICA": [
+      "582fecd58698"
+    ],
+    "PL-PINO-HINDU": [
+      "b74eaf1402e1"
+    ],
+    "PL-PINO-MONTESUMA": [
+      "5e8b0df021aa"
+    ],
+    "PL-PINO-ROMANO": [
+      "6f595012aa8d"
+    ],
+    "PL-POTHOS": [
+      "2b5e5f3b4a31"
+    ],
+    "PL-SUCULENTA-PEQUENA": [
+      "f35bf487bf59"
+    ],
+    "PL-SUCULENTAS-GRANDE": [
+      "215d5da20753"
+    ],
+    "PLT-JADE-01": [
+      "253c22f0869f"
+    ]
+  }
 }
