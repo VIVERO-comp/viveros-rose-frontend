@@ -115,6 +115,20 @@ def cargar_catalogo():
     return productos, fotos_previas
 
 
+# Fotos de la planta en maceta de color ("maceta-<color>-<slug>.ext"): no
+# entran a la lista normal (nunca son principal ni hover); se publican en
+# fotos.json bajo macetasPorSku para que el frontend las muestre en la galeria
+# (posiciones 2+) y las conecte con el selector de color de maceta.
+COLORES_MACETA = ["beige", "gris", "marron"]
+
+
+def maceta_de(nombre_archivo):
+    """(color, slug) si el archivo es una foto de maceta de color, o None."""
+    stem = normalizar(os.path.splitext(nombre_archivo)[0])
+    m = re.match(rf"^maceta-({'|'.join(COLORES_MACETA)})-(.+)$", stem)
+    return (m.group(1), m.group(2)) if m else None
+
+
 def stem_y_orden(nombre_archivo):
     """Nombre normalizado sin sufijos de serie, y el orden que el sufijo
     sugiere: base -> 1, hover -> 2, _2/_3/... -> despues del hover."""
@@ -213,6 +227,18 @@ def emparejar(mapa, hashes, productos, fotos_previas):
             entrada["sku"], entrada["orden"] = previa
             asignadas.append(h)
             continue
+        maceta = maceta_de(entrada["archivo"])
+        if maceta:
+            color, stem = maceta
+            sku = por_slug.get(stem) or por_nombre.get(stem)
+            if sku:
+                entrada["sku"] = sku
+                entrada["maceta"] = color
+                # Despues de cualquier foto normal, y en el orden fijo de
+                # COLORES_MACETA (mismo orden que veran las galerias).
+                entrada["orden"] = 900 + COLORES_MACETA.index(color)
+                asignadas.append(h)
+            continue
         stem, orden = stem_y_orden(entrada["archivo"])
         sku = por_slug.get(stem) or por_nombre.get(stem)
         if sku:
@@ -239,15 +265,29 @@ def clave_orden(entrada):
 
 
 def fotos_por_sku(mapa, solo_subidas=True):
+    """Fotos normales (las de maceta van aparte, en macetas_por_sku)."""
     por_sku = {}
     for h, e in mapa["fotos"].items():
-        if e["descartada"] or not e["sku"]:
+        if e["descartada"] or not e["sku"] or e.get("maceta"):
             continue
         if solo_subidas and not e["subida"]:
             continue
         por_sku.setdefault(e["sku"], []).append(h)
     for sku, hashes in por_sku.items():
         hashes.sort(key=lambda h: clave_orden(mapa["fotos"][h]))
+    return por_sku
+
+
+def macetas_por_sku(mapa, solo_subidas=True):
+    """SKU -> {color: hash} con la foto de la planta en cada color de maceta."""
+    por_sku = {}
+    for h, e in mapa["fotos"].items():
+        color = e.get("maceta")
+        if e["descartada"] or not e["sku"] or not color:
+            continue
+        if solo_subidas and not e["subida"]:
+            continue
+        por_sku.setdefault(e["sku"], {})[color] = h
     return por_sku
 
 
@@ -368,6 +408,7 @@ def generar_fotos_json(env, mapa):
     datos = {
         "cloud": env["CLOUDINARY_CLOUD_NAME"],
         "porSku": fotos_por_sku(mapa, solo_subidas=True),
+        "macetasPorSku": macetas_por_sku(mapa, solo_subidas=True),
     }
     nuevo = json.dumps(datos, ensure_ascii=False, indent=2, sort_keys=True) + "\n"
     actual = None

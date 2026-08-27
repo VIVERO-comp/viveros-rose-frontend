@@ -14,11 +14,26 @@
 import datos from '../data/fotos.json';
 
 const porSku = datos.porSku as Record<string, string[]>;
+const macetasPorSku = ((datos as { macetasPorSku?: unknown }).macetasPorSku ?? {}) as Record<
+  string,
+  Partial<Record<ColorMaceta, string>>
+>;
 const BASE = `https://res.cloudinary.com/${datos.cloud}/image/upload`;
 
-// Hashes de las fotos de un producto, en el orden publicado.
+// Colores de maceta con foto (scripts/fotos.py, archivos "maceta-<color>-<slug>").
+// Este orden fijo es el de la galeria y el del selector de colores.
+export const COLORES_MACETA = ['beige', 'gris', 'marron'] as const;
+export type ColorMaceta = (typeof COLORES_MACETA)[number];
+
+// Hashes de las fotos de un producto, en el orden publicado. Las fotos de
+// maceta NO vienen aqui (van en macetasDe): nunca son principal ni hover.
 export function fotosDe(sku: string): string[] {
   return porSku[sku] ?? [];
+}
+
+// color -> hash de la foto de la planta en la maceta de ese color.
+export function macetasDe(sku: string): Partial<Record<ColorMaceta, string>> {
+  return macetasPorSku[sku] ?? {};
 }
 
 export function urlFoto(

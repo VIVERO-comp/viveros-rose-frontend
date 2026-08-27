@@ -17,7 +17,7 @@ import {
 } from '../../../data/products';
 import { collections, factsOf } from '../../../data/collections';
 import { productosPublicados } from '../../../lib/catalogo-build';
-import { fotosDe, urlFoto } from '../../../lib/fotos';
+import { COLORES_MACETA, fotosDe, macetasDe, urlFoto, type ColorMaceta } from '../../../lib/fotos';
 import { SITE } from '../../../lib/site';
 
 // Solo los productos activos en Odoo generan pagina: un archivado no esta en
@@ -57,6 +57,29 @@ const fotosGaleria = fotosDe(product.sku).map((hash) => ({
   mini: urlFoto(product.sku, hash, { ancho: 160, ratio: '1:1' }),
   grande: urlFoto(product.sku, hash, { ancho: 960, ratio: '1:1' }),
 }));
+
+// Fotos de la planta en maceta de color: van SIEMPRE despues de las fotos
+// normales (posiciones 2, 3, 4…). Si el producto aun no tiene foto principal,
+// la posicion 1 es el marco con el emoji (reservada para cuando se tome) y
+// las macetas la siguen. Cada color del selector salta a su foto.
+const NOMBRE_COLOR: Record<ColorMaceta, string> = {
+  beige: 'Beige',
+  gris: 'Gris',
+  marron: 'Marrón',
+};
+const SWATCH_MACETA: Record<ColorMaceta, string> = {
+  beige: '#d9c6a8',
+  gris: '#454545',
+  marron: '#5a3a33',
+};
+const macetas = macetasDe(product.sku);
+const fotosMaceta = COLORES_MACETA.filter((c) => macetas[c]).map((color) => ({
+  color,
+  mini: urlFoto(product.sku, macetas[color]!, { ancho: 160, ratio: '1:1' }),
+  grande: urlFoto(product.sku, macetas[color]!, { ancho: 960, ratio: '1:1' }),
+}));
+const conMarcador = fotosGaleria.length === 0 && fotosMaceta.length > 0;
+const totalGaleria = (conMarcador ? 1 : fotosGaleria.length) + fotosMaceta.length;
 
 // Similares del carrusel "Te podrian gustar": solo productos que comparten
 // coleccion con este ('all' no cuenta porque abarca todo el catalogo),
@@ -186,16 +209,31 @@ const careTitle = `Cuidado de ${product.name.replace(/\s*\(.*\)$/, '').toLowerCa
 
 <Base title={product.name} description={product.description} whatsappMessage={whatsappMessage}>
   <div class="container product-hero">
-    <div class:list={['gallery', { 'gallery--sin-fotos': !fotosGaleria.length }]}>
-      {fotosGaleria.length > 0 && (
+    <div class:list={['gallery', { 'gallery--sin-fotos': !totalGaleria }]}>
+      {totalGaleria > 0 && (
         <div class="thumbs" data-thumbs>
+          {conMarcador && (
+            <button class="thumb thumb--emoji active" data-thumb aria-label="Ver foto 1">
+              {product.emoji}
+            </button>
+          )}
           {fotosGaleria.map((foto, i) => (
             <button
               class:list={['thumb', 'thumb--foto', { active: i === 0 }]}
-              data-thumb={i}
+              data-thumb
               data-foto={foto.grande}
               style={`background-image: url('${foto.mini}'); background-size: cover; background-position: center;`}
               aria-label={`Ver foto ${i + 1}`}
+            />
+          ))}
+          {fotosMaceta.map((foto) => (
+            <button
+              class="thumb thumb--foto"
+              data-thumb
+              data-foto={foto.grande}
+              data-color-maceta={foto.color}
+              style={`background-image: url('${foto.mini}'); background-size: cover; background-position: center;`}
+              aria-label={`Ver foto en maceta ${NOMBRE_COLOR[foto.color].toLowerCase()}`}
             />
           ))}
         </div>
@@ -210,13 +248,13 @@ const careTitle = `Cuidado de ${product.name.replace(/\s*\(.*\)$/, '').toLowerCa
               : undefined
           }
         >
-          {fotosGaleria.length ? '' : product.emoji}
-          {fotosGaleria.length > 0 && (
-            <span class="main-photo-num" data-main-num>Foto 1 de {fotosGaleria.length}</span>
+          {!fotosGaleria.length && <span data-main-emoji>{product.emoji}</span>}
+          {totalGaleria > 0 && (
+            <span class="main-photo-num" data-main-num>Foto 1 de {totalGaleria}</span>
           )}
         </div>
         <div class="soldout-stamp" data-soldout-stamp hidden={!soldOut || !comprable}>Agotado</div>
-        {fotosGaleria.length > 1 && (
+        {totalGaleria > 1 && (
           <>
             <button class="photo-arrow photo-arrow--prev" data-gallery-prev aria-label="Foto anterior">
               <Icon name="chevron-left" size={20} />
@@ -280,8 +318,12 @@ const careTitle = `Cuidado de ${product.name.replace(/\s*\(.*\)$/, '').toLowerCa
         }
       </div>
 
-      <div class="variant-title variant-title--gap">Maceta — De vivero</div>
+      <div class="variant-title variant-title--gap">Maceta — Sin maceta</div>
       <div class="pots">
+        <button class="pot active" type="button" title="Sin maceta">
+          <span class="pot-circle"><Icon name="sprout" size={20} /></span>
+          <span>Sin maceta</span>
+        </button>
         <button class="pot" disabled title="No disponible por ahora">
           <span class="pot-circle"><Icon name="flower-2" size={20} /></span>
           <span>De vivero</span>
@@ -295,15 +337,29 @@ const careTitle = `Cuidado de ${product.name.replace(/\s*\(.*\)$/, '').toLowerCa
       <div class="variant-title variant-title--gap">Color de maceta — De vivero</div>
       <div class="pot-colors">
         {
-          POT_COLORS.map((c) => (
-            <button
-              class="pot-color"
-              disabled
-              title="No disponible por ahora"
-              aria-label={`Color ${c.key}`}
-              style={`background: linear-gradient(to top left, transparent calc(50% - 1px), rgba(27,42,31,0.55) calc(50% - 1px), rgba(27,42,31,0.55) calc(50% + 1px), transparent calc(50% + 1px)), ${c.swatch};`}
-            />
-          ))
+          // Con fotos de maceta, cada circulo salta a la foto de su color en
+          // la galeria (solo vista previa: la maceta sigue sin poderse
+          // comprar). Sin fotos, quedan los circulos bloqueados de siempre.
+          fotosMaceta.length > 0
+            ? fotosMaceta.map((foto) => (
+                <button
+                  class="pot-color pot-color--foto"
+                  type="button"
+                  data-color-maceta-btn={foto.color}
+                  title={`Ver en maceta ${NOMBRE_COLOR[foto.color].toLowerCase()}`}
+                  aria-label={`Ver foto en maceta ${NOMBRE_COLOR[foto.color].toLowerCase()}`}
+                  style={`background: ${SWATCH_MACETA[foto.color]};`}
+                />
+              ))
+            : POT_COLORS.map((c) => (
+                <button
+                  class="pot-color"
+                  disabled
+                  title="No disponible por ahora"
+                  aria-label={`Color ${c.key}`}
+                  style={`background: linear-gradient(to top left, transparent calc(50% - 1px), rgba(27,42,31,0.55) calc(50% - 1px), rgba(27,42,31,0.55) calc(50% + 1px), transparent calc(50% + 1px)), ${c.swatch};`}
+                />
+              ))
         }
       </div>
 
@@ -329,9 +385,6 @@ const careTitle = `Cuidado de ${product.name.replace(/\s*\(.*\)$/, '').toLowerCa
            muestra: seria contradictorio, y el boton deshabilitado ya dice
            todo. Misma regla en el script de abajo y en StockBadge. -->
       <div class="cta-block" data-cta-block hidden={soldOut && comprable}>
-        <button class="cta-outline" type="button" disabled title="No disponible por ahora">
-          <Icon name="pencil" size={16} /> Personalizar tarjeta (+$5.00)
-        </button>
         <button
           class="cta-add add-to-cart"
           disabled={!comprable}
@@ -533,10 +586,17 @@ const careTitle = `Cuidado de ${product.name.replace(/\s*\(.*\)$/, '').toLowerCa
   import { esFavorito, recordarVisto, toggleFavorito } from '../../../lib/preferencias';
 
   // Galeria: miniatura activa y flechas en bucle. Si la miniatura trae foto
-  // real (data-foto), se intercambia tambien la imagen principal.
+  // real (data-foto), se intercambia tambien la imagen principal; sin
+  // data-foto es el marcador de la foto principal pendiente (vuelve al
+  // emoji). Los circulos de color de maceta saltan a la foto de su color y
+  // se marcan cuando la galeria pasa por ella (por click, flecha o thumb).
   const thumbs = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-thumb]'));
   const mainNum = document.querySelector<HTMLElement>('[data-main-num]');
   const mainPhoto = document.querySelector<HTMLElement>('[data-main-photo]');
+  const mainEmoji = document.querySelector<HTMLElement>('[data-main-emoji]');
+  const colorBtns = Array.from(
+    document.querySelectorAll<HTMLButtonElement>('[data-color-maceta-btn]'),
+  );
   let current = 0;
 
   function selectPhoto(index: number) {
@@ -544,12 +604,27 @@ const careTitle = `Cuidado de ${product.name.replace(/\s*\(.*\)$/, '').toLowerCa
     thumbs.forEach((t, i) => t.classList.toggle('active', i === current));
     if (mainNum) mainNum.textContent = `Foto ${current + 1} de ${thumbs.length}`;
     const foto = thumbs[current]?.dataset.foto;
-    if (foto && mainPhoto) mainPhoto.style.backgroundImage = `url('${foto}')`;
+    if (mainPhoto) {
+      mainPhoto.style.backgroundImage = foto ? `url('${foto}')` : '';
+      if (foto) {
+        mainPhoto.style.backgroundSize = 'cover';
+        mainPhoto.style.backgroundPosition = 'center';
+      }
+    }
+    if (mainEmoji) mainEmoji.hidden = !!foto;
+    const color = thumbs[current]?.dataset.colorMaceta;
+    colorBtns.forEach((b) => b.classList.toggle('active', b.dataset.colorMacetaBtn === color));
   }
 
   thumbs.forEach((t, i) => t.addEventListener('click', () => selectPhoto(i)));
   document.querySelector('[data-gallery-prev]')?.addEventListener('click', () => selectPhoto(current - 1));
   document.querySelector('[data-gallery-next]')?.addEventListener('click', () => selectPhoto(current + 1));
+  colorBtns.forEach((b) =>
+    b.addEventListener('click', () => {
+      const idx = thumbs.findIndex((t) => t.dataset.colorMaceta === b.dataset.colorMacetaBtn);
+      if (idx >= 0) selectPhoto(idx);
+    }),
+  );
 
   // Carrusel de similares: fila plana de tarjetas iguales sobre un scroller
   // nativo con snap (deslizar con el dedo sale gratis y es interrumpible).
@@ -559,6 +634,18 @@ const careTitle = `Cuidado de ${product.name.replace(/\s*\(.*\)$/, '').toLowerCa
   if (carrusel) {
     const ventana = carrusel.querySelector<HTMLElement>('[data-ventana]')!;
     const laminas = Array.from(ventana.querySelectorAll<HTMLElement>('[data-lamina]'));
+    // Copia completa de las tarjetas al final: el loop es infinito y SIEMPRE
+    // avanza en la misma direccion. Al asentarse el scroll sobre los clones,
+    // el corrector lo devuelve al punto identico de la zona real (mismos
+    // pixeles, salto invisible). Los clones no reciben foco ni clicks.
+    const clones = laminas.map((l) => {
+      const c = l.cloneNode(true) as HTMLElement;
+      c.setAttribute('aria-hidden', 'true');
+      c.setAttribute('inert', '');
+      c.removeAttribute('data-lamina');
+      return c;
+    });
+    ventana.append(...clones);
     const prev = carrusel.querySelector<HTMLButtonElement>('[data-sim-prev]');
     const next = carrusel.querySelector<HTMLButtonElement>('[data-sim-next]');
     const puntos = carrusel.querySelector<HTMLElement>('[data-sim-dots]');
@@ -571,13 +658,14 @@ const careTitle = `Cuidado de ${product.name.replace(/\s*\(.*\)$/, '').toLowerCa
         : laminas[0]?.offsetWidth || 1;
     const porPagina = () => Math.max(1, Math.round(ventana.clientWidth / paso()));
     const totalPaginas = () => Math.ceil(laminas.length / porPagina());
+    // Ancho de la zona real (donde empiezan los clones): el modulo con el
+    // total de paginas hace que los puntos marquen bien aunque el scroll
+    // este momentaneamente sobre los clones.
+    const anchoReal = () => clones[0].offsetLeft - laminas[0].offsetLeft;
     const paginaActual = () => {
-      // La ultima pagina puede ser parcial: el scroll se detiene en su tope
-      // antes de llegar a "pagina entera * paso", asi que el tope ES la
-      // ultima pagina.
-      const maximo = ventana.scrollWidth - ventana.clientWidth;
-      if (ventana.scrollLeft >= maximo - 1) return totalPaginas() - 1;
-      return Math.min(totalPaginas() - 1, Math.round(ventana.scrollLeft / (paso() * porPagina())));
+      const total = totalPaginas();
+      const pagina = Math.round(ventana.scrollLeft / (paso() * porPagina()));
+      return ((pagina % total) + total) % total;
     };
 
     const pintar = () => {
@@ -603,8 +691,6 @@ const careTitle = `Cuidado de ${product.name.replace(/\s*\(.*\)$/, '').toLowerCa
       puntos
         ?.querySelectorAll('button')
         .forEach((b, i) => b.setAttribute('aria-selected', i === actual ? 'true' : 'false'));
-      if (prev) prev.disabled = actual <= 0;
-      if (next) next.disabled = actual >= total - 1;
     };
 
     const irA = (pagina: number) => {
@@ -615,19 +701,52 @@ const careTitle = `Cuidado de ${product.name.replace(/\s*\(.*\)$/, '').toLowerCa
       });
     };
 
-    prev?.addEventListener('click', () => irA(paginaActual() - 1));
-    next?.addEventListener('click', () => irA(paginaActual() + 1));
+    // El carrusel es circular y cada flecha se mueve SIEMPRE en su propia
+    // direccion: nunca se ve "regresar" por encima de las tarjetas.
+    const avanzar = (delta: number) => {
+      const total = totalPaginas();
+      const destino = paginaActual() + delta;
+      if (destino >= total) {
+        // De la ultima pagina se sigue de largo hacia los clones; el
+        // corrector de abajo lo recoloca en la pagina 1 real al asentarse.
+        ventana.scrollTo({
+          left: clones[0].offsetLeft,
+          behavior: quieto.matches ? 'auto' : 'smooth',
+        });
+      } else if (destino < 0) {
+        // Desde la primera pagina hacia atras: salto invisible a su copia
+        // clonada (mismos pixeles) y desde ahi retrocede animado hasta la
+        // ultima pagina, tambien en su misma direccion.
+        ventana.scrollLeft += anchoReal();
+        irA(total - 1);
+      } else {
+        irA(destino);
+      }
+    };
+
+    prev?.addEventListener('click', () => avanzar(-1));
+    next?.addEventListener('click', () => avanzar(1));
 
     carrusel.addEventListener('keydown', (ev: KeyboardEvent) => {
-      if (ev.key === 'ArrowLeft') { ev.preventDefault(); irA(paginaActual() - 1); }
-      if (ev.key === 'ArrowRight') { ev.preventDefault(); irA(paginaActual() + 1); }
+      if (ev.key === 'ArrowLeft') { ev.preventDefault(); avanzar(-1); }
+      if (ev.key === 'ArrowRight') { ev.preventDefault(); avanzar(1); }
     });
 
     // Repintar al hacer scroll (throttle por rAF) y al cambiar el ancho.
+    // Ademas, cuando el scroll se asienta sobre los clones (por flecha o por
+    // deslizar con el dedo), teletransportar al punto identico de la zona
+    // real: nadie lo nota y el loop puede seguir hacia adelante por siempre.
     let pendiente = 0;
+    let asentado = 0;
     ventana.addEventListener('scroll', () => {
-      if (pendiente) return;
-      pendiente = requestAnimationFrame(() => { pendiente = 0; pintar(); });
+      if (!pendiente) {
+        pendiente = requestAnimationFrame(() => { pendiente = 0; pintar(); });
+      }
+      clearTimeout(asentado);
+      asentado = window.setTimeout(() => {
+        const real = anchoReal();
+        if (ventana.scrollLeft >= real - 1) ventana.scrollLeft -= real;
+      }, 120);
     });
     window.addEventListener('resize', pintar);
 
@@ -804,6 +923,9 @@ const careTitle = `Cuidado de ${product.name.replace(/\s*\(.*\)$/, '').toLowerCa
   /* Miniaturas con foto real: sin numero, la imagen llena el boton. */
   .thumb--foto { overflow: hidden; }
 
+  /* Marcador de la foto principal pendiente: el emoji como miniatura 1. */
+  .thumb--emoji { font-size: 1.9rem; }
+
   /* Carrusel de similares: fila plana de tarjetas del tamano del catalogo
      (4 por pagina en escritorio, 2 en movil), flechas en los bordes y
      puntos por pagina debajo, como los carruseles de tienda clasicos. */
@@ -866,13 +988,6 @@ const careTitle = `Cuidado de ${product.name.replace(/\s*\(.*\)$/, '').toLowerCa
 
   /* La flecha ya vive con translateY(-50%): la presion lo conserva. */
   .sim-arrow:active { transform: translateY(-50%) scale(0.94); }
-
-  /* En el tope queda visible pero apagada, como en las tiendas de referencia. */
-  .sim-arrow:disabled {
-    opacity: 0.35;
-    cursor: default;
-    pointer-events: none;
-  }
 
   .sim-arrow[hidden] { display: none; }
 
@@ -1105,6 +1220,9 @@ const careTitle = `Cuidado de ${product.name.replace(/\s*\(.*\)$/, '').toLowerCa
 
   .pot:disabled { cursor: not-allowed; opacity: 0.35; }
 
+  .pot.active { cursor: default; }
+  .pot.active .pot-circle { border: 2px solid var(--green); }
+
   .pot-circle {
     width: 50px;
     height: 50px;
@@ -1127,6 +1245,10 @@ const careTitle = `Cuidado de ${product.name.replace(/\s*\(.*\)$/, '').toLowerCa
 
   .pot-color:disabled { cursor: not-allowed; opacity: 0.55; }
 
+  /* Circulos con foto: solo vista previa (saltan a la foto de su color). */
+  .pot-color--foto { cursor: pointer; }
+  .pot-color--foto.active { border: 2px solid var(--green); }
+
   /* Garantias y CTAs */
   .assurances {
     display: flex;
@@ -1141,28 +1263,8 @@ const careTitle = `Cuidado de ${product.name.replace(/\s*\(.*\)$/, '').toLowerCa
 
   .cta-block { margin-top: 22px; }
 
-  .cta-outline {
-    width: 100%;
-    padding: 15px;
-    border-radius: 999px;
-    font-family: var(--font-ui);
-    font-size: 15px;
-    font-weight: 500;
-    background: transparent;
-    border: 1px solid var(--green-deep);
-    color: var(--green-deep);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 9px;
-  }
-
-  .cta-outline:not(:disabled):hover { background: rgba(22, 163, 74, 0.08); }
-  .cta-outline:disabled { opacity: 0.35; cursor: not-allowed; }
-
   .cta-add {
     width: 100%;
-    margin-top: 12px;
     padding: 16px;
     border-radius: 999px;
     font-family: var(--font-ui);

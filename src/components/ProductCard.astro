@@ -23,7 +23,6 @@ const outOfStock = product.available <= 0;
 const vigente = precioVigente(product);
 const regularTachado = compareAtPrice(product);
 const comprable = esComprable(product);
-const descuentoPct = regularTachado ? Math.round(100 * (1 - vigente / regularTachado)) : null;
 
 // "Mas vendida" usa la misma regla que la coleccion mas-vendidas.
 const esMasVendida = product.available >= 40;
@@ -35,29 +34,21 @@ const esMasVendida = product.available >= 40;
     <!-- Foto del producto con la segunda foto en hover (opacity 0→1 en 0.4s,
          como el handoff). El emoji queda SIEMPRE pintado debajo de la foto:
          es lo que se ve si el producto no tiene fotos o si Cloudinary no
-         responde (la capa de foto queda transparente y el emoji asoma). -->
+         responde (la capa de foto queda transparente y el emoji asoma).
+         El hover puede existir sin foto principal (foto en maceta cuando la
+         principal todavia no se toma): sobre el emoji tambien hay crossfade. -->
     <div class="tile-photo" aria-hidden="true">
       {product.emoji}
       {product.image && (
-        <>
-          <div class="tile-photo-img" style={`background-image: url('${product.image}');`} />
-          {product.imageHover && (
-            <div
-              class="tile-photo-img tile-photo-hover"
-              style={`background-image: url('${product.imageHover}');`}
-            />
-          )}
-        </>
+        <div class="tile-photo-img" style={`background-image: url('${product.image}');`} />
+      )}
+      {product.imageHover && (
+        <div
+          class="tile-photo-img tile-photo-hover"
+          style={`background-image: url('${product.imageHover}');`}
+        />
       )}
       <div class="tile-flags">
-        <span
-          class="tile-flag tile-flag--offer"
-          data-offer-flag
-          data-sku={product.sku}
-          hidden={!comprable || descuentoPct === null}
-        >
-          {descuentoPct !== null ? `-${descuentoPct}%` : ''}
-        </span>
         {esMasVendida && <span class="tile-flag">Más vendida</span>}
       </div>
     </div>
@@ -144,15 +135,6 @@ const esMasVendida = product.available >= 40;
       current.textContent = `Desde ${fmt(pv.vigente)}`;
       compare.hidden = !pv.comprable || pv.regular === null;
       if (pv.regular !== null) compare.textContent = fmt(pv.regular);
-    });
-
-    document.querySelectorAll<HTMLElement>('[data-offer-flag][data-sku]').forEach((flag) => {
-      const item = bySku.get(flag.dataset.sku!);
-      const pv = item && precioVista(item);
-      if (!pv) return;
-      const conDescuento = pv.comprable && pv.descuentoPct !== null;
-      flag.hidden = !conDescuento;
-      if (conDescuento) flag.textContent = `-${pv.descuentoPct}%`;
     });
 
     document.querySelectorAll<HTMLButtonElement>('[data-tile-add][data-sku]').forEach((btn) => {
@@ -271,16 +253,6 @@ const esMasVendida = product.available >= 40;
     background: rgba(255, 255, 255, 0.92);
     padding: 4px 10px;
     border-radius: 999px;
-  }
-
-  /* Descuento invertido (fondo verde) para distinguirse de "Más vendida". */
-  .tile-flag--offer {
-    color: #ffffff;
-    background: var(--green-deep);
-  }
-
-  .tile-flag--offer[hidden] {
-    display: none;
   }
 
   .tile-photo-img {

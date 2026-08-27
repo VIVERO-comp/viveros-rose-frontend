@@ -9,7 +9,7 @@
 // stock real lo pinta el stock proxy en el navegador via data-sku.
 
 import { PRECIO_MINIMO_CENTAVOS } from '../lib/stock';
-import { fotosDe, urlFoto } from '../lib/fotos';
+import { COLORES_MACETA, fotosDe, macetasDe, urlFoto } from '../lib/fotos';
 
 export interface Category {
   slug: string;
@@ -2156,10 +2156,19 @@ export const products: Product[] = [
 const ANCHO_TARJETA = 640;
 for (const p of products) {
   const fotos = fotosDe(p.sku);
-  if (!fotos.length) continue;
-  p.image = urlFoto(p.sku, fotos[0], { ancho: ANCHO_TARJETA });
-  p.imageHover = fotos[1] ? urlFoto(p.sku, fotos[1], { ancho: ANCHO_TARJETA }) : undefined;
-  p.gallery = fotos.slice(2).map((h) => urlFoto(p.sku, h, { ancho: ANCHO_TARJETA }));
+  if (fotos.length) {
+    p.image = urlFoto(p.sku, fotos[0], { ancho: ANCHO_TARJETA });
+    p.imageHover = fotos[1] ? urlFoto(p.sku, fotos[1], { ancho: ANCHO_TARJETA }) : undefined;
+    p.gallery = fotos.slice(2).map((h) => urlFoto(p.sku, h, { ancho: ANCHO_TARJETA }));
+  }
+  // Sin hover propio, el hover de la tarjeta es la foto en maceta (el primer
+  // color disponible): los zips de macetas se ven en hover y en la galeria
+  // del detalle, nunca como foto principal de la tarjeta.
+  if (!p.imageHover) {
+    const macetas = macetasDe(p.sku);
+    const hash = COLORES_MACETA.map((c) => macetas[c]).find(Boolean);
+    if (hash) p.imageHover = urlFoto(p.sku, hash, { ancho: ANCHO_TARJETA });
+  }
 }
 
 export function getCategory(slug: string): Category | undefined {
