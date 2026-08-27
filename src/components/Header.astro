@@ -468,12 +468,12 @@ const menuTipos = [
           <a href="/plantas?c=mas-vendidas">Más vendidas</a>
           <a href="/plantas">Todas las plantas</a>
         </div>
-        <p class="account-sub">Vistas recientemente</p>
-        <div class="account-card account-card--lista" data-vistos>Sin artículos vistos</div>
         <p class="account-sub">Favoritos</p>
         <div class="account-card account-card--lista" data-favoritos>
           Toca el corazón de una planta para guardarla aquí
         </div>
+        <p class="account-sub">Vistas recientemente</p>
+        <div class="account-card account-card--lista" data-vistos>Sin artículos vistos</div>
         <div class="account-links">
           <a href="/mayorista">Compras al mayor</a>
           <span class="account-links-sep" aria-hidden="true">·</span>
@@ -491,6 +491,14 @@ const menuTipos = [
       <div class="account-tab" data-account-tab="profile" hidden>
         <p class="account-headline">Perfil</p>
         <div class="account-card" data-cuenta-perfil>Inicia sesión para ver tus datos</div>
+        <p class="account-sub">Todos tus favoritos</p>
+        <div class="account-card account-card--lista" data-favoritos-todos>
+          Toca el corazón de una planta para guardarla aquí
+        </div>
+        <p class="account-sub">Compras anteriores</p>
+        <div class="account-card account-card--left" data-compras-lista>
+          Inicia sesión para ver tus compras anteriores.
+        </div>
       </div>
     </div>
     <div class="account-tabs">
@@ -727,13 +735,22 @@ const menuTipos = [
   document.addEventListener('favoritos:added', () => openPanel('account'));
 
   // Listas del panel de cuenta: vistos recientemente y favoritos (localStorage).
-  function pintarListaCuenta(el: HTMLElement | null, productos: ProductoGuardado[], vacio: string) {
+  // `max` recorta la lista; si quedan mas, `verMas` agrega el enlace que lleva
+  // a la pestana Perfil, donde viven todos los favoritos.
+  function pintarListaCuenta(
+    el: HTMLElement | null,
+    productos: ProductoGuardado[],
+    vacio: string,
+    opciones: { max?: number; verMas?: boolean } = {},
+  ) {
     if (!el) return;
     if (!productos.length) {
       el.classList.remove('account-card--llena');
       el.textContent = vacio;
       return;
     }
+    const total = productos.length;
+    if (opciones.max) productos = productos.slice(0, opciones.max);
     el.classList.add('account-card--llena');
     el.innerHTML = productos
       .map((p) => {
@@ -747,16 +764,35 @@ const menuTipos = [
     el.querySelectorAll('.account-item-name').forEach((n, i) => {
       n.textContent = productos[i].name;
     });
+    if (opciones.verMas && total > productos.length) {
+      const mas = document.createElement('button');
+      mas.className = 'panel-link panel-link--btn';
+      mas.textContent = `Ver los ${total} favoritos`;
+      mas.addEventListener('click', () =>
+        document.querySelector<HTMLElement>('[data-account-goto="profile"]')?.click(),
+      );
+      el.appendChild(mas);
+    }
   }
 
   function pintarListasCuenta() {
+    // "Para ti": favoritos primero (hasta 6 y el resto en Perfil), despues
+    // las ultimas 3 vistas.
+    pintarListaCuenta(
+      document.querySelector('[data-favoritos]'),
+      getFavoritos(),
+      'Toca el corazón de una planta para guardarla aquí',
+      { max: 6, verMas: true },
+    );
     pintarListaCuenta(
       document.querySelector('[data-vistos]'),
       getVistos(),
       'Sin artículos vistos',
+      { max: 3 },
     );
+    // Perfil: todos los favoritos, sin tope.
     pintarListaCuenta(
-      document.querySelector('[data-favoritos]'),
+      document.querySelector('[data-favoritos-todos]'),
       getFavoritos(),
       'Toca el corazón de una planta para guardarla aquí',
     );
@@ -860,6 +896,63 @@ const menuTipos = [
     }
   }
 
+  // Perfil: compras anteriores (los pedidos de la cuenta, del servidor).
+  // Se consultan la primera vez que se abre la pestana; sin sesion queda la
+  // nota de iniciar sesion.
+  let comprasConsultadas = false;
+
+  async function pintarComprasPerfil() {
+    if (comprasConsultadas) return;
+    comprasConsultadas = true;
+    const lista = document.querySelector<HTMLElement>('[data-compras-lista]');
+    if (!lista) return;
+    try {
+      const sesion = await fetch('/api/auth/me');
+      if (!sesion.ok) return; // sin sesion: queda la nota estatica
+      const res = await fetch('/api/account/orders');
+      if (!res.ok) return;
+      const { pedidos } = (await res.json()) as {
+        pedidos: {
+          numero: string;
+          fecha: string;
+          total_centavos: number;
+          estado: string | null;
+          retraso: boolean;
+        }[];
+      };
+      if (!pedidos.length) {
+        lista.textContent = 'Todavía no tienes compras. Cuando compres, las verás aquí.';
+        return;
+      }
+      lista.classList.add('orders-lista');
+      lista.textContent = '';
+      for (const pedido of pedidos.slice(0, 10)) {
+        const fila = document.createElement('a');
+        fila.className = 'orders-item';
+        fila.href = `/pedido?n=${encodeURIComponent(pedido.numero)}`;
+        const fecha = new Date(pedido.fecha).toLocaleDateString('es-PA', {
+          day: 'numeric',
+          month: 'short',
+          year: 'numeric',
+        });
+        fila.innerHTML =
+          `<span class="orders-item-numero">${pedido.numero}</span>` +
+          `<span class="orders-item-meta">${fecha} · $${(pedido.total_centavos / 100).toFixed(2)}` +
+          `${pedido.estado ? ` · ${pedido.estado}` : ''}</span>`;
+        lista.appendChild(fila);
+      }
+      if (pedidos.length > 10) {
+        const mas = document.createElement('a');
+        mas.className = 'panel-link';
+        mas.href = '/cuenta';
+        mas.textContent = `Ver las ${pedidos.length} compras en tu cuenta`;
+        lista.appendChild(mas);
+      }
+    } catch {
+      // sin red u Odoo caido: queda lo que alcanzo a pintarse
+    }
+  }
+
   document.querySelector('[data-cuenta-salir]')?.addEventListener('click', async () => {
     try {
       await fetch('/api/auth/logout', { method: 'POST' });
@@ -943,6 +1036,7 @@ const menuTipos = [
       document.querySelectorAll<HTMLElement>('[data-account-tab]').forEach((tab) => {
         tab.hidden = tab.dataset.accountTab !== target;
       });
+      if (target === 'profile') pintarComprasPerfil();
       document
         .querySelectorAll('[data-account-goto]')
         .forEach((b) => b.classList.toggle('active', b === btn));
@@ -1631,6 +1725,8 @@ const menuTipos = [
   }
 
   .panel-link { text-align: center; font-size: 14px; color: var(--ink); }
+  /* Variante para <button> (el "Ver más" de favoritos): mismo aspecto de enlace. */
+  .panel-link--btn { background: none; border: none; cursor: pointer; padding: 8px 0 0; text-decoration: underline; width: 100%; font-family: inherit; }
 
   .panel-note {
     font-size: 12px;
