@@ -20,6 +20,6 @@ export function decidirTrasNoDisponible(
   }
   return {
     esMio: false,
-    mensaje: mensajeServidor || 'Este pedido ya no se puede agarrar.',
+    mensaje: mensajeServidor || 'Este pedido ya no se puede confirmar.',
   };
 }

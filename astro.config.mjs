@@ -21,9 +21,11 @@ export default defineConfig({
           '/checkout',
           '/pedido',
           '/cuenta',
-          // Portal del repartidor y calificacion de entregas: llevan
-          // direcciones y telefonos de clientes, jamas deben indexarse.
+          // Portal del repartidor, panel de admin y calificacion de
+          // entregas: llevan direcciones y telefonos de clientes, jamas
+          // deben indexarse.
           '/repartidor',
+          '/admin',
           '/calificar',
         ].some((prefijo) => path === prefijo || path.startsWith(`${prefijo}/`));
       },

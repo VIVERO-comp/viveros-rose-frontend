@@ -30,11 +30,18 @@ const inalcanzable = () =>
 /** Reenvia una llamada al order-api con la API key (y la sesion, si hay). */
 export async function llamarOrderApi(
   ruta: string,
-  opciones: { metodo?: 'GET' | 'POST'; cuerpo?: unknown; token?: string } = {},
+  opciones: {
+    metodo?: 'GET' | 'POST';
+    cuerpo?: unknown;
+    token?: string;
+    // Encabezados extra (p. ej. X-Clave-Admin, que viaja SIEMPRE en header
+    // y nunca en la query string).
+    encabezados?: Record<string, string>;
+  } = {},
 ): Promise<Response> {
   const conf = config();
   if (!conf) return sinConfigurar();
-  const headers: Record<string, string> = { 'X-API-Key': conf.clave };
+  const headers: Record<string, string> = { 'X-API-Key': conf.clave, ...opciones.encabezados };
   if (opciones.token) headers['X-Session-Token'] = opciones.token;
   if (opciones.cuerpo !== undefined) headers['Content-Type'] = 'application/json';
   try {

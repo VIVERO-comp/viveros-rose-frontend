@@ -28,5 +28,5 @@ test('si el pedido no es mio se muestra el motivo del servidor', () => {
 test('sin detalle ni motivo queda el mensaje generico de no disponible', () => {
   const decision = decidirTrasNoDisponible(null, undefined);
   assert.equal(decision.esMio, false);
-  assert.equal(decision.mensaje, 'Este pedido ya no se puede agarrar.');
+  assert.equal(decision.mensaje, 'Este pedido ya no se puede confirmar.');
 });

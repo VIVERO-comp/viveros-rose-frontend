@@ -1,0 +1,1204 @@
+---
+// Panel de administracion del portal. Misma familia que /repartidor: se
+// siente app, movil primero, para mirarse con una mano y al sol. Cuatro
+// pantallas con navegacion fija abajo:
+//
+//   INICIO   resumen del periodo (hoy / semana / mes): pedidos generados,
+//            plantas vendidas, valor, la calle (sin tomar / en camino /
+//            con retraso) y los tiempos de entrega.
+//   PEDIDOS  todos los activos con zona, articulos, quien lo lleva y desde
+//            cuando; retrasados destacados. Detalle con historial.
+//   VALIDAR  marcar un pedido como pagado (accion_marcar_pagado en Odoo),
+//            con confirmacion explicita y constancia de quien lo hizo.
+//   STOCK    buscar una planta y ver su disponibilidad (via stock-proxy).
+//
+// La credencial es el enlace personal ...?clave=... de la etiqueta "Admin"
+// en Odoo. La clave se guarda en el navegador, se limpia de la URL con
+// replaceState y viaja SIEMPRE en el header X-Clave-Admin (peticionAdmin la
+// rechaza si aparece en una URL); el order-api la valida contra Odoo en
+// cada peticion, asi que rotarla o quitar la etiqueta revoca al instante.
+import Base from '../layouts/Base.astro';
+import { products } from '../data/products';
+
+// Catalogo local para la busqueda de stock: el nombre y la foto ya viven en
+// el frontend; al order-api solo viajan los SKUs elegidos.
+const CATALOGO = products.map((p) => ({
+  sku: p.sku,
+  nombre: p.name,
+  image: p.image ?? null,
+  emoji: p.emoji,
+}));
+---
+
+<Base
+  noindex
+  title="Admin"
+  description="Panel de administración de Vivero Rose."
+  chrome="bare"
+  manifest="/manifest-admin.webmanifest"
+>
+  <div class="app">
+    <div class="globales">
+      <!-- Sin clave o clave revocada: solo se entra con el enlace personal. -->
+      <div class="tarjeta" data-sin-clave hidden>
+        <p><strong>Falta tu enlace de admin.</strong></p>
+        <p>
+          Abre el enlace de admin que se genera en Odoo (termina en
+          <code>?clave=…</code>), o pégalo aquí:
+        </p>
+        <form class="form-clave" data-form-clave>
+          <input
+            type="text"
+            data-input-clave
+            placeholder="Pega aquí tu enlace o tu clave"
+            autocomplete="off"
+            autocapitalize="off"
+            spellcheck="false"
+          />
+          <button type="submit" class="btn btn--green">Entrar</button>
+        </form>
+        <p class="field-error" data-error-clave hidden>Pega el enlace completo o la clave.</p>
+        <p class="suave">
+          Si el enlace dejó de funcionar, se generó uno más nuevo: cópialo de
+          la ficha del contacto en Odoo (pestaña Admin).
+        </p>
+      </div>
+
+      <p class="portal-mensaje" data-mensaje hidden></p>
+    </div>
+
+    <!-- Pantalla 1: INICIO -->
+    <section class="pantalla" data-pantalla="inicio">
+      <header class="inicio-head">
+        <p class="kicker">VIVERO ROSE · ADMIN</p>
+        <h1 class="saludo">Hola<span data-nombre></span></h1>
+      </header>
+
+      <!-- Selector de periodo: segmentado, tocable con el pulgar. -->
+      <div class="periodos" role="group" aria-label="Periodo del resumen">
+        <button class="periodo periodo--activo" type="button" data-periodo="hoy" aria-pressed="true">Hoy</button>
+        <button class="periodo" type="button" data-periodo="semana" aria-pressed="false">Semana</button>
+        <button class="periodo" type="button" data-periodo="mes" aria-pressed="false">Mes</button>
+      </div>
+
+      <div data-resumen><p class="cargando">Cargando…</p></div>
+    </section>
+
+    <!-- Pantalla 2: PEDIDOS -->
+    <section class="pantalla" data-pantalla="pedidos" hidden>
+      <header class="pantalla-head">
+        <h1>Pedidos</h1>
+        <button class="btn btn--ghost btn-refrescar" data-refrescar-pedidos type="button">Actualizar</button>
+      </header>
+      <div data-vista-lista>
+        <div data-lista><p class="cargando">Cargando…</p></div>
+      </div>
+      <div data-vista-detalle hidden>
+        <button class="volver" data-volver type="button">← Todos los pedidos</button>
+        <div data-detalle></div>
+      </div>
+    </section>
+
+    <!-- Pantalla 3: VALIDAR -->
+    <section class="pantalla" data-pantalla="validar" hidden>
+      <header class="pantalla-head">
+        <h1>Validar pagos</h1>
+        <button class="btn btn--ghost btn-refrescar" data-refrescar-validar type="button">Actualizar</button>
+      </header>
+      <p class="suave intro-validar">
+        Pedidos del checkout esperando que confirmes el pago (Yappy,
+        transferencia o efectivo). Validar hace lo mismo que el botón
+        “Pagado” de Odoo y queda registrado a tu nombre.
+      </p>
+      <div data-validar><p class="cargando">Cargando…</p></div>
+    </section>
+
+    <!-- Pantalla 4: STOCK -->
+    <section class="pantalla" data-pantalla="stock" hidden>
+      <header class="pantalla-head">
+        <h1>Stock</h1>
+      </header>
+      <input
+        class="buscador"
+        type="search"
+        placeholder="Busca una planta por nombre o SKU"
+        data-buscador
+        autocomplete="off"
+      />
+      <div data-stock>
+        <p class="suave">Escribe al menos 2 letras para buscar en el catálogo.</p>
+      </div>
+    </section>
+  </div>
+
+  <nav class="tabs" data-tabs aria-label="Pantallas">
+    <button class="tab tab--activa" type="button" data-tab="inicio" aria-label="Inicio">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg>
+      <span>Inicio</span>
+    </button>
+    <button class="tab" type="button" data-tab="pedidos" aria-label="Pedidos">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 8.5 12 3 3 8.5v7L12 21l9-5.5v-7Z"/><path d="M3 8.5 12 14l9-5.5"/><path d="M12 14v7"/></svg>
+      <span>Pedidos</span>
+    </button>
+    <button class="tab" type="button" data-tab="validar" aria-label="Validar pagos">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m8.5 12.5 2.5 2.5 4.5-5"/></svg>
+      <span>Validar</span>
+      <span class="tab-globito" data-globito-validar hidden></span>
+    </button>
+    <button class="tab" type="button" data-tab="stock" aria-label="Stock">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <span>Stock</span>
+    </button>
+  </nav>
+</Base>
+
+<script is:inline define:vars={{ CATALOGO }}>
+  window.CATALOGO_ADMIN = CATALOGO;
+</script>
+
+<script>
+  import { duracionLegible, minutosDesde, peticionAdmin } from '../lib/admin';
+
+  const $ = <T extends HTMLElement>(sel: string) => document.querySelector<T>(sel)!;
+  const mensajeEl = $('[data-mensaje]');
+  const resumenEl = $('[data-resumen]');
+  const listaEl = $('[data-lista]');
+  const detalleEl = $('[data-detalle]');
+  const vistaLista = $('[data-vista-lista]');
+  const vistaDetalle = $('[data-vista-detalle]');
+  const validarEl = $('[data-validar]');
+  const stockEl = $('[data-stock]');
+
+  const CATALOGO: { sku: string; nombre: string; image: string | null; emoji: string }[] =
+    (window as any).CATALOGO_ADMIN ?? [];
+
+  const ETIQUETA_ESTADO: Record<string, string> = {
+    listo: 'Listo para salir',
+    saliendo: 'Saliendo',
+    en_camino: 'En camino',
+    entregado: 'Entregado',
+  };
+
+  // -- credencial -----------------------------------------------------------
+
+  const parametros = new URLSearchParams(location.search);
+  const claveUrl = parametros.get('clave');
+  if (claveUrl) {
+    localStorage.setItem('vr_clave_admin', claveUrl);
+    // La clave no se queda en la barra, en el historial ni en logs.
+    history.replaceState(null, '', '/admin');
+  }
+  const clave = claveUrl || localStorage.getItem('vr_clave_admin') || '';
+
+  function mensaje(texto: string) {
+    mensajeEl.textContent = texto;
+    mensajeEl.hidden = !texto;
+  }
+
+  function escapar(texto: string): string {
+    const div = document.createElement('div');
+    div.textContent = texto;
+    return div.innerHTML;
+  }
+
+  const dinero = (centavos: number) => `$${(centavos / 100).toFixed(2)}`;
+
+  function fechaOdoo(valor: string): Date {
+    return new Date(valor.replace(' ', 'T') + 'Z');
+  }
+
+  const cuando = (valor: string) =>
+    fechaOdoo(valor).toLocaleString('es-PA', {
+      day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit',
+    });
+
+  function htmlComoTexto(html: string): string {
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    return (doc.body.textContent ?? '').trim();
+  }
+
+  function sinClave() {
+    $('[data-sin-clave]').hidden = false;
+    document.querySelectorAll<HTMLElement>('.pantalla').forEach((el) => (el.hidden = true));
+    ($('[data-tabs]') as HTMLElement).style.display = 'none';
+  }
+
+  function manejar401() {
+    localStorage.removeItem('vr_clave_admin');
+    mensaje('');
+    sinClave();
+    $('[data-error-clave]').hidden = true;
+  }
+
+  async function pedirAdmin(ruta: string, init: RequestInit = {}): Promise<Response> {
+    const { url, init: opciones } = peticionAdmin(ruta, clave, init);
+    return fetch(url, opciones);
+  }
+
+  // -- pantallas y navegacion -----------------------------------------------
+
+  type Pantalla = 'inicio' | 'pedidos' | 'validar' | 'stock';
+
+  function animarEntrada(el: HTMLElement, clase: string) {
+    el.classList.add(clase);
+    void el.offsetWidth;
+    el.classList.remove(clase);
+  }
+
+  const CARGADORES: Record<Pantalla, () => void> = {
+    inicio: () => cargarResumen(),
+    pedidos: cargarPedidos,
+    validar: cargarPedidos,
+    stock: () => {},
+  };
+
+  function cambiarPantalla(destino: Pantalla) {
+    mensaje('');
+    document.querySelectorAll<HTMLElement>('[data-tab]').forEach((tab) => {
+      tab.classList.toggle('tab--activa', tab.getAttribute('data-tab') === destino);
+    });
+    document.querySelectorAll<HTMLElement>('[data-pantalla]').forEach((pantalla) => {
+      const activa = pantalla.getAttribute('data-pantalla') === destino;
+      if (activa && pantalla.hidden) {
+        pantalla.hidden = false;
+        animarEntrada(pantalla, 'pantalla-entrando');
+      } else if (!activa) {
+        pantalla.hidden = true;
+      }
+    });
+    window.scrollTo(0, 0);
+    if (clave) CARGADORES[destino]();
+  }
+
+  document.querySelectorAll<HTMLElement>('[data-tab]').forEach((tab) => {
+    tab.addEventListener('click', () => cambiarPantalla(tab.getAttribute('data-tab') as Pantalla));
+  });
+
+  // -- pantalla INICIO ------------------------------------------------------
+
+  let periodoActual = 'hoy';
+
+  document.querySelectorAll<HTMLButtonElement>('[data-periodo]').forEach((boton) => {
+    boton.addEventListener('click', () => {
+      periodoActual = boton.getAttribute('data-periodo')!;
+      document.querySelectorAll<HTMLButtonElement>('[data-periodo]').forEach((b) => {
+        const activo = b === boton;
+        b.classList.toggle('periodo--activo', activo);
+        b.setAttribute('aria-pressed', String(activo));
+      });
+      cargarResumen();
+    });
+  });
+
+  async function cargarResumen() {
+    try {
+      const res = await pedirAdmin(`/api/admin/resumen?periodo=${periodoActual}`);
+      if (res.status === 401) {
+        manejar401();
+        return;
+      }
+      if (!res.ok) throw new Error();
+      pintarResumen(await res.json());
+    } catch {
+      resumenEl.innerHTML = '';
+      mensaje('No pudimos cargar el resumen. Revisa tu señal e intenta de nuevo.');
+    }
+  }
+
+  const ETIQUETA_PERIODO: Record<string, string> = {
+    hoy: 'hoy', semana: 'esta semana', mes: 'este mes',
+  };
+
+  function pintarResumen(datos: any) {
+    const pedidos = datos.pedidos;
+    const calle = datos.calle ?? {};
+    const tiempos = datos.tiempos ?? {};
+    const retrasoAlto = (calle.con_retraso ?? 0) > 0;
+    resumenEl.innerHTML = `
+      <div class="tarjeta-valor">
+        <p class="valor-etiqueta">Vendido ${ETIQUETA_PERIODO[datos.periodo] ?? ''}</p>
+        <p class="valor-monto">${pedidos ? dinero(pedidos.valor_centavos) : '—'}</p>
+        <p class="valor-detalle">${
+          pedidos
+            ? `${pedidos.generados === 1 ? '1 pedido' : `${pedidos.generados} pedidos`} · ${
+                pedidos.plantas === 1 ? '1 planta' : `${pedidos.plantas} plantas`
+              }`
+            : 'Sin datos de la tienda ahora mismo'
+        }</p>
+      </div>
+
+      <h2 class="bloque-titulo">La calle ahora</h2>
+      <div class="metricas metricas--tres">
+        <div class="metrica">
+          <span class="metrica-numero">${calle.sin_tomar ?? '—'}</span>
+          <span class="metrica-nombre">Sin tomar</span>
+        </div>
+        <div class="metrica">
+          <span class="metrica-numero">${calle.en_camino ?? '—'}</span>
+          <span class="metrica-nombre">En camino</span>
+        </div>
+        <div class="metrica ${retrasoAlto ? 'metrica--alerta' : ''}">
+          <span class="metrica-numero">${calle.con_retraso ?? '—'}</span>
+          <span class="metrica-nombre">Con retraso</span>
+        </div>
+      </div>
+
+      <h2 class="bloque-titulo">Tiempo de entrega</h2>
+      <div class="metricas">
+        <div class="metrica">
+          <span class="metrica-numero metrica-numero--chica">${duracionLegible(tiempos.promedio_minutos)}</span>
+          <span class="metrica-nombre">Promedio (pago → entrega${
+            tiempos.entregas ? `, ${tiempos.entregas === 1 ? '1 entrega' : `${tiempos.entregas} entregas`}` : ''
+          })</span>
+        </div>
+        <div class="metrica">
+          <span class="metrica-numero metrica-numero--chica">${duracionLegible(tiempos.ultimo_minutos)}</span>
+          <span class="metrica-nombre">Último pedido entregado</span>
+        </div>
+      </div>`;
+  }
+
+  // -- pantalla PEDIDOS y VALIDAR (comparten la carga) ----------------------
+
+  let porValidar: any[] = [];
+
+  async function cargarPedidos() {
+    vistaDetalle.hidden = true;
+    vistaLista.hidden = false;
+    try {
+      const res = await pedirAdmin('/api/admin/pedidos');
+      if (res.status === 401) {
+        manejar401();
+        return;
+      }
+      if (!res.ok) throw new Error();
+      const datos = await res.json();
+      porValidar = datos.por_validar ?? [];
+      pintarPedidos(datos.activos ?? []);
+      pintarValidar();
+      pintarGlobitoValidar();
+    } catch {
+      listaEl.innerHTML = '';
+      validarEl.innerHTML = '';
+      mensaje('No pudimos cargar los pedidos. Revisa tu señal y toca “Actualizar”.');
+    }
+  }
+
+  function pintarGlobitoValidar() {
+    const globito = $('[data-globito-validar]');
+    globito.hidden = porValidar.length === 0;
+    globito.textContent = porValidar.length > 9 ? '9+' : String(porValidar.length);
+  }
+
+  function resumenArticulos(articulos: any[]): string {
+    const total = articulos.reduce((suma, a) => suma + (a.cantidad ?? 0), 0);
+    return total === 1 ? '1 artículo' : `${total} artículos`;
+  }
+
+  function tarjetaPedido(p: any): string {
+    const desde = p.en_camino_desde
+      ? `hace ${duracionLegible(minutosDesde(p.en_camino_desde, new Date()))}`
+      : null;
+    return `
+      <button class="tarjeta pedido-card ${p.con_retraso ? 'pedido-card--retraso' : ''}"
+              data-numero="${escapar(p.numero)}" type="button">
+        <span class="pedido-linea1">
+          <span class="pedido-numero">${escapar(p.numero)}</span>
+          <span class="chip chip--${p.estado_entrega}">${ETIQUETA_ESTADO[p.estado_entrega] ?? p.estado_entrega}</span>
+        </span>
+        <span class="pedido-linea2">
+          <span>${escapar(p.cliente ?? 'Cliente')}${p.zona ? ' · ' + escapar(p.zona) : ''}</span>
+          <span class="pedido-total">$${Number(p.total).toFixed(2)}</span>
+        </span>
+        <span class="pedido-linea2 suave">
+          <span>${resumenArticulos(p.articulos ?? [])}</span>
+          <span>${
+            p.repartidor
+              ? `${escapar(p.repartidor)}${desde ? ' · ' + desde : ''}`
+              : 'Sin repartidor'
+          }</span>
+        </span>
+        ${p.con_retraso ? '<span class="chip chip--retraso">Con retraso</span>' : ''}
+      </button>`;
+  }
+
+  function pintarPedidos(activos: any[]) {
+    if (!activos.length) {
+      listaEl.innerHTML =
+        '<div class="tarjeta vacio"><p>No hay pedidos activos ahora mismo.</p></div>';
+      return;
+    }
+    // Los retrasados primero: son los que piden atencion.
+    const retrasados = activos.filter((p) => p.con_retraso);
+    const alDia = activos.filter((p) => !p.con_retraso);
+    listaEl.innerHTML = [
+      retrasados.length
+        ? `<h2 class="bloque-titulo bloque-titulo--alerta">Con retraso</h2>` +
+          retrasados.map(tarjetaPedido).join('')
+        : '',
+      retrasados.length && alDia.length ? '<h2 class="bloque-titulo">Al día</h2>' : '',
+      alDia.map(tarjetaPedido).join(''),
+    ].join('');
+    listaEl.querySelectorAll('[data-numero]').forEach((el) =>
+      el.addEventListener('click', () => abrirDetalle(el.getAttribute('data-numero')!)),
+    );
+  }
+
+  async function abrirDetalle(numero: string) {
+    vistaLista.hidden = true;
+    vistaDetalle.hidden = false;
+    animarEntrada(vistaDetalle, 'detalle-entrando');
+    window.scrollTo(0, 0);
+    detalleEl.innerHTML = '<p class="cargando">Cargando pedido…</p>';
+    try {
+      const res = await pedirAdmin(`/api/admin/pedidos/${encodeURIComponent(numero)}`);
+      if (!res.ok) throw new Error();
+      pintarDetalle(await res.json());
+    } catch {
+      detalleEl.innerHTML =
+        '<div class="tarjeta"><p>No pudimos cargar este pedido. Vuelve a la lista e intenta de nuevo.</p></div>';
+    }
+  }
+
+  function pintarDetalle(p: any) {
+    const items = (p.articulos ?? [])
+      .map(
+        (item: any) => `
+        <li class="item">
+          <span class="item-nombre">${escapar(item.descripcion)}</span>
+          <span class="item-cant">× ${item.cantidad}</span>
+        </li>`,
+      )
+      .join('');
+    // El historial: los hitos sellados del flujo, mas las notas del chatter
+    // (ahi quedan las validaciones del panel, con quien y cuando).
+    const hitos = [
+      ['Creado', p.hitos?.creado_en],
+      ['Pagado', p.hitos?.pagado_en],
+      ['En camino', p.hitos?.en_camino_en],
+      ['Entregado', p.hitos?.entregado_en],
+    ]
+      .map(
+        ([nombre, fecha]) => `
+        <p class="hito ${fecha ? '' : 'hito--pendiente'}">
+          <span class="hito-punto"></span>
+          <span class="hito-nombre">${nombre}</span>
+          <span class="hito-fecha">${fecha ? cuando(fecha as string) : 'Pendiente'}</span>
+        </p>`,
+      )
+      .join('');
+    const notas = (p.notas ?? [])
+      .map(
+        (nota: any) => `
+        <p class="nota">
+          <span>${escapar(htmlComoTexto(nota.texto))}</span>
+          <span class="suave">${nota.autor ? escapar(nota.autor) + ' · ' : ''}${nota.fecha ? cuando(nota.fecha) : ''}</span>
+        </p>`,
+      )
+      .join('');
+    detalleEl.innerHTML = `
+      <div class="tarjeta ${p.con_retraso ? 'pedido-card--retraso' : ''}">
+        <p class="pedido-linea1">
+          <span class="pedido-numero">${escapar(p.numero)}</span>
+          <span class="chip chip--${p.estado_entrega}">${ETIQUETA_ESTADO[p.estado_entrega] ?? p.estado_entrega ?? 'Sin validar'}</span>
+        </p>
+        <p class="detalle-cliente">${escapar(p.cliente ?? 'Cliente')}</p>
+        ${p.repartidor ? `<p class="suave">Lo lleva ${escapar(p.repartidor)}</p>` : ''}
+        ${p.con_retraso ? '<span class="chip chip--retraso">Con retraso</span>' : ''}
+        <ul class="items">${items}</ul>
+        <p class="detalle-total">Total: <strong>$${Number(p.total).toFixed(2)}</strong></p>
+        ${p.nota ? `<pre class="detalle-nota">${escapar(htmlComoTexto(p.nota))}</pre>` : ''}
+      </div>
+      <div class="tarjeta">
+        <h2 class="bloque-titulo bloque-titulo--dentro">Historial</h2>
+        <div class="hitos">${hitos}</div>
+        ${notas ? `<div class="notas">${notas}</div>` : ''}
+      </div>`;
+  }
+
+  $('[data-volver]').addEventListener('click', cargarPedidos);
+  $('[data-refrescar-pedidos]').addEventListener('click', cargarPedidos);
+  $('[data-refrescar-validar]').addEventListener('click', cargarPedidos);
+
+  // -- pantalla VALIDAR -----------------------------------------------------
+
+  function pintarValidar() {
+    if (!porValidar.length) {
+      validarEl.innerHTML =
+        '<div class="tarjeta vacio"><p>No hay pagos por validar.</p>' +
+        '<p class="suave">Cuando entre un pedido nuevo aparecerá aquí.</p></div>';
+      return;
+    }
+    validarEl.innerHTML = porValidar
+      .map(
+        (p: any) => `
+        <div class="tarjeta por-validar" data-validar-numero="${escapar(p.numero)}">
+          <p class="pedido-linea1">
+            <span class="pedido-numero">${escapar(p.numero)}</span>
+            <span class="pedido-total">$${Number(p.total).toFixed(2)}</span>
+          </p>
+          <p class="pedido-linea2">
+            <span>${escapar(p.cliente ?? 'Cliente')}</span>
+            <span class="suave">${p.creado_en ? cuando(p.creado_en) : ''}</span>
+          </p>
+          <p class="suave">${resumenArticulos(p.articulos ?? [])}</p>
+          <div class="zona-validar">
+            <button class="btn btn--green btn-grande" type="button" data-pedir-confirmacion>
+              Marcar como pagado
+            </button>
+            <div class="confirmacion" data-confirmacion hidden>
+              <p><strong>¿Confirmas que ${escapar(p.numero)} ya está pagado?</strong>
+                 El pedido quedará listo para salir y la validación se registra a tu nombre.</p>
+              <div class="confirmacion-botones">
+                <button class="btn btn--green btn-grande" type="button" data-confirmar>Sí, marcar pagado</button>
+                <button class="btn btn--ghost" type="button" data-cancelar>Cancelar</button>
+              </div>
+            </div>
+            <p class="validar-estado" data-validar-estado hidden></p>
+          </div>
+        </div>`,
+      )
+      .join('');
+    validarEl.querySelectorAll<HTMLElement>('[data-validar-numero]').forEach((tarjeta) => {
+      const numero = tarjeta.getAttribute('data-validar-numero')!;
+      const abrir = tarjeta.querySelector<HTMLButtonElement>('[data-pedir-confirmacion]')!;
+      const confirmacion = tarjeta.querySelector<HTMLElement>('[data-confirmacion]')!;
+      // Confirmacion explicita en dos pasos, nunca un toque suelto.
+      abrir.addEventListener('click', () => {
+        abrir.hidden = true;
+        confirmacion.hidden = false;
+        animarEntrada(confirmacion, 'pantalla-entrando');
+      });
+      tarjeta.querySelector('[data-cancelar]')!.addEventListener('click', () => {
+        confirmacion.hidden = true;
+        abrir.hidden = false;
+      });
+      tarjeta
+        .querySelector<HTMLButtonElement>('[data-confirmar]')!
+        .addEventListener('click', (e) => validarPago(numero, tarjeta, e.target as HTMLButtonElement));
+    });
+  }
+
+  async function validarPago(numero: string, tarjeta: HTMLElement, boton: HTMLButtonElement) {
+    const estado = tarjeta.querySelector<HTMLElement>('[data-validar-estado]')!;
+    boton.disabled = true;
+    boton.textContent = 'Validando…';
+    try {
+      const res = await pedirAdmin(`/api/admin/pedidos/${encodeURIComponent(numero)}/validar-pago`, {
+        method: 'POST',
+      });
+      if (res.status === 401) {
+        manejar401();
+        return;
+      }
+      if (!res.ok) throw new Error();
+      tarjeta.querySelector<HTMLElement>('[data-confirmacion]')!.hidden = true;
+      estado.hidden = false;
+      estado.textContent = `✅ ${numero} quedó listo para salir.`;
+      // La tarjeta se despide sola y el conteo del tab se actualiza.
+      porValidar = porValidar.filter((p) => p.numero !== numero);
+      pintarGlobitoValidar();
+      setTimeout(() => {
+        tarjeta.classList.add('por-validar--saliendo');
+        setTimeout(() => {
+          tarjeta.remove();
+          if (!porValidar.length) pintarValidar();
+        }, 220);
+      }, 1200);
+    } catch {
+      boton.disabled = false;
+      boton.textContent = 'Sí, marcar pagado';
+      estado.hidden = false;
+      estado.textContent = 'No se pudo validar. Revisa tu señal e intenta de nuevo (reintentar es seguro).';
+    }
+  }
+
+  // -- pantalla STOCK -------------------------------------------------------
+
+  let temporizadorBusqueda: ReturnType<typeof setTimeout> | undefined;
+
+  $('[data-buscador]').addEventListener('input', (e) => {
+    const texto = (e.target as HTMLInputElement).value.trim().toLowerCase();
+    clearTimeout(temporizadorBusqueda);
+    if (texto.length < 2) {
+      stockEl.innerHTML =
+        '<p class="suave">Escribe al menos 2 letras para buscar en el catálogo.</p>';
+      return;
+    }
+    temporizadorBusqueda = setTimeout(() => buscarStock(texto), 250);
+  });
+
+  async function buscarStock(texto: string) {
+    const coincidencias = CATALOGO.filter(
+      (p) => p.nombre.toLowerCase().includes(texto) || p.sku.toLowerCase().includes(texto),
+    ).slice(0, 20);
+    if (!coincidencias.length) {
+      stockEl.innerHTML = '<div class="tarjeta vacio"><p>Nada en el catálogo con ese nombre.</p></div>';
+      return;
+    }
+    stockEl.innerHTML = '<p class="cargando">Consultando stock…</p>';
+    let disponibles: Record<string, number> = {};
+    let sinStock = false;
+    try {
+      const res = await pedirAdmin(
+        `/api/admin/stock?skus=${encodeURIComponent(coincidencias.map((p) => p.sku).join(','))}`,
+      );
+      if (res.status === 401) {
+        manejar401();
+        return;
+      }
+      if (!res.ok) throw new Error();
+      disponibles = (await res.json()).disponibles ?? {};
+    } catch {
+      sinStock = true;
+    }
+    stockEl.innerHTML =
+      (sinStock
+        ? '<p class="suave">El stock no respondió: se muestra el catálogo sin cantidades.</p>'
+        : '') +
+      coincidencias
+        .map((p) => {
+          const unidades = disponibles[p.sku];
+          const badge = sinStock || unidades === undefined
+            ? '<span class="chip">Sin dato</span>'
+            : unidades > 0
+              ? `<span class="chip chip--stock">${unidades} en stock</span>`
+              : '<span class="chip chip--agotado">Agotado</span>';
+          const foto = p.image
+            ? `<img class="item-foto" src="${p.image}" alt="" loading="lazy" />`
+            : `<span class="item-foto item-emoji">${p.emoji ?? '🪴'}</span>`;
+          return `
+          <div class="tarjeta stock-card">
+            ${foto}
+            <span class="stock-datos">
+              <span class="stock-nombre">${escapar(p.nombre)}</span>
+              <span class="suave">${escapar(p.sku)}</span>
+            </span>
+            ${badge}
+          </div>`;
+        })
+        .join('');
+  }
+
+  // -- enlace pegado a mano y arranque --------------------------------------
+
+  function extraerClave(texto: string): string {
+    const limpio = texto.trim();
+    try {
+      const url = new URL(limpio);
+      return url.searchParams.get('clave')?.trim() ?? '';
+    } catch {
+      return limpio;
+    }
+  }
+
+  $('[data-form-clave]').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const input = $('[data-input-clave]') as unknown as HTMLInputElement;
+    const nueva = extraerClave(input.value);
+    if (!nueva) {
+      $('[data-error-clave]').hidden = false;
+      return;
+    }
+    localStorage.setItem('vr_clave_admin', nueva);
+    location.replace('/admin');
+  });
+
+  async function arrancar() {
+    if (!clave) {
+      sinClave();
+      return;
+    }
+    try {
+      const res = await pedirAdmin(`/api/admin/resumen?periodo=${periodoActual}`);
+      if (res.status === 401) {
+        manejar401();
+        return;
+      }
+      if (!res.ok) throw new Error();
+      pintarResumen(await res.json());
+      cargarPedidos(); // precarga pedidos y el conteo de "Validar"
+    } catch {
+      mensaje('No pudimos cargar el panel. Revisa tu señal e intenta de nuevo.');
+    }
+  }
+
+  arrancar();
+</script>
+
+<!-- Global a proposito, como en /repartidor: las pantallas se inyectan con
+     innerHTML y el CSS scoped no las alcanzaria. Todo prefijado con .app o
+     .tabs (solo existen en esta pagina). -->
+<style is:global>
+  .wa-float { display: none !important; }
+
+  .app [hidden] { display: none !important; }
+
+  .app {
+    max-width: 34rem;
+    margin: 0 auto;
+    padding: 1.1rem 1.1rem calc(84px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .app .pantalla {
+    transition: opacity 180ms var(--ease-out), transform 180ms var(--ease-out);
+  }
+
+  .app .pantalla-entrando {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  .app [data-vista-detalle] {
+    transition: opacity 220ms var(--ease-drawer), transform 220ms var(--ease-drawer);
+  }
+
+  .app .detalle-entrando {
+    opacity: 0;
+    transform: translateX(28px);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .app .pantalla,
+    .app [data-vista-detalle] {
+      transition: opacity 150ms ease;
+    }
+    .app .pantalla-entrando,
+    .app .detalle-entrando {
+      transform: none;
+    }
+  }
+
+  .app .kicker {
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
+    color: var(--ink-faint);
+    margin: 0 0 0.2rem;
+  }
+
+  .app .inicio-head { margin-bottom: 1rem; }
+
+  .app .saludo { font-weight: 400; font-size: 1.7rem; margin: 0; }
+
+  .app .pantalla-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .app .pantalla-head h1 { font-weight: 400; font-size: 1.5rem; margin: 0; }
+
+  .app .btn-refrescar { flex-shrink: 0; }
+
+  .app .bloque-titulo {
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin: 1.4rem 0 0.6rem;
+  }
+
+  .app .bloque-titulo--alerta { color: #a4322a; }
+
+  .app .bloque-titulo--dentro { margin-top: 0; }
+
+  /* -- selector de periodo ------------------------------------------------ */
+
+  .app .periodos {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 4px;
+    background: var(--surface-tint);
+    border-radius: var(--radius-lg);
+    padding: 4px;
+    margin-bottom: 1rem;
+  }
+
+  .app .periodo {
+    border: none;
+    background: transparent;
+    font: inherit;
+    font-weight: 600;
+    color: var(--ink-soft);
+    min-height: 44px;
+    border-radius: calc(var(--radius-lg) - 4px);
+    cursor: pointer;
+    transition: transform 160ms var(--ease-out);
+  }
+
+  .app .periodo:active { transform: scale(0.97); }
+
+  .app .periodo--activo {
+    background: var(--surface);
+    color: var(--green-deep);
+    box-shadow: 0 1px 4px rgba(27, 42, 31, 0.12);
+  }
+
+  /* -- resumen (inicio) --------------------------------------------------- */
+
+  .app .tarjeta-valor {
+    background: var(--card-dark);
+    color: #fff;
+    border-radius: var(--radius-lg);
+    padding: 1.3rem 1.4rem 1.2rem;
+  }
+
+  .app .valor-etiqueta {
+    font-size: 0.78rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--green-light);
+    margin: 0 0 0.3rem;
+  }
+
+  .app .valor-monto {
+    font-size: 2.9rem;
+    font-weight: 600;
+    line-height: 1.05;
+    margin: 0 0 0.45rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .app .valor-detalle {
+    margin: 0;
+    font-size: 0.95rem;
+    color: rgba(255, 255, 255, 0.85);
+  }
+
+  .app .metricas {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.8rem;
+  }
+
+  .app .metricas--tres { grid-template-columns: 1fr 1fr 1fr; }
+
+  .app .metrica {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    background: var(--green-tint);
+    color: var(--green-deep);
+    border-radius: var(--radius-lg);
+    padding: 1rem 1.1rem;
+  }
+
+  .app .metrica--alerta {
+    background: #f7e3e0;
+    color: #a4322a;
+  }
+
+  .app .metrica-numero {
+    font-size: 2rem;
+    font-weight: 600;
+    line-height: 1.1;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .app .metrica-numero--chica { font-size: 1.35rem; }
+
+  .app .metrica-nombre { font-size: 0.85rem; }
+
+  /* -- tarjetas y listas -------------------------------------------------- */
+
+  .app .tarjeta {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    padding: 1rem 1.1rem;
+    margin-bottom: 0.8rem;
+  }
+
+  .app .tarjeta.vacio { text-align: center; color: var(--ink-soft); }
+
+  .app .cargando { color: var(--ink-soft); }
+
+  .app .suave { color: var(--ink-soft); font-size: 0.9rem; }
+
+  .app .pedido-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    width: 100%;
+    text-align: left;
+    font: inherit;
+    cursor: pointer;
+    transition: transform 160ms var(--ease-out);
+  }
+
+  .app .pedido-card:active { transform: scale(0.98); }
+
+  .app .pedido-card--retraso { border-left: 4px solid #a4322a; }
+
+  .app .pedido-linea1,
+  .app .pedido-linea2 {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.8rem;
+    margin: 0;
+    width: 100%;
+  }
+
+  .app .pedido-numero { font-weight: 600; }
+
+  .app .pedido-total {
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .app .chip {
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.2rem 0.55rem;
+    border-radius: 999px;
+    background: var(--surface-tint);
+    color: var(--ink-soft);
+    white-space: nowrap;
+  }
+
+  .app .chip--listo { background: var(--green-tint); color: var(--green-deep); }
+  .app .chip--saliendo,
+  .app .chip--en_camino { background: #fdf0d7; color: #7c5a12; }
+  .app .chip--entregado { background: var(--green-tint); color: var(--green-deep); }
+  .app .chip--retraso { background: #f7e3e0; color: #a4322a; align-self: flex-start; }
+  .app .chip--stock { background: var(--green-tint); color: var(--green-deep); }
+  .app .chip--agotado { background: #f7e3e0; color: #a4322a; }
+
+  .app .volver {
+    border: none;
+    background: none;
+    font: inherit;
+    color: var(--green-deep);
+    padding: 0.4rem 0;
+    margin-bottom: 0.6rem;
+    cursor: pointer;
+  }
+
+  .app .detalle-cliente { margin: 0.2rem 0; font-size: 1.05rem; }
+
+  .app .items { list-style: none; margin: 0.8rem 0; padding: 0; }
+
+  .app .item {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    padding: 0.35rem 0;
+  }
+
+  .app .item-nombre { flex: 1; min-width: 0; }
+
+  .app .item-cant { font-variant-numeric: tabular-nums; color: var(--ink-soft); }
+
+  .app .detalle-total { margin: 0.4rem 0 0; }
+
+  .app .detalle-nota {
+    font: inherit;
+    font-size: 0.9rem;
+    color: var(--ink-soft);
+    background: var(--surface-tint);
+    border-radius: var(--radius);
+    padding: 0.7rem 0.9rem;
+    white-space: pre-wrap;
+    margin: 0.8rem 0 0;
+  }
+
+  /* -- historial ----------------------------------------------------------- */
+
+  .app .hitos { margin-bottom: 0.6rem; }
+
+  .app .hito {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0.6rem;
+    margin: 0;
+    padding: 0.4rem 0;
+  }
+
+  .app .hito-punto {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--green-deep);
+  }
+
+  .app .hito--pendiente .hito-punto { background: var(--line-strong); }
+
+  .app .hito--pendiente { color: var(--ink-faint); }
+
+  .app .hito-fecha { font-size: 0.85rem; color: var(--ink-soft); }
+
+  .app .nota {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    margin: 0;
+    padding: 0.55rem 0;
+    border-top: 1px solid var(--line);
+    font-size: 0.92rem;
+  }
+
+  /* -- validar ------------------------------------------------------------- */
+
+  .app .intro-validar { margin: -0.4rem 0 1rem; }
+
+  .app .zona-validar { margin-top: 0.8rem; }
+
+  .app .btn-grande {
+    width: 100%;
+    padding: 0.85rem 1rem;
+    font-size: 1rem;
+  }
+
+  .app .confirmacion {
+    background: var(--surface-tint);
+    border-radius: var(--radius);
+    padding: 0.9rem 1rem;
+    transition: opacity 180ms var(--ease-out), transform 180ms var(--ease-out);
+  }
+
+  .app .confirmacion p { margin: 0 0 0.8rem; }
+
+  .app .confirmacion-botones {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .app .validar-estado { margin: 0.6rem 0 0; font-weight: 600; }
+
+  .app .por-validar {
+    transition: opacity 220ms var(--ease-out), transform 220ms var(--ease-out);
+  }
+
+  .app .por-validar--saliendo {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+
+  /* -- stock ---------------------------------------------------------------- */
+
+  .app .buscador {
+    width: 100%;
+    font: inherit;
+    padding: 0.8rem 1rem;
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius-lg);
+    margin-bottom: 1rem;
+    min-height: 48px;
+  }
+
+  .app .stock-card {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+  }
+
+  .app .item-foto {
+    width: 44px;
+    height: 44px;
+    border-radius: var(--radius);
+    object-fit: cover;
+    flex-shrink: 0;
+  }
+
+  .app .item-emoji {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    background: var(--surface-tint);
+  }
+
+  .app .stock-datos {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .app .stock-nombre { font-weight: 600; }
+
+  /* -- clave y mensajes ----------------------------------------------------- */
+
+  .app .form-clave {
+    display: flex;
+    gap: 0.5rem;
+    margin: 0.6rem 0;
+  }
+
+  .app .form-clave input {
+    flex: 1;
+    min-width: 0;
+    font: inherit;
+    padding: 0.6rem 0.8rem;
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius);
+  }
+
+  .app .portal-mensaje {
+    background: var(--surface-tint);
+    border-radius: var(--radius);
+    padding: 0.8rem 1rem;
+    margin-bottom: 0.8rem;
+  }
+
+  .app .field-error { color: #a4322a; font-size: 0.9rem; }
+
+  /* -- tabs de abajo -------------------------------------------------------- */
+
+  .tabs {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: space-around;
+    background: var(--surface);
+    border-top: 1px solid var(--line);
+    padding: 0.45rem 0 calc(0.45rem + env(safe-area-inset-bottom, 0px));
+    z-index: 50;
+  }
+
+  .tabs .tab {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    border: none;
+    background: none;
+    font: inherit;
+    font-size: 0.72rem;
+    color: var(--ink-faint);
+    min-width: 64px;
+    min-height: 48px;
+    cursor: pointer;
+    transition: transform 160ms var(--ease-out);
+  }
+
+  .tabs .tab:active { transform: scale(0.94); }
+
+  .tabs .tab svg { width: 24px; height: 24px; }
+
+  .tabs .tab--activa { color: var(--green-deep); }
+
+  .tabs .tab-globito {
+    position: absolute;
+    top: 0;
+    right: 10px;
+    background: #a4322a;
+    color: #fff;
+    font-size: 0.65rem;
+    font-weight: 700;
+    min-width: 16px;
+    height: 16px;
+    border-radius: 999px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 4px;
+  }
+</style>

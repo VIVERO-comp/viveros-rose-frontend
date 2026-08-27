@@ -158,6 +158,17 @@ const FOTOS_CATALOGO = Object.fromEntries(
     </section>
   </div>
 
+  <!-- Confirmacion de exito al confirmar un pedido: el circulo se dibuja
+       con el gancho en el centro (~600 ms) y despues se ve el detalle.
+       CSS/SVG puro; con prefers-reduced-motion no se muestra. -->
+  <div class="exito" data-exito hidden>
+    <svg viewBox="0 0 72 72" aria-hidden="true">
+      <circle class="exito-circulo" cx="36" cy="36" r="30" pathLength="1"/>
+      <path class="exito-gancho" d="M23 37.5 L32.5 47 L50 27" pathLength="1"/>
+    </svg>
+    <p class="exito-texto">Pedido confirmado</p>
+  </div>
+
   <!-- Navegacion fija abajo, alcanzable con el pulgar. -->
   <nav class="tabs" data-tabs aria-label="Pantallas">
     <button class="tab tab--activa" type="button" data-tab="inicio" aria-label="Inicio">
@@ -379,10 +390,29 @@ const FOTOS_CATALOGO = Object.fromEntries(
 
   // -- pantalla INICIO ------------------------------------------------------
 
+  // La clave puede ser la del panel de admin (enlace /admin pegado aqui, o
+  // un admin que abrio /repartidor): se prueba contra el panel con la clave
+  // SOLO en el header, y si entra se le manda a su pagina.
+  async function esClaveDeAdmin(): Promise<boolean> {
+    try {
+      const res = await fetch('/api/admin/resumen?periodo=hoy', {
+        headers: { 'X-Clave-Admin': clave },
+      });
+      return res.ok;
+    } catch {
+      return false;
+    }
+  }
+
   async function cargarInicio() {
     try {
       const res = await fetch(`/api/repartidor/resumen?clave=${encodeURIComponent(clave)}`);
       if (res.status === 401) {
+        if (await esClaveDeAdmin()) {
+          localStorage.setItem('vr_clave_admin', clave);
+          location.replace('/admin');
+          return;
+        }
         manejar401();
         return;
       }
@@ -748,7 +778,7 @@ const FOTOS_CATALOGO = Object.fromEntries(
       const boton = document.createElement('button');
       boton.className = 'btn btn--green btn-grande';
       boton.type = 'button';
-      boton.textContent = 'Confirmar este pedido';
+      boton.textContent = 'Confirmar pedido';
       boton.addEventListener('click', () => agarrar(p.numero, boton));
       acciones.appendChild(boton);
       return;
@@ -778,9 +808,28 @@ const FOTOS_CATALOGO = Object.fromEntries(
       .addEventListener('change', (e) => subirFoto(p, e.target as HTMLInputElement));
   }
 
+  // La confirmacion de exito: se pinta el detalle debajo, el gancho se
+  // dibuja encima (~600 ms) y el velo se va solo. Con motricidad reducida
+  // no hay velo: el detalle aparece directo.
+  function animarExito(alTerminar: () => void) {
+    alTerminar();
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const velo = $('[data-exito]');
+    velo.hidden = false;
+    void velo.offsetWidth; // el reflow arranca las animaciones de trazo
+    velo.classList.add('exito--activa');
+    setTimeout(() => {
+      velo.classList.add('exito--saliendo');
+      setTimeout(() => {
+        velo.hidden = true;
+        velo.classList.remove('exito--activa', 'exito--saliendo');
+      }, 200);
+    }, 950);
+  }
+
   async function agarrar(numero: string, boton: HTMLButtonElement) {
     boton.disabled = true;
-    boton.textContent = 'Agarrando…';
+    boton.textContent = 'Confirmando…';
     try {
       const res = await fetch(`/api/repartidor/pedidos/${encodeURIComponent(numero)}/agarrar`, {
         method: 'POST',
@@ -790,11 +839,11 @@ const FOTOS_CATALOGO = Object.fromEntries(
       const datos = await res.json();
       if (res.ok) {
         esMio.set(numero, true);
-        pintarDetalle(datos.pedido, datos.whatsapp ?? null);
+        animarExito(() => pintarDetalle(datos.pedido, datos.whatsapp ?? null));
         return;
       }
       if (res.status === 409 && datos.error === 'ya_agarrado') {
-        mensaje('Otro repartidor lo agarró primero. La lista se actualizó.');
+        mensaje('Otro repartidor lo confirmó primero. La lista se actualizó.');
         volverALista();
         return;
       }
@@ -817,8 +866,8 @@ const FOTOS_CATALOGO = Object.fromEntries(
       throw new Error();
     } catch {
       boton.disabled = false;
-      boton.textContent = 'Agarrar este pedido';
-      mensaje('No se pudo agarrar el pedido. Revisa tu señal e intenta de nuevo.');
+      boton.textContent = 'Confirmar pedido';
+      mensaje('No se pudo confirmar el pedido. Revisa tu señal e intenta de nuevo.');
     }
   }
 
@@ -891,8 +940,8 @@ const FOTOS_CATALOGO = Object.fromEntries(
     pedido_listo: () => 'Pedido nuevo listo para salir',
     agarrado: (a) =>
       a.detalle === nombreRepartidor
-        ? 'Agarraste el pedido'
-        : `${a.detalle ?? 'Otro repartidor'} agarró el pedido`,
+        ? 'Confirmaste el pedido'
+        : `${a.detalle ?? 'Otro repartidor'} confirmó el pedido`,
     retraso: () => 'Pedido con retraso',
   };
 
@@ -934,7 +983,7 @@ const FOTOS_CATALOGO = Object.fromEntries(
     if (!avisos.length) {
       avisosEl.innerHTML =
         '<div class="tarjeta vacio"><p>Sin avisos por ahora.</p>' +
-        '<p class="suave">Aquí verás los pedidos nuevos, los que agarra cada quien y los retrasos.</p></div>';
+        '<p class="suave">Aquí verás los pedidos nuevos, los que confirma cada quien y los retrasos.</p></div>';
       return;
     }
     // Vienen del mas nuevo al mas viejo: se agrupan por dia conservando el orden.
@@ -1160,6 +1209,70 @@ const FOTOS_CATALOGO = Object.fromEntries(
     .app .detalle-entrando {
       transform: none;
     }
+  }
+
+  /* -- confirmacion de exito (gancho que se dibuja) ----------------------- */
+
+  .exito {
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    background: rgba(238, 245, 240, 0.96);
+    /* La salida (200 ms) es mas rapida que el dibujo: el sistema responde. */
+    transition: opacity 200ms var(--ease-out);
+  }
+
+  .exito[hidden] { display: none; }
+
+  .exito--saliendo { opacity: 0; }
+
+  .exito svg { width: 7.5rem; height: 7.5rem; }
+
+  .exito-circulo,
+  .exito-gancho {
+    fill: none;
+    stroke: var(--green-deep);
+    stroke-width: 4.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    /* pathLength="1": el dasharray normalizado dibuja el trazo al animar
+       el offset de 1 a 0, sin medir la geometria real. */
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+  }
+
+  .exito--activa .exito-circulo {
+    animation: exito-trazo 420ms var(--ease-out) forwards;
+  }
+
+  .exito--activa .exito-gancho {
+    /* Arranca cuando el circulo casi cierra; termina ~600 ms. */
+    animation: exito-trazo 260ms var(--ease-out) 340ms forwards;
+  }
+
+  .exito-texto {
+    margin: 0;
+    font-weight: 600;
+    color: var(--green-deep);
+    opacity: 0;
+  }
+
+  .exito--activa .exito-texto {
+    animation: exito-texto 200ms var(--ease-out) 480ms forwards;
+  }
+
+  @keyframes exito-trazo {
+    to { stroke-dashoffset: 0; }
+  }
+
+  @keyframes exito-texto {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: none; }
   }
 
   /* -- cabeceras ---------------------------------------------------------- */
