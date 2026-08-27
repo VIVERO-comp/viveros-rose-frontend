@@ -181,6 +181,8 @@ const FOTOS_CATALOGO = Object.fromEntries(
 </script>
 
 <script>
+  import { decidirTrasNoDisponible } from '../lib/repartidor';
+
   const $ = <T extends HTMLElement>(sel: string) => document.querySelector<T>(sel)!;
   const listaEl = $('[data-lista]');
   const detalleEl = $('[data-detalle]');
@@ -794,6 +796,22 @@ const FOTOS_CATALOGO = Object.fromEntries(
       if (res.status === 409 && datos.error === 'ya_agarrado') {
         mensaje('Otro repartidor lo agarró primero. La lista se actualizó.');
         volverALista();
+        return;
+      }
+      if (res.status === 409 && datos.error === 'not_available') {
+        // Quiza el agarrar anterior SI entro y la respuesta se perdio por
+        // la senal: se refresca el detalle y se decide con el, en vez de
+        // dar el error generico de senal por un pedido que ya es suyo.
+        const resDetalle = await fetch(
+          `/api/repartidor/pedidos/${encodeURIComponent(numero)}?clave=${encodeURIComponent(clave)}`,
+        );
+        if (!resDetalle.ok) throw new Error();
+        const detalle = await resDetalle.json();
+        const decision = decidirTrasNoDisponible(detalle, datos.message);
+        esMio.set(numero, decision.esMio);
+        mensaje(decision.mensaje);
+        if (decision.esMio) pintarDetalle(detalle);
+        else volverALista();
         return;
       }
       throw new Error();
