@@ -38,6 +38,17 @@ const CATALOGO = products.map((p) => ({
   manifest="/manifest-admin.webmanifest"
 >
   <div class="app">
+    <!-- Indicador del pull to refresh: un disco que baja con el dedo, con
+         un arco que se llena al acercarse al umbral y gira mientras carga.
+         Solo tacto; el boton "Actualizar" sigue siendo el respaldo. -->
+    <div class="ptr" data-ptr aria-hidden="true">
+      <div class="ptr-disco">
+        <svg viewBox="0 0 24 24" data-ptr-svg>
+          <circle class="ptr-arco" cx="12" cy="12" r="9" pathLength="1"/>
+        </svg>
+      </div>
+    </div>
+
     <div class="globales">
       <!-- Sin clave o clave revocada: solo se entra con el enlace personal. -->
       <div class="tarjeta" data-sin-clave hidden>
@@ -158,6 +169,7 @@ const CATALOGO = products.map((p) => ({
 
 <script>
   import { duracionLegible, minutosDesde, peticionAdmin } from '../lib/admin';
+  import { instalarTirarParaRefrescar } from '../lib/refrescar';
 
   const $ = <T extends HTMLElement>(sel: string) => document.querySelector<T>(sel)!;
   const mensajeEl = $('[data-mensaje]');
@@ -238,6 +250,7 @@ const CATALOGO = products.map((p) => ({
   // -- pantallas y navegacion -----------------------------------------------
 
   type Pantalla = 'inicio' | 'pedidos' | 'validar' | 'stock';
+  let pantallaActual: Pantalla = 'inicio';
 
   function animarEntrada(el: HTMLElement, clase: string) {
     el.classList.add(clase);
@@ -266,6 +279,7 @@ const CATALOGO = products.map((p) => ({
         pantalla.hidden = true;
       }
     });
+    pantallaActual = destino;
     window.scrollTo(0, 0);
     if (clave) CARGADORES[destino]();
   }
@@ -444,7 +458,10 @@ const CATALOGO = products.map((p) => ({
     );
   }
 
+  let numeroDetalleAbierto = '';
+
   async function abrirDetalle(numero: string) {
+    numeroDetalleAbierto = numero;
     vistaLista.hidden = true;
     vistaDetalle.hidden = false;
     animarEntrada(vistaDetalle, 'detalle-entrando');
@@ -704,6 +721,30 @@ const CATALOGO = products.map((p) => ({
     location.replace('/admin');
   });
 
+  // -- tirar para refrescar -------------------------------------------------
+
+  // Recarga lo que se este mirando: el resumen, la lista (o el detalle
+  // abierto), los pagos por validar o la busqueda de stock vigente. El
+  // boton "Actualizar" sigue ahi como respaldo del gesto.
+  instalarTirarParaRefrescar({
+    indicador: $('[data-ptr]'),
+    alRefrescar: async () => {
+      if (!clave) return;
+      if (pantallaActual === 'inicio') {
+        await cargarResumen();
+      } else if (pantallaActual === 'stock') {
+        const texto = ($('[data-buscador]') as unknown as HTMLInputElement).value
+          .trim()
+          .toLowerCase();
+        if (texto.length >= 2) await buscarStock(texto);
+      } else if (pantallaActual === 'pedidos' && !vistaDetalle.hidden && numeroDetalleAbierto) {
+        await abrirDetalle(numeroDetalleAbierto);
+      } else {
+        await cargarPedidos();
+      }
+    },
+  });
+
   async function arrancar() {
     if (!clave) {
       sinClave();
@@ -767,6 +808,68 @@ const CATALOGO = products.map((p) => ({
     .app .detalle-entrando {
       transform: none;
     }
+  }
+
+  /* -- tirar para refrescar ----------------------------------------------- */
+
+  /* Sin el pull-to-refresh nativo del navegador: aqui lo maneja el portal. */
+  html,
+  body {
+    overscroll-behavior-y: contain;
+  }
+
+  .app .ptr {
+    position: fixed;
+    top: 0;
+    left: 50%;
+    transform: translate(-50%, -48px);
+    opacity: 0;
+    z-index: 55; /* sobre las tarjetas, bajo cualquier velo */
+    pointer-events: none;
+  }
+
+  .app .ptr-disco {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    box-shadow: 0 2px 10px rgba(27, 42, 31, 0.18);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .app .ptr svg {
+    width: 22px;
+    height: 22px;
+  }
+
+  .app .ptr-arco {
+    fill: none;
+    stroke: var(--green-deep);
+    stroke-width: 2.5;
+    stroke-linecap: round;
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+  }
+
+  .app .ptr--girando svg {
+    animation: ptr-giro 700ms linear infinite;
+  }
+
+  /* El regreso al soltar; el seguimiento del dedo va sin transicion. */
+  .app .ptr--volviendo {
+    transition: transform 200ms var(--ease-out), opacity 200ms var(--ease-out);
+  }
+
+  @keyframes ptr-giro {
+    to { transform: rotate(360deg); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .app .ptr--girando svg { animation: none; }
+    .app .ptr--volviendo { transition: none; }
   }
 
   .app .kicker {
