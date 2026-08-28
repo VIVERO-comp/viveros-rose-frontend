@@ -14,6 +14,21 @@
 import datos from '../data/fotos.json';
 
 const porSku = datos.porSku as Record<string, string[]>;
+const manoPorSku = ((datos as { manoPorSku?: unknown }).manoPorSku ?? {}) as Record<string, string>;
+const recortesPorHash = ((datos as { recortesPorHash?: unknown }).recortesPorHash ?? {}) as Record<
+  string,
+  [number, number, number, number]
+>;
+
+// Recorte decidido en la pagina de revision (fracciones 0..1 del original):
+// se antepone como transformacion c_crop a TODA URL de esa foto, asi la
+// tarjeta, la galeria y el circulo ven la misma foto ya recortada.
+function segmentoRecorte(hash: string): string {
+  const rec = recortesPorHash[hash];
+  if (!rec) return '';
+  const [x, y, w, h] = rec;
+  return `c_crop,x_${x},y_${y},w_${w},h_${h}/`;
+}
 const macetasPorSku = ((datos as { macetasPorSku?: unknown }).macetasPorSku ?? {}) as Record<
   string,
   Partial<Record<ColorMaceta, string>>
@@ -36,11 +51,23 @@ export function macetasDe(sku: string): Partial<Record<ColorMaceta, string>> {
   return macetasPorSku[sku] ?? {};
 }
 
+// Hash de la foto donde la mano sostiene la planta (scripts/fotos.py la
+// marca con "mano"). El circulo de "Cuidado de X" la prefiere.
+export function manoDe(sku: string): string | undefined {
+  return manoPorSku[sku];
+}
+
 export function urlFoto(
   sku: string,
   hash: string,
-  opciones: { ancho: number; ratio?: '4:5' | '1:1' },
+  opciones: { ancho: number; ratio?: '4:5' | '1:1'; completa?: boolean },
 ): string {
+  const recorte = segmentoRecorte(hash);
+  if (opciones.completa) {
+    // Foto entera (tras el recorte manual, si lo hay): encaja dentro de un
+    // cuadro ancho x ancho conservando la proporcion (el visor usa cover).
+    return `${BASE}/${recorte}f_auto,q_auto,c_fit,w_${opciones.ancho},h_${opciones.ancho}/productos/${sku}/${hash}`;
+  }
   const ratio = opciones.ratio ?? '4:5';
-  return `${BASE}/f_auto,q_auto,c_fill,g_auto,ar_${ratio},w_${opciones.ancho}/productos/${sku}/${hash}`;
+  return `${BASE}/${recorte}f_auto,q_auto,c_fill,g_auto,ar_${ratio},w_${opciones.ancho}/productos/${sku}/${hash}`;
 }

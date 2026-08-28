@@ -17,7 +17,7 @@ import {
 } from '../../../data/products';
 import { collections, factsOf } from '../../../data/collections';
 import { productosPublicados } from '../../../lib/catalogo-build';
-import { COLORES_MACETA, fotosDe, macetasDe, urlFoto, type ColorMaceta } from '../../../lib/fotos';
+import { COLORES_MACETA, fotosDe, macetasDe, manoDe, urlFoto, type ColorMaceta } from '../../../lib/fotos';
 import { SITE } from '../../../lib/site';
 
 // Solo los productos activos en Odoo generan pagina: un archivado no esta en
@@ -50,12 +50,14 @@ const related = publicados
 
 // Fotos reales de la galeria, desde Cloudinary (scripts/fotos.py mantiene el
 // orden: principal, hover, adicionales). Cada foto en dos tamanos: miniatura
-// cuadrada para la tira y grande para el visor principal (tambien cuadrado).
+// cuadrada para la tira y grande para el visor principal. La grande viaja
+// entera (c_fit, sin recorte de Cloudinary) y el visor 4:5 la llena con
+// cover: solo se pierde un poco de arriba y de abajo, nunca los lados.
 // Sin fotos no hay tira ni flechas ni contador: solo el marco con el emoji
 // (las guias de desarrollo — cajas numeradas, medidas — no se publican).
 const fotosGaleria = fotosDe(product.sku).map((hash) => ({
   mini: urlFoto(product.sku, hash, { ancho: 160, ratio: '1:1' }),
-  grande: urlFoto(product.sku, hash, { ancho: 960, ratio: '1:1' }),
+  grande: urlFoto(product.sku, hash, { ancho: 960, completa: true }),
 }));
 
 // Fotos de la planta en maceta de color: van SIEMPRE despues de las fotos
@@ -76,7 +78,7 @@ const macetas = macetasDe(product.sku);
 const fotosMaceta = COLORES_MACETA.filter((c) => macetas[c]).map((color) => ({
   color,
   mini: urlFoto(product.sku, macetas[color]!, { ancho: 160, ratio: '1:1' }),
-  grande: urlFoto(product.sku, macetas[color]!, { ancho: 960, ratio: '1:1' }),
+  grande: urlFoto(product.sku, macetas[color]!, { ancho: 960, completa: true }),
 }));
 const conMarcador = fotosGaleria.length === 0 && fotosMaceta.length > 0;
 const totalGaleria = (conMarcador ? 1 : fotosGaleria.length) + fotosMaceta.length;
@@ -205,6 +207,14 @@ const accordions = [
 ];
 
 const careTitle = `Cuidado de ${product.name.replace(/\s*\(.*\)$/, '').toLowerCase()}`;
+
+// Foto del circulo de cuidado: la de la mano sosteniendo la planta si existe
+// (scripts/fotos.py la marca), si no la principal. Recorte cuadrado centrado
+// en el sujeto (g_auto): en un circulo no cabe la foto entera.
+const hashCuidado = manoDe(product.sku) ?? fotosDe(product.sku)[0];
+const fotoCuidado = hashCuidado
+  ? urlFoto(product.sku, hashCuidado, { ancho: 640, ratio: '1:1' })
+  : product.image;
 ---
 
 <Base title={product.name} description={product.description} whatsappMessage={whatsappMessage}>
@@ -536,12 +546,12 @@ const careTitle = `Cuidado de ${product.name.replace(/\s*\(.*\)$/, '').toLowerCa
       <div
         class="care-photo"
         style={
-          product.image
-            ? `background-image: url('${product.image}'); background-size: cover; background-position: center;`
+          fotoCuidado
+            ? `background-image: url('${fotoCuidado}'); background-size: cover; background-position: center;`
             : undefined
         }
       >
-        {product.image ? '' : product.emoji}
+        {fotoCuidado ? '' : product.emoji}
       </div>
       <div>
         {
@@ -900,7 +910,9 @@ const careTitle = `Cuidado de ${product.name.replace(/\s*\(.*\)$/, '').toLowerCa
 
   .main-photo {
     /* Con las miniaturas fuera de flujo, la foto se auto-colocaria en la
-       columna del carril; va explicita en la segunda. */
+       columna del carril; va explicita en la segunda. Marco cuadrado (como
+       la tarjeta en produccion); la foto viaja entera y el navegador centra
+       el recorte — el ajuste fino por foto se hace en la herramienta. */
     grid-column: 2;
     position: relative;
     aspect-ratio: 1 / 1;
