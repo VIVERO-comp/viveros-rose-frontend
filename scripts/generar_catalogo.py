@@ -1,3 +1,18 @@
+# =====================================================================
+#  NO CORRER ESTE SCRIPT HASTA NUEVO AVISO (Abraham, 28/08/2026)
+#
+#  src/data/products.ts tiene escritos A MANO el tamano (`size`) de los
+#  129 productos y los cuidados (`care`: luz, riego, dificultad) de 126.
+#  Este script no genera ninguno de los dos (emite un `care` generico y
+#  ningun `size`), asi que regenerar el catalogo los borra: el filtro de
+#  tamano queda vacio y todas las fichas dicen lo mismo.
+#
+#  Se vuelve a habilitar cuando esos datos salgan de Odoo (o de otra
+#  fuente que este script lea). Mientras tanto, los cambios de Odoo
+#  (nombres, archivados) se aplican a products.ts como delta dirigido.
+#  El freno esta en codigo mas abajo: aborta salvo con --pisar-datos-manuales.
+# =====================================================================
+#
 # Regenera el array `products` de src/data/products.ts a partir del export
 # de Odoo (Producto (product.template).xlsx). Solo reemplaza el array; las
 # interfaces, categorias y funciones del archivo quedan intactas.
@@ -16,6 +31,15 @@ import re
 import sys
 import unicodedata
 
+if "--pisar-datos-manuales" not in sys.argv:
+    sys.exit(
+        "DETENIDO: generar_catalogo.py esta deshabilitado hasta nuevo aviso "
+        "(28/08/2026). Regenerar borra el tamano de 129 productos y los "
+        "cuidados de 126 escritos a mano en products.ts. Ver la cabecera de "
+        "este archivo y el README."
+    )
+sys.argv.remove("--pisar-datos-manuales")
+
 XLSX = sys.argv[1] if len(sys.argv) > 1 else os.path.expanduser(
     "~/Downloads/Producto (product.template).xlsx"
 )
@@ -32,6 +56,14 @@ NO_PLANTAS = {"MACETA-001"}  # referencias del export que no son plantas
 SLUGS_FIJOS = {
     "PL-POTHOS": "potos",
     "PL-PHOTOS-MULTI-RAMA": "potos-multi-rama",
+    # URLs ya publicadas antes de alinear los nombres al valor de Odoo
+    # (28/08/2026): el nombre cambia, la URL se conserva.
+    "PL-ANTHURIO-FLOR": "anturio",
+    "PL-EPISCIAS-VR": "episcias-vr",
+    "PL-FICUS-LYRATA-3-RAMAS": "ficus-lyrata-3-ramas-hasta-175cm",
+    "PL-GINGER": "ginger",
+    "PL-MILLONARIA-ZAMIOCULCA-BLANCA": "zamiculca-variegada",
+    "PL-PURPLE-LADY-EN-BOLSA": "purple-lady-en-bolsa",
 }
 
 # Palabras clave (sobre el nombre sin acentos, en mayusculas) -> categoria del

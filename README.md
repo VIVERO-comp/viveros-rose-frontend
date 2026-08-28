@@ -4,6 +4,14 @@ Frontend en [Astro](https://astro.build) de **Plantas Panama** (`plantaspanama.c
 
 Implementa la arquitectura de informacion y el sistema visual de la propuesta de diseno (v0.1): tienda de plantas con inventario real, entrega a domicilio y WhatsApp como canal principal de soporte.
 
+> **⚠️ No correr `scripts/generar_catalogo.py` hasta nuevo aviso (28/08/2026).**
+> `src/data/products.ts` tiene escritos a mano el tamano (`size`) de los 129
+> productos y los cuidados (`care`) de 126; el generador no los produce y
+> regenerar el catalogo los borra. El script aborta solo; los cambios de Odoo
+> (nombres, archivados) se aplican a `products.ts` como delta hasta que esos
+> datos salgan de Odoo. Odoo sigue siendo la fuente de verdad de nombre,
+> precio, stock y archivado.
+
 ## Rutas
 
 | Ruta | Contenido |
