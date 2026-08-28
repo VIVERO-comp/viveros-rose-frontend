@@ -28,3 +28,8 @@ scripts/.miniaturas/
 
 # Bytecode de los scripts de Python.
 scripts/__pycache__/
+
+# Herramienta de fotos: cache local y respaldos del mapa
+scripts/.miniaturas/
+scripts/.originales/
+scripts/respaldos-fotos-mapa/

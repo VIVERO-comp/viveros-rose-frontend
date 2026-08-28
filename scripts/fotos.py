@@ -55,6 +55,8 @@ MAPA_PATH = os.path.join(RAIZ, "scripts", "fotos-mapa.json")
 FOTOS_JSON_PATH = os.path.join(RAIZ, "src", "data", "fotos.json")
 PRODUCTS_TS = os.path.join(RAIZ, "src", "data", "products.ts")
 MINIATURAS_DIR = os.path.join(RAIZ, "scripts", ".miniaturas")
+ORIGINALES_DIR = os.path.join(RAIZ, "scripts", ".originales")
+RESPALDOS_DIR = os.path.join(RAIZ, "scripts", "respaldos-fotos-mapa")
 
 EXTENSIONES = {".jpg", ".jpeg", ".png", ".heic", ".webp"}
 # Fotos tomadas con menos de 10 minutos de diferencia se agrupan en la
@@ -172,10 +174,29 @@ def cargar_mapa():
     return {"version": 1, "fotos": {}}
 
 
+_respaldo_hecho = False
+
+
 def guardar_mapa(mapa):
-    with open(MAPA_PATH, "w", encoding="utf-8") as f:
+    # fotos-mapa.json es la unica fuente de las decisiones: antes del primer
+    # sobrescrito de cada corrida se guarda una copia con fecha, por si un
+    # guardado falla a medias.
+    global _respaldo_hecho
+    if not _respaldo_hecho and os.path.exists(MAPA_PATH):
+        os.makedirs(RESPALDOS_DIR, exist_ok=True)
+        marca = datetime.now().strftime("%Y%m%d-%H%M%S")
+        with open(MAPA_PATH, "rb") as origen:
+            contenido = origen.read()
+        with open(os.path.join(RESPALDOS_DIR, f"fotos-mapa-{marca}.json"), "wb") as copia:
+            copia.write(contenido)
+        _respaldo_hecho = True
+    # Escritura atomica: primero un temporal, despues el rename (un corte a
+    # mitad de escritura no deja el mapa corrupto).
+    temporal = MAPA_PATH + ".tmp"
+    with open(temporal, "w", encoding="utf-8") as f:
         json.dump(mapa, f, ensure_ascii=False, indent=2, sort_keys=True)
         f.write("\n")
+    os.replace(temporal, MAPA_PATH)
 
 
 def escanear(carpeta, mapa):
@@ -253,11 +274,12 @@ def pendientes_de(mapa):
 
 
 def clave_orden(entrada):
-    # Orden dentro de un producto: principal primero, despues el orden
-    # explicito (sufijo del archivo o decision de revision) y por ultimo la
-    # fecha de captura.
+    # Orden dentro de un producto: principal primero, hover segundo, despues
+    # el orden explicito (sufijo del archivo o decision de revision) y por
+    # ultimo la fecha de captura.
     return (
         0 if entrada.get("principal") else 1,
+        0 if entrada.get("hover") else 1,
         entrada.get("orden") if entrada.get("orden") is not None else 999,
         entrada.get("fecha") or "",
         entrada.get("archivo") or "",
@@ -276,6 +298,31 @@ def fotos_por_sku(mapa, solo_subidas=True):
     for sku, hashes in por_sku.items():
         hashes.sort(key=lambda h: clave_orden(mapa["fotos"][h]))
     return por_sku
+
+
+def mano_por_sku(mapa, solo_subidas=True):
+    """SKU -> hash de la foto con la mano sosteniendo la planta (la primera
+    en el orden de galeria). El frontend la usa en el circulo de cuidado."""
+    por_sku = {}
+    for sku, hashes in fotos_por_sku(mapa, solo_subidas).items():
+        con_mano = [h for h in hashes if mapa["fotos"][h].get("mano")]
+        if con_mano:
+            por_sku[sku] = con_mano[0]
+    return por_sku
+
+
+def recortes_por_hash(mapa, solo_subidas=True):
+    """hash -> [x, y, ancho, alto] en fracciones (0..1) del original. El
+    frontend antepone c_crop con estos valores a toda URL de la foto."""
+    usados = set()
+    for hashes in fotos_por_sku(mapa, solo_subidas).values():
+        usados.update(hashes)
+    for colores in macetas_por_sku(mapa, solo_subidas).values():
+        usados.update(colores.values())
+    return {
+        h: mapa["fotos"][h]["recorte"]
+        for h in usados if mapa["fotos"][h].get("recorte")
+    }
 
 
 def macetas_por_sku(mapa, solo_subidas=True):
@@ -340,10 +387,37 @@ def subir_pendientes(env, mapa, rutas):
             print(f"  ERROR subiendo {entrada['archivo']} ({public_id}): {error}")
             continue
         entrada["subida"] = True
+        entrada["cloud_sku"] = entrada["sku"]  # bajo que SKU vive en Cloudinary
         subidas += 1
         print(f"  Subida {entrada['archivo']} -> {public_id}")
         guardar_mapa(mapa)  # progreso a salvo si la corrida se corta
     return subidas, sin_archivo
+
+
+def descargar_original(env, entrada, h):
+    """Recupera el archivo original de una foto que ya no esta en la carpeta,
+    desde Cloudinary (el hash garantiza que es byte a byte el mismo).
+    Devuelve la ruta local o None."""
+    sku_cloud = entrada.get("cloud_sku") or entrada.get("sku")
+    if not sku_cloud:
+        return None
+    os.makedirs(ORIGINALES_DIR, exist_ok=True)
+    destino = os.path.join(ORIGINALES_DIR, f"{h}.jpg")
+    if not os.path.exists(destino):
+        url = (f"https://res.cloudinary.com/{env['CLOUDINARY_CLOUD_NAME']}"
+               f"/image/upload/productos/{sku_cloud}/{h}")
+        resultado = subprocess.run(
+            ["curl", "-sS", "--fail", url, "-o", destino],
+            capture_output=True, text=True, timeout=120,
+        )
+        if resultado.returncode != 0:
+            if os.path.exists(destino):
+                os.remove(destino)
+            return None
+    if hash_archivo(destino) != h:
+        os.remove(destino)  # Cloudinary lo recodifico: no sirve como original
+        return None
+    return destino
 
 
 def peticion_admin(env, metodo, ruta):
@@ -409,6 +483,8 @@ def generar_fotos_json(env, mapa):
         "cloud": env["CLOUDINARY_CLOUD_NAME"],
         "porSku": fotos_por_sku(mapa, solo_subidas=True),
         "macetasPorSku": macetas_por_sku(mapa, solo_subidas=True),
+        "manoPorSku": mano_por_sku(mapa, solo_subidas=True),
+        "recortesPorHash": recortes_por_hash(mapa, solo_subidas=True),
     }
     nuevo = json.dumps(datos, ensure_ascii=False, indent=2, sort_keys=True) + "\n"
     actual = None
@@ -458,56 +534,140 @@ def grupos_pendientes(mapa, rutas):
     return grupos
 
 
-PAGINA_HTML = """<!doctype html>
+PAGINA_HTML = r"""<!doctype html>
 <html lang="es">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Revisión de fotos</title>
+<title>Fotos del catálogo</title>
 <style>
   :root { --verde: #1b5e20; --linea: #d7e0d9; --tinta: #1b2a1f; }
   * { box-sizing: border-box; }
   body { font-family: -apple-system, system-ui, sans-serif; margin: 0; color: var(--tinta); background: #f6f8f6; }
-  header { position: sticky; top: 0; background: #fff; border-bottom: 1px solid var(--linea); padding: 12px 20px; display: flex; align-items: center; gap: 16px; z-index: 5; }
-  h1 { font-size: 17px; margin: 0; flex: 1; }
-  main { max-width: 1080px; margin: 0 auto; padding: 20px; }
-  h2 { font-size: 15px; margin: 28px 0 10px; }
-  .grupo { background: #fff; border: 1px solid var(--linea); border-radius: 10px; padding: 14px; margin-bottom: 14px; }
+  header { position: sticky; top: 0; background: #fff; border-bottom: 1px solid var(--linea); padding: 10px 20px; display: flex; align-items: center; gap: 12px; z-index: 5; flex-wrap: wrap; }
+  h1 { font-size: 17px; margin: 0; }
+  #buscador { flex: 1; min-width: 220px; }
+  main { max-width: 1160px; margin: 0 auto; padding: 20px; }
+  h2 { font-size: 15px; margin: 26px 0 10px; }
+  input[list], input[type="search"] { padding: 8px 10px; border: 1px solid var(--linea); border-radius: 8px; font-size: 14px; }
+  figure input[list] { min-width: 0; width: 100%; font-size: 12px; padding: 6px 8px; margin-top: 4px; }
+  .grupo, .prod { background: #fff; border: 1px solid var(--linea); border-radius: 10px; padding: 14px; margin-bottom: 14px; }
   .grupo-cab { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 10px; }
   .grupo-cab .fecha { color: #667; font-size: 12px; }
-  input[list] { padding: 8px 10px; border: 1px solid var(--linea); border-radius: 8px; font-size: 14px; min-width: 320px; }
-  .fila-fotos { display: flex; gap: 10px; flex-wrap: wrap; }
-  figure { margin: 0; width: 150px; }
-  figure img { width: 150px; height: 150px; object-fit: cover; border-radius: 8px; display: block; border: 2px solid transparent; }
+  .grupo-cab input[list] { min-width: 300px; }
+  .fila-fotos { display: flex; gap: 12px; flex-wrap: wrap; }
+  figure { margin: 0; width: 152px; }
+  figure img { width: 152px; height: 152px; object-fit: cover; border-radius: 8px; display: block; border: 2px solid transparent; }
   figure.descartada img { opacity: 0.3; }
-  figcaption { font-size: 11px; color: #667; word-break: break-all; margin-top: 4px; }
-  .acciones { display: flex; gap: 6px; margin-top: 4px; }
-  button { font-size: 12px; padding: 4px 8px; border-radius: 6px; border: 1px solid var(--linea); background: #fff; cursor: pointer; }
-  button.primario { background: var(--verde); border-color: var(--verde); color: #fff; font-size: 14px; padding: 8px 16px; }
-  .prod { background: #fff; border: 1px solid var(--linea); border-radius: 10px; padding: 12px 14px; margin-bottom: 10px; }
-  .prod h3 { font-size: 14px; margin: 0 0 8px; }
-  .prod .fila-fotos figure { width: 110px; }
-  .prod .fila-fotos img { width: 110px; height: 110px; }
   figure.principal img { border-color: var(--verde); }
-  figure .estrella { position: absolute; }
-  .marca-principal { font-size: 11px; color: var(--verde); font-weight: 600; }
+  figcaption { font-size: 11px; color: #667; word-break: break-all; margin-top: 4px; min-height: 14px; }
+  .acciones { display: flex; gap: 4px; margin-top: 4px; flex-wrap: wrap; }
+  button { font-size: 12px; padding: 4px 7px; border-radius: 6px; border: 1px solid var(--linea); background: #fff; cursor: pointer; }
+  button:hover { border-color: #9ab3a0; }
+  button.primario { background: var(--verde); border-color: var(--verde); color: #fff; font-size: 14px; padding: 8px 16px; }
+  button.primario:disabled { opacity: 0.5; cursor: default; }
+  .acciones-roles button { border-color: #b8ccbc; }
+  .prod h3 { font-size: 14px; margin: 0 0 10px; }
   .aviso { background: #fff8e1; border: 1px solid #e8d9a0; border-radius: 8px; padding: 10px 14px; font-size: 13px; }
   #estado { font-size: 13px; color: #667; }
+  .et { display: inline-block; font-size: 9px; font-weight: 700; letter-spacing: 0.4px; border-radius: 4px; padding: 1px 4px; margin: 0 3px 2px 0; color: #fff; }
+  .et-verde { background: var(--verde); }
+  .et-azul { background: #1565c0; }
+  .et-lila { background: #6a3fa0; }
+  .et-gris { background: #667; }
+
+  /* Pareja tarjeta/hover + circulo, como se ven en el sitio. */
+  .pareja { display: flex; gap: 18px; align-items: flex-start; margin-bottom: 12px; }
+  .ctx { background-color: #eef1ee; background-repeat: no-repeat; border: 1px solid var(--linea); position: relative; overflow: hidden; }
+  .ctx-tarjeta { width: 168px; height: 210px; border-radius: 12px; }
+  .ctx-capa { position: absolute; inset: 0; background-repeat: no-repeat; opacity: 0; transition: opacity 0.3s; }
+  .ctx-tarjeta:hover .ctx-capa { opacity: 1; }
+  .ctx-circulo { width: 120px; height: 120px; border-radius: 50%; }
+  .ctx-titulo { font-size: 10px; color: #667; text-align: center; margin-top: 4px; }
+  .panel { background: #fff; border: 1px solid var(--linea); border-radius: 10px; padding: 4px 14px; margin-bottom: 10px; }
+  .panel summary { font-size: 14px; font-weight: 600; padding: 8px 0; cursor: pointer; }
+  .panel ul { margin: 4px 0 12px; padding-left: 18px; font-size: 13px; }
+  .panel li { margin-bottom: 3px; }
+  .mover { margin-top: 4px; }
+  .mover input[list] { width: 100%; font-size: 12px; padding: 6px 8px; }
+
+  #recorte-fondo { position: fixed; inset: 0; background: rgba(20, 30, 22, 0.55); display: flex; align-items: center; justify-content: center; z-index: 20; }
+  #recorte-fondo[hidden] { display: none; }
+  #recorte-caja { background: #fff; border-radius: 12px; padding: 16px; max-width: min(94vw, 1040px); }
+  #recorte-caja p { margin: 0 0 10px; font-size: 13px; color: #445; }
+  #recorte-cuerpo { display: flex; gap: 18px; align-items: flex-start; flex-wrap: wrap; }
+  #recorte-marco { position: relative; display: inline-block; touch-action: none; cursor: crosshair; }
+  #recorte-marco img { display: block; max-width: min(70vw, 620px); max-height: 60vh; user-select: none; -webkit-user-drag: none; }
+  #recorte-sel { position: absolute; border: 2px solid #fff; outline: 2px dashed var(--verde); background: rgba(27, 94, 32, 0.18); pointer-events: none; }
+  .recorte-botones { display: flex; gap: 8px; margin-top: 12px; }
 </style>
 </head>
 <body>
 <header>
-  <h1>Revisión de fotos</h1>
+  <h1>Fotos del catálogo</h1>
+  <input id="buscador" type="search" placeholder="Buscar producto por nombre o SKU…" oninput="pintar()">
   <span id="estado"></span>
+  <button id="btn-deshacer" onclick="deshacer()" disabled>Deshacer</button>
   <button class="primario" onclick="guardar(false)">Guardar</button>
   <button class="primario" onclick="guardar(true)">Guardar y terminar</button>
 </header>
 <main>
   <div id="contenido"></div>
 </main>
+<div id="recorte-fondo" hidden onclick="if (event.target === this) cerrarRecorte()">
+  <div id="recorte-caja">
+    <p>Arrastra sobre la foto para marcar la parte que se verá. A la derecha, cómo queda en la tarjeta y en el círculo.</p>
+    <div id="recorte-cuerpo">
+      <div id="recorte-marco"
+           onpointerdown="recorteDown(event)" onpointermove="recorteMove(event)"
+           onpointerup="recorteUp()" onpointerleave="recorteUp()">
+        <img id="recorte-img" draggable="false">
+        <div id="recorte-sel" hidden></div>
+      </div>
+      <div>
+        <div class="ctx ctx-tarjeta" id="prev-tarjeta"></div>
+        <div class="ctx-titulo">Tarjeta / galería</div>
+        <div class="ctx ctx-circulo" id="prev-circulo" style="margin-top:12px"></div>
+        <div class="ctx-titulo">Círculo de cuidado</div>
+      </div>
+    </div>
+    <div class="recorte-botones">
+      <button class="primario" onclick="guardarRecorte()">Usar este recorte</button>
+      <button onclick="limpiarRecorte()">Sin recorte</button>
+      <button onclick="cerrarRecorte()">Cancelar</button>
+    </div>
+  </div>
+</div>
 <script>
 const DATOS = __DATOS__;
-const cambios = { asignar: {}, descartar: {}, principal: {} };
+let cambios = { asignar: {}, descartar: {}, quitar: {}, principal: {}, hover: {}, circulo: {}, recortes: {} };
+
+// --- Deshacer: una pila de instantáneas del estado local (nada esta
+// guardado hasta pulsar Guardar, así que revertir es solo restaurar). ---
+const pila = [];
+
+function accion(etiqueta) {
+  pila.push({ etiqueta, estado: structuredClone({
+    cambios, asignados: DATOS.asignados, fotos: DATOS.fotos, sueltas: DATOS.sueltas, grupos: DATOS.grupos,
+  }) });
+  if (pila.length > 80) pila.shift();
+}
+
+function deshacer() {
+  const ultimo = pila.pop();
+  if (!ultimo) return;
+  cambios = ultimo.estado.cambios;
+  DATOS.asignados = ultimo.estado.asignados;
+  DATOS.fotos = ultimo.estado.fotos;
+  DATOS.sueltas = ultimo.estado.sueltas;
+  DATOS.grupos = ultimo.estado.grupos;
+  pintar();
+  refrescarEstado();
+}
+
+function normalizar(s) {
+  return (s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-');
+}
 
 function opcionesProductos() {
   return DATOS.productos.map(p => `<option value="${p.sku} — ${p.nombre}"></option>`).join('');
@@ -518,90 +678,423 @@ function skuDeEntrada(valor) {
   return DATOS.productos.some(p => p.sku === sku) ? sku : null;
 }
 
+// Fichas de foto ----------------------------------------------------------
+
+function fichaPendiente(h) {
+  const descartada = cambios.descartar[h] ? 'descartada' : '';
+  return `
+    <figure id="fig-${h}" class="${descartada}">
+      <img src="/miniatura/${h}" alt="">
+      <figcaption>${DATOS.fotos[h].archivo}</figcaption>
+      <input list="productos" placeholder="¿Qué es?" oninput="asignarFoto('${h}', this)">
+      <div class="acciones"><button onclick="alternarDescarte('${h}')">Descartar</button></div>
+    </figure>`;
+}
+
+function fichaAsignada(prod, h) {
+  const marcas = [
+    prod.principal === h ? '<span class="et et-verde">PRINCIPAL</span>' : '',
+    prod.hover === h ? '<span class="et et-azul">HOVER</span>' : '',
+    prod.circulo === h ? '<span class="et et-lila">CÍRCULO</span>' : '',
+    DATOS.fotos[h].recorte ? '<span class="et et-gris">RECORTADA</span>' : '',
+  ].join('');
+  return `
+    <figure id="fig-${h}" class="${prod.principal === h ? 'principal' : ''}">
+      <img src="/miniatura/${h}" alt="">
+      <figcaption>${marcas}${DATOS.fotos[h].archivo}</figcaption>
+      <div class="acciones acciones-roles">
+        <button onclick="hacerPrincipal('${prod.sku}', '${h}')">Principal</button>
+        <button onclick="hacerHover('${prod.sku}', '${h}')">Hover</button>
+        <button onclick="hacerCirculo('${prod.sku}', '${h}')">Círculo</button>
+      </div>
+      <div class="acciones">
+        <button onclick="abrirRecorte('${h}')">Recortar</button>
+        <button onclick="alternarMover('${h}')">Mover a…</button>
+        <button onclick="desasignarFoto('${prod.sku}', '${h}')">Desasignar</button>
+        <button onclick="descartarAsignada('${prod.sku}', '${h}')">Descartar</button>
+      </div>
+      <div class="mover" id="mover-${h}" hidden>
+        <input list="productos" placeholder="Producto destino…" oninput="moverFoto('${prod.sku}', '${h}', this)">
+      </div>
+    </figure>`;
+}
+
+// Sospechosas: el nombre del archivo no cuadra con el producto asignado.
+function esSospechosa(prod, h) {
+  const stem = normalizar(DATOS.fotos[h].archivo.replace(/\.[a-z0-9]+$/i, ''));
+  const tokens = stem.split('-').filter(t =>
+    t.length >= 3 && !/^\d+$/.test(t) &&
+    !['photo', 'img', 'principal', 'hover', 'foto', 'plant', 'jpeg'].includes(t));
+  if (!tokens.length) return false;  // PHOTO-2026-… no dice nada
+  const objetivo = normalizar(`${prod.sku} ${prod.slug || ''} ${prod.nombre}`);
+  const palabras = objetivo.split('-').filter(p => p.length >= 4);
+  return !tokens.some(t => objetivo.includes(t) || palabras.some(p => t.includes(p)));
+}
+
 function pintar() {
   const c = document.getElementById('contenido');
+  const filtro = normalizar(document.getElementById('buscador').value).replace(/-/g, ' ');
   let html = '';
-  if (DATOS.grupos.length) {
-    html += `<h2>Fotos por asignar (${DATOS.grupos.reduce((n, g) => n + g.length, 0)})</h2>`;
-    html += `<p class="aviso">Escribe el producto del grupo (busca por nombre o SKU). Las fotos tomadas juntas vienen agrupadas; si una no pertenece al grupo, descártala aquí y asígnala en la siguiente corrida, o descártala para siempre.</p>`;
+
+  // Paneles -------------------------------------------------------------
+  const conFoto = new Set(DATOS.asignados.filter(p => p.fotos.length).map(p => p.sku));
+  const sinFoto = DATOS.productos.filter(p => !conFoto.has(p.sku));
+  const pendTotal = DATOS.grupos.reduce((n, g) => n + g.length, 0) + DATOS.sueltas.length;
+  const sospechosas = [];
+  DATOS.asignados.forEach(prod => prod.fotos.forEach(h => {
+    if (esSospechosa(prod, h)) sospechosas.push({ prod, h });
+  }));
+
+  html += `<details class="panel"><summary>Productos sin foto (${sinFoto.length})</summary><ul>` +
+    sinFoto.map(p => `<li>${p.sku} — ${p.nombre}</li>`).join('') + '</ul></details>';
+
+  html += `<details class="panel" ${pendTotal ? 'open' : ''}><summary>Fotos sin producto (${pendTotal})</summary>`;
+  if (pendTotal) {
+    html += `<p class="aviso">Escribe debajo de cada foto qué producto es (por nombre o SKU). El campo del grupo asigna el grupo entero; lo escrito foto por foto manda.</p>`;
     DATOS.grupos.forEach((grupo, gi) => {
       html += `<div class="grupo">
         <div class="grupo-cab">
-          <input list="productos" id="grupo-${gi}" placeholder="SKU o nombre del producto…"
-                 oninput="asignarGrupo(${gi}, this.value)">
+          <input list="productos" id="grupo-${gi}" placeholder="SKU o nombre para todo el grupo…" oninput="asignarGrupo(${gi}, this.value)">
           <span class="fecha">${DATOS.fotos[grupo[0]].fecha}</span>
         </div>
-        <div class="fila-fotos">` +
-        grupo.map(h => `
-          <figure id="fig-${h}">
-            <img src="/miniatura/${h}" alt="">
-            <figcaption>${DATOS.fotos[h].archivo}</figcaption>
-            <div class="acciones"><button onclick="alternarDescarte('${h}')">Descartar</button></div>
-          </figure>`).join('') +
-        `</div></div>`;
+        <div class="fila-fotos">` + grupo.map(fichaPendiente).join('') + '</div></div>';
     });
+    if (DATOS.sueltas.length) {
+      html += `<div class="grupo"><div class="grupo-cab"><span class="fecha">Sin archivo local (vienen de Cloudinary)</span></div>
+        <div class="fila-fotos">` + DATOS.sueltas.map(fichaPendiente).join('') + '</div></div>';
+    }
   } else {
-    html += '<p>No hay fotos nuevas por asignar.</p>';
+    html += '<ul><li>Ninguna.</li></ul>';
   }
-  if (DATOS.asignados.length) {
-    html += '<h2>Productos con fotos — clic en una foto para hacerla principal</h2>';
-    DATOS.asignados.forEach(prod => {
-      html += `<div class="prod"><h3>${prod.sku} — ${prod.nombre}</h3><div class="fila-fotos">` +
-        prod.fotos.map(h => `
-          <figure id="fig-${h}" class="${prod.principal === h ? 'principal' : ''}" style="cursor:pointer"
-                  onclick="hacerPrincipal('${prod.sku}', '${h}')">
-            <img src="/miniatura/${h}" alt="" title="Hacer principal">
-            <figcaption>${prod.principal === h ? '<span class=marca-principal>PRINCIPAL</span> ' : ''}${DATOS.fotos[h].archivo}</figcaption>
-          </figure>`).join('') +
-        `</div></div>`;
-    });
-  }
+  html += '</details>';
+
+  html += `<details class="panel"><summary>Asignaciones sospechosas (${sospechosas.length})</summary><ul>` +
+    (sospechosas.length
+      ? sospechosas.map(s => `<li><b>${DATOS.fotos[s.h].archivo}</b> está en ${s.prod.sku} — ${s.prod.nombre}</li>`).join('')
+      : '<li>Ninguna: todos los nombres de archivo cuadran.</li>') +
+    '</ul></details>';
+
+  // Productos con fotos --------------------------------------------------
+  html += '<h2>Productos con fotos</h2>';
+  html += `<p class="aviso"><b>Principal</b> = tarjeta y 1ª de la galería · <b>Hover</b> = 2ª (al pasar el mouse) · <b>Círculo</b> = "Cuidado de…" · <b>Recortar</b> = elegir qué parte se ve · <b>Mover a…</b> = a otro producto · <b>Desasignar</b> = vuelve a pendientes · <b>Descartar</b> = eliminar del sitio. Pasa el mouse sobre la mini-tarjeta para ver el hover como en el sitio.</p>`;
+  DATOS.asignados.forEach(prod => {
+    if (!prod.fotos.length) return;
+    if (filtro && !normalizar(`${prod.sku} ${prod.nombre}`).replace(/-/g, ' ').includes(filtro)) return;
+    const circulo = prod.circulo || prod.principal;
+    html += `<div class="prod"><h3>${prod.sku} — ${prod.nombre}</h3>
+      <div class="pareja">
+        <div>
+          <div class="ctx ctx-tarjeta" data-ctx data-h="${prod.principal || ''}">
+            ${prod.hover ? `<div class="ctx-capa" data-ctx data-h="${prod.hover}"></div>` : ''}
+          </div>
+          <div class="ctx-titulo">Tarjeta ${prod.hover ? '(pasa el mouse: hover)' : '(sin hover)'}</div>
+        </div>
+        <div>
+          <div class="ctx ctx-circulo" data-ctx data-h="${circulo || ''}"></div>
+          <div class="ctx-titulo">Círculo</div>
+        </div>
+      </div>
+      <div class="fila-fotos">` + prod.fotos.map(h => fichaAsignada(prod, h)).join('') + '</div></div>';
+  });
+
   html += `<datalist id="productos">${opcionesProductos()}</datalist>`;
   c.innerHTML = html;
+  aplicarContextos();
+  actualizarDeshacer();
 }
+
+// --- Previsualizaciones fieles: misma matemática de cover que el sitio ---
+const dimensiones = {};  // hash -> {w, h}
+
+function conDimensiones(h, fn) {
+  if (dimensiones[h]) { fn(dimensiones[h]); return; }
+  const img = new Image();
+  img.onload = () => { dimensiones[h] = { w: img.naturalWidth, h: img.naturalHeight }; fn(dimensiones[h]); };
+  img.src = `/foto/${h}`;
+}
+
+function pintarCover(el, h, rec) {
+  if (!h) { el.style.backgroundImage = ''; return; }
+  conDimensiones(h, dim => {
+    const cw = el.clientWidth, ch = el.clientHeight;
+    if (!cw || !ch) return;
+    const [rx, ry, rw, rh] = rec || [0, 0, 1, 1];
+    const escala = Math.max(cw / (rw * dim.w), ch / (rh * dim.h));
+    el.style.backgroundImage = `url('/foto/${h}')`;
+    el.style.backgroundSize = `${dim.w * escala}px ${dim.h * escala}px`;
+    el.style.backgroundPosition =
+      `${cw / 2 - (rx + rw / 2) * dim.w * escala}px ${ch / 2 - (ry + rh / 2) * dim.h * escala}px`;
+  });
+}
+
+function aplicarContextos() {
+  document.querySelectorAll('[data-ctx]').forEach(el => {
+    const h = el.dataset.h;
+    pintarCover(el, h, h && (h in cambios.recortes ? cambios.recortes[h] : DATOS.fotos[h]?.recorte));
+  });
+}
+
+// --- Acciones sobre pendientes ---
+const individuales = {};
 
 function asignarGrupo(gi, valor) {
   const sku = skuDeEntrada(valor);
   document.getElementById(`grupo-${gi}`).style.borderColor = sku ? 'var(--verde)' : '';
+  accion('asignar grupo');
   DATOS.grupos[gi].forEach(h => {
-    if (!cambios.descartar[h]) cambios.asignar[h] = sku;
+    if (!cambios.descartar[h] && !individuales[h]) cambios.asignar[h] = sku;
   });
   refrescarEstado();
 }
 
+function asignarFoto(h, campo) {
+  const valor = campo.value;
+  const sku = skuDeEntrada(valor);
+  individuales[h] = Boolean(valor.trim());
+  accion('asignar foto');
+  if (sku) {
+    cambios.asignar[h] = sku;
+    delete cambios.descartar[h];
+    document.getElementById(`fig-${h}`).classList.remove('descartada');
+  } else {
+    delete cambios.asignar[h];
+  }
+  campo.style.borderColor = sku ? 'var(--verde)' : (valor.trim() ? '#c62828' : '');
+  refrescarEstado();
+}
+
 function alternarDescarte(h) {
+  accion('descartar');
   cambios.descartar[h] = !cambios.descartar[h];
-  if (cambios.descartar[h]) delete cambios.asignar[h];
+  if (cambios.descartar[h]) { delete cambios.asignar[h]; delete cambios.quitar[h]; }
   document.getElementById(`fig-${h}`).classList.toggle('descartada', cambios.descartar[h]);
   refrescarEstado();
 }
 
+// --- Acciones sobre fotos asignadas ---
+function prodDe(sku) { return DATOS.asignados.find(p => p.sku === sku); }
+
+function sacarDeProducto(prod, h) {
+  prod.fotos = prod.fotos.filter(x => x !== h);
+  if (prod.principal === h) prod.principal = prod.fotos[0] || null;
+  if (prod.hover === h) prod.hover = null;
+  if (prod.circulo === h) prod.circulo = null;
+}
+
 function hacerPrincipal(sku, h) {
+  accion('principal');
+  const prod = prodDe(sku);
   cambios.principal[sku] = h;
-  const prod = DATOS.asignados.find(p => p.sku === sku);
   prod.principal = h;
-  pintar();
-  refrescarEstado();
+  if (prod.hover === h) prod.hover = null;
+  pintar(); refrescarEstado();
+}
+
+function hacerHover(sku, h) {
+  accion('hover');
+  const prod = prodDe(sku);
+  cambios.hover[sku] = h;
+  prod.hover = h;
+  if (prod.principal === h) prod.principal = null;
+  pintar(); refrescarEstado();
+}
+
+function hacerCirculo(sku, h) {
+  accion('círculo');
+  const prod = prodDe(sku);
+  cambios.circulo[sku] = prod.circulo === h ? null : h;
+  prod.circulo = cambios.circulo[sku];
+  pintar(); refrescarEstado();
+}
+
+function alternarMover(h) {
+  const div = document.getElementById(`mover-${h}`);
+  div.hidden = !div.hidden;
+  if (!div.hidden) div.querySelector('input').focus();
+}
+
+function moverFoto(skuOrigen, h, campo) {
+  const sku = skuDeEntrada(campo.value);
+  campo.style.borderColor = sku ? 'var(--verde)' : (campo.value.trim() ? '#c62828' : '');
+  if (!sku || sku === skuOrigen) return;
+  accion('mover');
+  sacarDeProducto(prodDe(skuOrigen), h);
+  let destino = prodDe(sku);
+  if (!destino) {
+    const p = DATOS.productos.find(x => x.sku === sku);
+    destino = { sku, nombre: p.nombre, slug: p.slug, fotos: [], principal: null, hover: null, circulo: null };
+    DATOS.asignados.push(destino);
+    DATOS.asignados.sort((a, b) => a.sku.localeCompare(b.sku));
+  }
+  destino.fotos.push(h);
+  if (!destino.principal) destino.principal = h;
+  cambios.asignar[h] = sku;
+  delete cambios.quitar[h];
+  delete cambios.descartar[h];
+  pintar(); refrescarEstado();
+}
+
+function desasignarFoto(sku, h) {
+  accion('desasignar');
+  sacarDeProducto(prodDe(sku), h);
+  DATOS.sueltas.push(h);
+  cambios.quitar[h] = true;
+  delete cambios.asignar[h];
+  pintar(); refrescarEstado();
+}
+
+function descartarAsignada(sku, h) {
+  accion('descartar');
+  sacarDeProducto(prodDe(sku), h);
+  cambios.descartar[h] = true;
+  delete cambios.asignar[h];
+  delete cambios.quitar[h];
+  pintar(); refrescarEstado();
+}
+
+// --- Recorte -------------------------------------------------------------
+let hRecorte = null;
+let selInicio = null;
+
+function recorteActual() {
+  return hRecorte in cambios.recortes ? cambios.recortes[hRecorte] : DATOS.fotos[hRecorte].recorte;
+}
+
+function abrirRecorte(h) {
+  hRecorte = h;
+  const img = document.getElementById('recorte-img');
+  const sel = document.getElementById('recorte-sel');
+  sel.hidden = true;
+  img.onload = () => {
+    const rec = recorteActual();
+    if (rec) pintarSel(rec);
+    previsualizarRecorte(rec);
+  };
+  img.src = `/foto/${h}`;
+  document.getElementById('recorte-fondo').hidden = false;
+  if (img.complete && img.naturalWidth) img.onload();
+}
+
+function previsualizarRecorte(rec) {
+  pintarCover(document.getElementById('prev-tarjeta'), hRecorte, rec);
+  pintarCover(document.getElementById('prev-circulo'), hRecorte, rec);
+}
+
+function pintarSel([x, y, w, h]) {
+  const img = document.getElementById('recorte-img');
+  const sel = document.getElementById('recorte-sel');
+  sel.style.left = `${x * img.clientWidth}px`;
+  sel.style.top = `${y * img.clientHeight}px`;
+  sel.style.width = `${w * img.clientWidth}px`;
+  sel.style.height = `${h * img.clientHeight}px`;
+  sel.hidden = false;
+}
+
+function seleccionFracciones() {
+  const img = document.getElementById('recorte-img');
+  const sel = document.getElementById('recorte-sel');
+  if (sel.hidden || sel.offsetWidth < 10 || sel.offsetHeight < 10) return null;
+  return [
+    sel.offsetLeft / img.clientWidth,
+    sel.offsetTop / img.clientHeight,
+    sel.offsetWidth / img.clientWidth,
+    sel.offsetHeight / img.clientHeight,
+  ].map(v => Math.round(v * 10000) / 10000);
+}
+
+function puntoEnImagen(ev) {
+  const r = document.getElementById('recorte-img').getBoundingClientRect();
+  return [
+    Math.min(Math.max(ev.clientX - r.left, 0), r.width),
+    Math.min(Math.max(ev.clientY - r.top, 0), r.height),
+  ];
+}
+
+function recorteDown(ev) {
+  ev.preventDefault();
+  selInicio = puntoEnImagen(ev);
+}
+
+function recorteMove(ev) {
+  if (!selInicio) return;
+  const [x2, y2] = puntoEnImagen(ev);
+  const img = document.getElementById('recorte-img');
+  pintarSel([
+    Math.min(selInicio[0], x2) / img.clientWidth,
+    Math.min(selInicio[1], y2) / img.clientHeight,
+    Math.abs(x2 - selInicio[0]) / img.clientWidth,
+    Math.abs(y2 - selInicio[1]) / img.clientHeight,
+  ]);
+  previsualizarRecorte(seleccionFracciones());
+}
+
+function recorteUp() {
+  if (selInicio) previsualizarRecorte(seleccionFracciones() || recorteActual());
+  selInicio = null;
+}
+
+function guardarRecorte() {
+  const rec = seleccionFracciones();
+  if (rec) {
+    accion('recorte');
+    cambios.recortes[hRecorte] = rec;
+    DATOS.fotos[hRecorte].recorte = rec;
+  }
+  cerrarRecorte(); pintar(); refrescarEstado();
+}
+
+function limpiarRecorte() {
+  accion('recorte');
+  cambios.recortes[hRecorte] = null;
+  DATOS.fotos[hRecorte].recorte = null;
+  cerrarRecorte(); pintar(); refrescarEstado();
+}
+
+function cerrarRecorte() {
+  document.getElementById('recorte-fondo').hidden = true;
+  hRecorte = null;
+  selInicio = null;
+}
+
+// --- Estado y guardado ---------------------------------------------------
+function actualizarDeshacer() {
+  const b = document.getElementById('btn-deshacer');
+  b.disabled = !pila.length;
+  b.textContent = pila.length ? `Deshacer (${pila[pila.length - 1].etiqueta})` : 'Deshacer';
 }
 
 function refrescarEstado() {
   const n = Object.values(cambios.asignar).filter(Boolean).length +
     Object.values(cambios.descartar).filter(Boolean).length +
-    Object.keys(cambios.principal).length;
+    Object.values(cambios.quitar).filter(Boolean).length +
+    Object.keys(cambios.principal).length +
+    Object.keys(cambios.hover).length +
+    Object.keys(cambios.circulo).length +
+    Object.keys(cambios.recortes).length;
   document.getElementById('estado').textContent = n ? `${n} decisiones sin guardar` : '';
+  actualizarDeshacer();
 }
 
 async function guardar(terminar) {
   const carga = {
     asignar: Object.fromEntries(Object.entries(cambios.asignar).filter(([, v]) => v)),
     descartar: Object.keys(cambios.descartar).filter(h => cambios.descartar[h]),
+    quitar: Object.keys(cambios.quitar).filter(h => cambios.quitar[h]),
     principal: cambios.principal,
+    hover: cambios.hover,
+    circulo: cambios.circulo,
+    recortes: cambios.recortes,
     terminar,
   };
+  document.getElementById('estado').textContent = 'Guardando… (si hay fotos movidas, se re-suben a Cloudinary)';
   const resp = await fetch('/decisiones', { method: 'POST', body: JSON.stringify(carga) });
-  if (!resp.ok) { alert('No se pudieron guardar las decisiones.'); return; }
+  if (!resp.ok) {
+    document.getElementById('estado').textContent = '';
+    alert('No se pudieron guardar las decisiones.');
+    return;
+  }
   if (terminar) {
-    document.body.innerHTML = '<main><h1>Listo.</h1><p>Ya puedes volver a la terminal: el script sigue con la subida.</p></main>';
+    document.body.innerHTML = '<main><h1>Listo.</h1><p>Decisiones guardadas y fotos.json regenerado. Ya puedes cerrar esta pestaña.</p></main>';
   } else {
     location.reload();
   }
@@ -617,28 +1110,53 @@ pintar();
 def datos_revision(mapa, rutas, productos):
     nombres = {p["sku"]: p["nombre"] for p in productos}
     por_sku = fotos_por_sku(mapa, solo_subidas=False)
+    mano = mano_por_sku(mapa, solo_subidas=False)
     asignados = []
     for sku in sorted(por_sku):
-        fotos = [h for h in por_sku[sku] if h in rutas]
-        if not fotos:
-            continue
+        # TODAS las fotos del producto, tambien las de tandas viejas que ya
+        # no estan en la carpeta (la miniatura sale de Cloudinary).
+        fotos = por_sku[sku]
         asignados.append({
             "sku": sku,
             "nombre": nombres.get(sku, "(fuera del catalogo)"),
             "fotos": fotos,
             "principal": fotos[0],
+            "hover": fotos[1] if len(fotos) > 1 else None,
+            "circulo": mano.get(sku),
         })
+    # Pendientes de tandas viejas (o desasignadas) sin archivo en la carpeta:
+    # no entran a los grupos por fecha, van sueltas (miniatura via Cloudinary).
+    sueltas = [h for h in pendientes_de(mapa) if h not in rutas]
+    sueltas.sort(key=lambda h: mapa["fotos"][h]["archivo"])
     return {
-        "productos": [{"sku": p["sku"], "nombre": p["nombre"]} for p in productos],
-        "fotos": {h: {"archivo": e["archivo"], "fecha": e["fecha"]} for h, e in mapa["fotos"].items()},
+        "productos": [
+            {"sku": p["sku"], "nombre": p["nombre"], "slug": p["slug"]}
+            for p in productos
+        ],
+        "fotos": {
+            h: {
+                "archivo": e["archivo"],
+                "fecha": e["fecha"],
+                "recorte": e.get("recorte"),
+            }
+            for h, e in mapa["fotos"].items()
+        },
         "grupos": grupos_pendientes(mapa, rutas),
+        "sueltas": sueltas,
         "asignados": asignados,
     }
 
 
-def servir_revision(mapa, rutas, productos, puerto):
+def servir_revision(env, mapa, rutas, productos, puerto):
     """Levanta la pagina en localhost y bloquea hasta 'Guardar y terminar'."""
     terminado = threading.Event()
+    base_cloud = f"https://res.cloudinary.com/{env['CLOUDINARY_CLOUD_NAME']}/image/upload"
+
+    def url_cloud(h, ancho):
+        e = mapa["fotos"].get(h)
+        if e and e.get("subida") and e.get("sku"):
+            return f"{base_cloud}/f_jpg,c_fit,w_{ancho}/productos/{e['sku']}/{h}"
+        return None
 
     class Manejador(BaseHTTPRequestHandler):
         def log_message(self, *args):
@@ -663,6 +1181,36 @@ def servir_revision(mapa, rutas, productos, puerto):
                     with open(ruta, "rb") as f:
                         self.responder(f.read(), "image/jpeg")
                 else:
+                    # Foto de una tanda vieja sin archivo local: la sirve
+                    # Cloudinary, que la tiene subida.
+                    remota = url_cloud(h, 300)
+                    if remota:
+                        self.send_response(302)
+                        self.send_header("Location", remota)
+                        self.end_headers()
+                    else:
+                        self.responder(b"no", "text/plain", 404)
+            elif self.path.startswith("/foto/"):
+                # Vista grande para el recorte.
+                h = self.path.rsplit("/", 1)[1]
+                if h in rutas:
+                    os.makedirs(MINIATURAS_DIR, exist_ok=True)
+                    destino = os.path.join(MINIATURAS_DIR, f"{h}-grande.jpg")
+                    if not os.path.exists(destino):
+                        subprocess.run(
+                            ["sips", "-Z", "1100", "-s", "format", "jpeg", rutas[h], "--out", destino],
+                            capture_output=True, timeout=30,
+                        )
+                    if os.path.exists(destino):
+                        with open(destino, "rb") as f:
+                            self.responder(f.read(), "image/jpeg")
+                        return
+                remota = url_cloud(h, 1100)
+                if remota:
+                    self.send_response(302)
+                    self.send_header("Location", remota)
+                    self.end_headers()
+                else:
                     self.responder(b"no", "text/plain", 404)
             else:
                 self.responder(b"no", "text/plain", 404)
@@ -676,17 +1224,85 @@ def servir_revision(mapa, rutas, productos, puerto):
             skus_validos = {p["sku"] for p in productos}
             for h, sku in carga.get("asignar", {}).items():
                 if h in mapa["fotos"] and sku in skus_validos:
-                    mapa["fotos"][h]["sku"] = sku
-                    mapa["fotos"][h]["descartada"] = False
+                    entrada = mapa["fotos"][h]
+                    if entrada.get("sku") != sku:
+                        if entrada["subida"]:
+                            # En Cloudinary vive bajo el SKU viejo: recordarlo
+                            # (para recuperar el original) y re-subirla.
+                            entrada.setdefault("cloud_sku", entrada.get("sku"))
+                            entrada["subida"] = False
+                        # Los roles no viajan al producto nuevo.
+                        entrada["principal"] = False
+                        entrada["hover"] = False
+                        entrada["mano"] = False
+                        entrada["orden"] = None
+                    entrada["sku"] = sku
+                    entrada["descartada"] = False
+            for h in carga.get("quitar", []):
+                # Vuelve a pendientes: pierde el producto pero se puede reasignar.
+                if h in mapa["fotos"]:
+                    entrada = mapa["fotos"][h]
+                    if entrada["subida"]:
+                        entrada.setdefault("cloud_sku", entrada.get("sku"))
+                    entrada["sku"] = None
+                    entrada["orden"] = None
+                    entrada["principal"] = False
+                    entrada["hover"] = False
+                    entrada["mano"] = False
+                    entrada["descartada"] = False
+                    entrada.pop("maceta", None)
             for h in carga.get("descartar", []):
-                if h in mapa["fotos"] and not mapa["fotos"][h]["subida"]:
+                # Tambien las ya subidas: solo salen de fotos.json, Cloudinary
+                # guarda el archivo pero nada lo referencia.
+                if h in mapa["fotos"]:
                     mapa["fotos"][h]["descartada"] = True
                     mapa["fotos"][h]["sku"] = None
+                    mapa["fotos"][h]["principal"] = False
             for sku, h in carga.get("principal", {}).items():
                 for otro, e in mapa["fotos"].items():
                     if e["sku"] == sku:
                         e["principal"] = otro == h
+                        if otro == h:
+                            e["hover"] = False  # una foto no es ambas cosas
+            for sku, h in carga.get("hover", {}).items():
+                for otro, e in mapa["fotos"].items():
+                    if e["sku"] == sku:
+                        e["hover"] = otro == h
+                        if otro == h:
+                            e["principal"] = False
+            for sku, h in carga.get("circulo", {}).items():
+                # h puede ser null: ningun circulo explicito para ese SKU.
+                for otro, e in mapa["fotos"].items():
+                    if e["sku"] == sku:
+                        e["mano"] = otro == h
+            for h, rec in carga.get("recortes", {}).items():
+                if h not in mapa["fotos"]:
+                    continue
+                if not rec:
+                    mapa["fotos"][h].pop("recorte", None)
+                    continue
+                try:
+                    x, y, w, alto = (round(float(v), 4) for v in rec)
+                except (TypeError, ValueError):
+                    continue
+                if 0 <= x < 1 and 0 <= y < 1 and 0.02 < w <= 1 and 0.02 < alto <= 1:
+                    if w > 0.98 and alto > 0.98:
+                        mapa["fotos"][h].pop("recorte", None)  # casi entera
+                    else:
+                        mapa["fotos"][h]["recorte"] = [x, y, min(w, 1 - x), min(alto, 1 - y)]
             guardar_mapa(mapa)
+            # El guardado deja todo aplicado: se recuperan los originales de
+            # las fotos movidas (si ya no estan en la carpeta), se re-suben
+            # bajo su SKU nuevo y se regenera fotos.json — el dev server del
+            # sitio lo recoge al instante.
+            for h, e in mapa["fotos"].items():
+                if e["sku"] and not e["descartada"] and not e["subida"] and h not in rutas:
+                    ruta = descargar_original(env, e, h)
+                    if ruta:
+                        rutas[h] = ruta
+            subir_pendientes(env, mapa, rutas)
+            guardar_mapa(mapa)
+            generar_fotos_json(env, mapa)
             self.responder(b'{"ok": true}', "application/json")
             if carga.get("terminar"):
                 terminado.set()
@@ -710,6 +1326,9 @@ def main():
     parser.add_argument("carpeta", nargs="?", help="Carpeta plana con las fotos del celular")
     parser.add_argument("--sin-revision", action="store_true")
     parser.add_argument("--solo-revision", action="store_true")
+    parser.add_argument("--catalogo", action="store_true",
+                        help="abre la herramienta del catalogo de fotos "
+                             "(la carpeta es opcional: lo remoto sale de Cloudinary)")
     parser.add_argument("--puerto", type=int, default=8765)
     parser.add_argument("--reiniciar", action="store_true")
     parser.add_argument("--borrar-cloudinary", action="store_true")
@@ -728,26 +1347,28 @@ def main():
             borrar_cloudinary(env)
         return
 
-    if not args.carpeta:
-        parser.error("falta la carpeta de fotos (o una de --reiniciar / --borrar-cloudinary)")
-    carpeta = os.path.expanduser(args.carpeta)
-    if not os.path.isdir(carpeta):
-        sys.exit(f"No existe la carpeta {carpeta}")
+    if not args.carpeta and not args.catalogo:
+        parser.error("falta la carpeta de fotos (o una de --catalogo / --reiniciar / --borrar-cloudinary)")
 
     env = cargar_env()
     productos, fotos_previas = cargar_catalogo()
     mapa = cargar_mapa()
 
-    rutas, nuevas = escanear(carpeta, mapa)
-    asignadas = emparejar(mapa, list(mapa["fotos"]), productos, fotos_previas)
-    guardar_mapa(mapa)
-    print(f"Fotos en la carpeta: {len(rutas)} ({len(nuevas)} nuevas)")
-    if asignadas:
-        print(f"Asignadas solas por nombre: {len(asignadas)}")
+    rutas, nuevas = {}, []
+    if args.carpeta:
+        carpeta = os.path.expanduser(args.carpeta)
+        if not os.path.isdir(carpeta):
+            sys.exit(f"No existe la carpeta {carpeta}")
+        rutas, nuevas = escanear(carpeta, mapa)
+        asignadas = emparejar(mapa, list(mapa["fotos"]), productos, fotos_previas)
+        guardar_mapa(mapa)
+        print(f"Fotos en la carpeta: {len(rutas)} ({len(nuevas)} nuevas)")
+        if asignadas:
+            print(f"Asignadas solas por nombre: {len(asignadas)}")
 
     pendientes = [h for h in pendientes_de(mapa) if h in rutas]
-    if (pendientes and not args.sin_revision) or args.solo_revision:
-        servir_revision(mapa, rutas, productos, args.puerto)
+    if (pendientes and not args.sin_revision) or args.solo_revision or args.catalogo:
+        servir_revision(env, mapa, rutas, productos, args.puerto)
         mapa = cargar_mapa()  # relee las decisiones guardadas
         pendientes = [h for h in pendientes_de(mapa) if h in rutas]
 
