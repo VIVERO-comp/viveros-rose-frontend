@@ -157,6 +157,20 @@ export const products: Product[] = [
     size: 'pequena',
   },
   {
+    sku: 'PL-ALCANCEL',
+    slug: 'alcancel',
+    category: 'interior',
+    name: 'Alcancel',
+    scientificName: '',
+    price: 3,
+    description:
+      'Alcancel de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
+    care: { light: 'Luz indirecta brillante', water: '1–2 veces por semana', difficulty: 'Facil' },
+    available: 0,
+    emoji: '🪴',
+    size: 'pequena',
+  },
+  {
     sku: 'PL-ALOCASIA-GIGANTE-VARIEGADA',
     slug: 'alocasia-gigante-variegada',
     category: 'interior',
