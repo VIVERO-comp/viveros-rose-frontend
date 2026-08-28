@@ -24,9 +24,13 @@ interface Props {
   // content="noindex"> y quedan tambien filtradas del sitemap en
   // astro.config.mjs.
   noindex?: boolean;
-  // Ruta de un web app manifest (solo /repartidor: lo hace instalable como
-  // app en la pantalla de inicio del celular).
+  // Ruta de un web app manifest (/repartidor y /admin: los hace instalables
+  // como app en la pantalla de inicio del celular).
   manifest?: string;
+  // Icono de "Agregar a pantalla de inicio" en iPhone (iOS usa este link,
+  // no el manifest). Se cambia por pagina para que las apps instaladas se
+  // distingan entre si (/repartidor usa la moto; /admin conserva el logo).
+  appleTouchIcon?: string;
 }
 
 const {
@@ -39,6 +43,7 @@ const {
   minimalLinkLabel = 'Seguir comprando',
   noindex = false,
   manifest,
+  appleTouchIcon = '/apple-touch-icon.png',
 } = Astro.props;
 
 // La canonica usa solo el pathname: las variantes del catalogo con parametros
@@ -58,7 +63,7 @@ const socialImageUrl = new URL(socialImage, Astro.site).href;
     <!-- El .ico es el respaldo para Safari, que no soporta favicons SVG. -->
     <link rel="icon" href="/favicon.ico" sizes="32x32" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="apple-touch-icon" href={appleTouchIcon} />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <!-- Instrument Serif (italica) solo se usa en los heros de las paginas
