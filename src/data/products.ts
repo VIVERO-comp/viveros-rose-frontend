@@ -188,7 +188,7 @@ export const products: Product[] = [
     sku: 'PL-ANTHURIO-FLOR',
     slug: 'anturio',
     category: 'florales',
-    name: 'Anturio',
+    name: 'Anturios',
     scientificName: '',
     price: 5, // pendiente de precio en Odoo
     description:
@@ -652,7 +652,7 @@ export const products: Product[] = [
     sku: 'PL-EPISCIAS-VR',
     slug: 'episcias-vr',
     category: 'interior',
-    name: 'Episcias vr',
+    name: 'Episcias',
     scientificName: '',
     price: 5, // pendiente de precio en Odoo
     description:
@@ -722,7 +722,7 @@ export const products: Product[] = [
     sku: 'PL-FICUS-LYRATA-3-RAMAS',
     slug: 'ficus-lyrata-3-ramas-hasta-175cm',
     category: 'interior',
-    name: 'Ficus lyrata 3 ramas (hasta 175cm)',
+    name: 'Ficus lyrata 3 ramas',
     scientificName: '',
     price: 5, // pendiente de precio en Odoo
     description:
@@ -778,7 +778,7 @@ export const products: Product[] = [
     sku: 'PL-GINGER',
     slug: 'ginger',
     category: 'florales',
-    name: 'Ginger',
+    name: 'Ginger variagada',
     scientificName: '',
     price: 5, // pendiente de precio en Odoo
     description:
@@ -1265,20 +1265,6 @@ export const products: Product[] = [
     size: 'pequena',
   },
   {
-    sku: 'PL-PALMA-CUBANA',
-    slug: 'palma-cubana',
-    category: 'exterior',
-    name: 'Palma cubana',
-    scientificName: '',
-    price: 5, // pendiente de precio en Odoo
-    description:
-      'Palma cubana de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Sol pleno', water: '2–3 veces por semana', difficulty: 'Facil' },
-    available: 0,
-    emoji: '🌴',
-    size: 'grande',
-  },
-  {
     sku: 'PL-DRACAENA-ROJA',
     slug: 'dracaena-roja',
     category: 'interior',
@@ -1289,7 +1275,7 @@ export const products: Product[] = [
       'Dracaena roja de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
     care: { light: 'Sol pleno', water: '2–3 veces por semana', difficulty: 'Facil' },
     available: 0,
-    emoji: '🌴',
+    emoji: '🪴',
     size: 'mediana',
   },
   {
@@ -1699,20 +1685,6 @@ export const products: Product[] = [
     size: 'pequena',
   },
   {
-    sku: 'PL-PURPLE-LADY-EN-BOLSA',
-    slug: 'purple-lady-en-bolsa',
-    category: 'interior',
-    name: 'Purple lady en bolsa',
-    scientificName: '',
-    price: 5, // pendiente de precio en Odoo
-    description:
-      'Purple lady en bolsa de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Luz indirecta brillante', water: '1–2 veces por semana', difficulty: 'Facil' },
-    available: 0,
-    emoji: '🪴',
-    size: 'pequena',
-  },
-  {
     sku: 'PL-ROMERO',
     slug: 'romero',
     category: 'exterior',
@@ -1811,20 +1783,6 @@ export const products: Product[] = [
     size: 'pequena',
   },
   {
-    sku: 'PL-SALVIA-ESPLENDA',
-    slug: 'salvia-esplenda',
-    category: 'florales',
-    name: 'Salvia esplenda',
-    scientificName: '',
-    price: 5, // pendiente de precio en Odoo
-    description:
-      'Salvia esplenda de nuestro vivero en Panamá. Foto y descripción detallada muy pronto; consúltanos por tamaños disponibles.',
-    care: { light: 'Sol pleno', water: 'Diario o interdiario', difficulty: 'Facil' },
-    available: 0,
-    emoji: '🌺',
-    size: 'pequena',
-  },
-  {
     sku: 'PL-SUCULENTA-PEQUENA',
     slug: 'suculenta-pequena',
     category: 'interior',
@@ -1912,7 +1870,7 @@ export const products: Product[] = [
     sku: 'PL-MILLONARIA-ZAMIOCULCA-BLANCA',
     slug: 'zamiculca-variegada',
     category: 'interior',
-    name: 'Zamiculca variegada',
+    name: 'Millonaria zamiculca blanca',
     scientificName: '',
     price: 5, // pendiente de precio en Odoo
     description:
