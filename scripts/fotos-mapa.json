@@ -75,6 +75,18 @@
       "sku": "PL-LENGUA-DE-SUEGRA-ENANA",
       "subida": true
     },
+    "16276dc9dc6b": {
+      "archivo": "ixora.webp",
+      "cloud_sku": "PL-IXORA",
+      "descartada": true,
+      "fecha": "2026-08-28 17:21:30 +0000",
+      "hover": false,
+      "mano": false,
+      "orden": 1,
+      "principal": false,
+      "sku": null,
+      "subida": true
+    },
     "18f7ae9f65e4": {
       "archivo": "jazmin-blanco-enano.jpg",
       "descartada": false,
@@ -144,9 +156,10 @@
       "archivo": "suculentas-grande.jpeg",
       "descartada": false,
       "fecha": "2026-08-26 21:59:04 +0000",
+      "hover": false,
       "mano": false,
       "orden": 1,
-      "principal": false,
+      "principal": true,
       "sku": "PL-SUCULENTAS-GRANDE",
       "subida": true
     },
@@ -330,6 +343,18 @@
       "sku": "PL-LENGUA-DE-SUEGRA-MINI",
       "subida": true
     },
+    "425385fd4f22": {
+      "archivo": "millonaria-zamioculca-negra.png",
+      "cloud_sku": "PL-MILLONARIA-ZAMIOCULCA-NEGRA",
+      "descartada": true,
+      "fecha": "2026-08-28 17:21:30 +0000",
+      "hover": false,
+      "mano": false,
+      "orden": 1,
+      "principal": false,
+      "sku": null,
+      "subida": true
+    },
     "473aee587cda": {
       "archivo": "ficus-lyrata.jpg",
       "descartada": false,
@@ -390,6 +415,7 @@
       "archivo": "suculenta grande2.jpg",
       "descartada": false,
       "fecha": "2026-08-28 15:02:36 +0000",
+      "hover": false,
       "mano": true,
       "orden": 3,
       "principal": false,
@@ -414,6 +440,18 @@
       "sku": "PL-PINO-MONTESUMA",
       "subida": true
     },
+    "607a6e71fae2": {
+      "archivo": "esparrago-meyeri.webp",
+      "cloud_sku": "PL-ESPARRAGO-MEYERI",
+      "descartada": true,
+      "fecha": "2026-08-28 17:21:30 +0000",
+      "hover": false,
+      "mano": false,
+      "orden": 1,
+      "principal": false,
+      "sku": null,
+      "subida": true
+    },
     "625f062a1662": {
       "archivo": "PHOTO-2026-08-28-08-57-00_4.jpg",
       "descartada": true,
@@ -433,12 +471,15 @@
       "subida": true
     },
     "6ad5e5007536": {
-      "archivo": "PHOTO-2026-08-28-08-56-56_4.jpg",
+      "archivo": "novio chino.jpg",
+      "cloud_sku": "PL-NOVIO-CHINO",
       "descartada": false,
       "fecha": "2026-08-28 15:02:36 +0000",
+      "hover": false,
+      "mano": false,
       "orden": null,
       "principal": false,
-      "sku": "PL-CLAVEL-CHINO",
+      "sku": "PL-NOVIO-CHINO",
       "subida": true
     },
     "6ced31823982": {
@@ -489,6 +530,18 @@
       "sku": "PL-LENGUA-DE-SUEGRA-MINI",
       "subida": true
     },
+    "76f2df60cef2": {
+      "archivo": "millonaria-zamioculca.png",
+      "cloud_sku": "PL-MILLONARIA-ZAMIOCULCA",
+      "descartada": true,
+      "fecha": "2026-08-28 17:21:30 +0000",
+      "hover": false,
+      "mano": false,
+      "orden": 1,
+      "principal": false,
+      "sku": null,
+      "subida": true
+    },
     "7798a5e8d79e": {
       "archivo": "lengua-de-suegra-mini.jpeg",
       "descartada": false,
@@ -536,10 +589,23 @@
       "sku": "PLT-TORENIA-01",
       "subida": true
     },
+    "881ea34ef405": {
+      "archivo": "agave-gigante.webp",
+      "cloud_sku": "PL-AGAVE-GIGANTE",
+      "descartada": true,
+      "fecha": "2026-08-28 17:21:30 +0000",
+      "hover": false,
+      "mano": false,
+      "orden": 1,
+      "principal": false,
+      "sku": null,
+      "subida": true
+    },
     "89dc602d74f7": {
       "archivo": "suculentas grande.jpg",
       "descartada": false,
       "fecha": "2026-08-28 15:02:36 +0000",
+      "hover": true,
       "mano": false,
       "orden": 1,
       "principal": false,
@@ -655,6 +721,7 @@
       "archivo": "suculenta grande.jpg",
       "descartada": false,
       "fecha": "2026-08-28 15:02:38 +0000",
+      "hover": false,
       "mano": false,
       "orden": 2,
       "principal": false,
@@ -680,6 +747,18 @@
       "orden": 3,
       "principal": false,
       "sku": "PL-ROSITA-MINIATURA",
+      "subida": true
+    },
+    "b2d4d1e07dda": {
+      "archivo": "aralias.jpg",
+      "cloud_sku": "PL-ARALIAS",
+      "descartada": true,
+      "fecha": "2026-08-28 17:21:30 +0000",
+      "hover": false,
+      "mano": false,
+      "orden": 1,
+      "principal": false,
+      "sku": null,
       "subida": true
     },
     "b53f60917a47": {
@@ -726,6 +805,18 @@
       "orden": 1,
       "principal": false,
       "sku": "PL-CACTUS-PEQUENO",
+      "subida": true
+    },
+    "c183918dbc1e": {
+      "archivo": "aglonemas.webp",
+      "cloud_sku": "PL-AGLONEMAS",
+      "descartada": true,
+      "fecha": "2026-08-28 17:21:30 +0000",
+      "hover": false,
+      "mano": false,
+      "orden": 1,
+      "principal": false,
+      "sku": null,
       "subida": true
     },
     "c2bf7eddfd94": {
@@ -886,6 +977,18 @@
       "orden": 1,
       "principal": false,
       "sku": "PL-SUCULENTA-PEQUENA",
+      "subida": true
+    },
+    "f3f3fc6383e7": {
+      "archivo": "zamiculca-variegada.png",
+      "cloud_sku": "PL-MILLONARIA-ZAMIOCULCA-BLANCA",
+      "descartada": true,
+      "fecha": "2026-08-28 17:21:30 +0000",
+      "hover": false,
+      "mano": false,
+      "orden": 1,
+      "principal": false,
+      "sku": null,
       "subida": true
     },
     "fa416c7b9195": {
