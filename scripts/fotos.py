@@ -23,6 +23,11 @@
 #                   sube lo asignado y reporta cuantas quedaron pendientes.
 #   --solo-revision abre la pagina de revision aunque no haya fotos nuevas
 #                   (para cambiar principales o descartar fotos viejas).
+#   --catalogo      la herramienta del catalogo: buscador, principal/hover/
+#                   circulo, recorte, mover, paneles y subida de fotos desde
+#                   el navegador (arrastrar o elegir archivos): el archivo se
+#                   COPIA a la carpeta pasada por parametro y la asignacion al
+#                   producto queda como decision pendiente hasta Guardar.
 #   --puerto N      puerto del servidor de revision (por defecto 8765).
 #
 # Borron y cuenta nueva (no necesitan carpeta):
@@ -47,6 +52,7 @@ import subprocess
 import sys
 import threading
 import unicodedata
+import urllib.parse
 from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
@@ -62,6 +68,69 @@ EXTENSIONES = {".jpg", ".jpeg", ".png", ".heic", ".webp"}
 # Fotos tomadas con menos de 10 minutos de diferencia se agrupan en la
 # revision: casi siempre son la misma planta, asi que se decide una sola vez.
 BRECHA_GRUPO_SEG = 10 * 60
+# Subida desde el navegador: originales del celular sin comprimir (van a la
+# carpeta tal cual), asi que el tope es generoso.
+MAX_SUBIDA = 40_000_000
+
+
+def es_imagen(datos):
+    """Cabeceras reales de JPEG, PNG, WebP y HEIC; el nombre y el tipo que
+    manda el navegador no se creen."""
+    return (
+        datos[:3] == b"\xff\xd8\xff"
+        or datos[:8] == b"\x89PNG\r\n\x1a\n"
+        or (datos[:4] == b"RIFF" and datos[8:12] == b"WEBP")
+        or (datos[4:8] == b"ftyp" and datos[8:12] in (b"heic", b"heix", b"mif1", b"msf1", b"heif"))
+    )
+
+
+def nombre_libre(carpeta, nombre):
+    """Nombre seguro para guardar en la carpeta: solo el nombre base, y con
+    sufijo -2, -3... si ya existe otro archivo con ese nombre (el contenido
+    distinto ya se comprobo por hash antes de llegar aqui)."""
+    nombre = os.path.basename(nombre.replace("\\", "/")).strip().lstrip(".") or "foto.jpg"
+    base, ext = os.path.splitext(nombre)
+    if ext.lower() not in EXTENSIONES:
+        ext = ".jpg"
+    candidato = base + ext
+    n = 2
+    while os.path.exists(os.path.join(carpeta, candidato)):
+        candidato = f"{base}-{n}{ext}"
+        n += 1
+    return candidato
+
+
+def registrar_subida(mapa, rutas, carpeta, nombre, datos):
+    """Guarda una foto subida desde el navegador en la carpeta y la deja
+    registrada en memoria (el mapa se escribe recien al Guardar, como toda
+    decision). Devuelve (hash, archivo, repetida)."""
+    h = hashlib.sha1(datos).hexdigest()[:12]
+    if h in rutas:
+        # Ya esta en la carpeta con este u otro nombre: no se duplica.
+        return h, mapa["fotos"][h]["archivo"], True
+    archivo = nombre_libre(carpeta, nombre)
+    ruta = os.path.join(carpeta, archivo)
+    temporal = ruta + ".parcial"
+    with open(temporal, "wb") as f:
+        f.write(datos)
+    os.replace(temporal, ruta)
+    rutas[h] = ruta
+    entrada = mapa["fotos"].get(h)
+    if entrada is None:
+        mapa["fotos"][h] = {
+            "archivo": archivo,
+            "fecha": fecha_captura(ruta),
+            "sku": None,
+            "orden": None,
+            "principal": False,
+            "descartada": False,
+            "subida": False,
+        }
+        return h, archivo, False
+    # Foto de una tanda vieja que ya no estaba en la carpeta: vuelve a tener
+    # archivo local (asi se puede re-subir si se mueve de producto).
+    entrada["archivo"] = archivo
+    return h, archivo, True
 
 
 def cargar_env():
@@ -591,6 +660,11 @@ PAGINA_HTML = r"""<!doctype html>
   .mover { margin-top: 4px; }
   .mover input[list] { width: 100%; font-size: 12px; padding: 6px 8px; }
 
+  .zona-subir { margin-top: 12px; border: 2px dashed #b9c9bd; border-radius: 10px; padding: 10px 12px; font-size: 13px; color: #445; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .zona-subir.arrastrando { border-color: var(--verde); background: #eef5ef; }
+  .zona-subir .progreso { color: var(--verde); }
+  .zona-subir .error { color: #c62828; }
+  .panel li button { margin-left: 8px; font-size: 12px; padding: 3px 8px; }
   #recorte-fondo { position: fixed; inset: 0; background: rgba(20, 30, 22, 0.55); display: flex; align-items: center; justify-content: center; z-index: 20; }
   #recorte-fondo[hidden] { display: none; }
   #recorte-caja { background: #fff; border-radius: 12px; padding: 16px; max-width: min(94vw, 1040px); }
@@ -614,6 +688,7 @@ PAGINA_HTML = r"""<!doctype html>
 <main>
   <div id="contenido"></div>
 </main>
+<input type="file" id="selector" multiple accept="image/*,.heic" hidden onchange="subirArchivos(skuSelector, this.files); this.value = '';">
 <div id="recorte-fondo" hidden onclick="if (event.target === this) cerrarRecorte()">
   <div id="recorte-caja">
     <p>Arrastra sobre la foto para marcar la parte que se verá. A la derecha, cómo queda en la tarjeta y en el círculo.</p>
@@ -640,6 +715,7 @@ PAGINA_HTML = r"""<!doctype html>
 </div>
 <script>
 const DATOS = __DATOS__;
+const CARPETA = __CARPETA__;  // null cuando se corrio sin carpeta: no se puede subir
 let cambios = { asignar: {}, descartar: {}, quitar: {}, principal: {}, hover: {}, circulo: {}, recortes: {} };
 
 // --- Deshacer: una pila de instantáneas del estado local (nada esta
@@ -746,7 +822,10 @@ function pintar() {
   }));
 
   html += `<details class="panel"><summary>Productos sin foto (${sinFoto.length})</summary><ul>` +
-    sinFoto.map(p => `<li>${p.sku} — ${p.nombre}</li>`).join('') + '</ul></details>';
+    sinFoto.map(p => `<li>${p.sku} — ${p.nombre}` +
+      (CARPETA ? `<button onclick="elegirArchivos('${p.sku}')">Subir fotos</button>` : '') +
+      (subidas[p.sku] ? ` <span class="progreso">${subidas[p.sku].texto || ''}</span><span class="error">${subidas[p.sku].errores.join(' · ')}</span>` : '') +
+      '</li>').join('') + '</ul></details>';
 
   html += `<details class="panel" ${pendTotal ? 'open' : ''}><summary>Fotos sin producto (${pendTotal})</summary>`;
   if (pendTotal) {
@@ -794,13 +873,89 @@ function pintar() {
           <div class="ctx-titulo">Círculo</div>
         </div>
       </div>
-      <div class="fila-fotos">` + prod.fotos.map(h => fichaAsignada(prod, h)).join('') + '</div></div>';
+      <div class="fila-fotos">` + prod.fotos.map(h => fichaAsignada(prod, h)).join('') + '</div>' +
+      zonaSubir(prod.sku) + '</div>';
   });
 
   html += `<datalist id="productos">${opcionesProductos()}</datalist>`;
   c.innerHTML = html;
   aplicarContextos();
   actualizarDeshacer();
+}
+
+// --- Subida desde el navegador ------------------------------------------
+// El archivo se copia a la carpeta de fotos (la del parámetro) y queda
+// registrado en el servidor; la asignación al producto es una decisión más
+// (cambios.asignar) y se persiste con Guardar, como todo lo demás.
+const subidas = {};  // sku -> { texto, errores[] }
+let skuSelector = null;
+
+function zonaSubir(sku) {
+  if (!CARPETA) return '<div class="zona-subir">Para subir fotos corre el script con la carpeta de fotos.</div>';
+  const est = subidas[sku] || { texto: '', errores: [] };
+  return `<div class="zona-subir" data-sku="${sku}"
+      ondragover="event.preventDefault(); this.classList.add('arrastrando')"
+      ondragleave="this.classList.remove('arrastrando')"
+      ondrop="event.preventDefault(); this.classList.remove('arrastrando'); subirArchivos('${sku}', event.dataTransfer.files)">
+    <span>Subir fotos a este producto: arrastra aquí o</span>
+    <button onclick="elegirArchivos('${sku}')">Elegir archivos…</button>
+    <span class="progreso">${est.texto}</span>
+    <span class="error">${est.errores.join(' · ')}</span>
+  </div>`;
+}
+
+function elegirArchivos(sku) {
+  skuSelector = sku;
+  document.getElementById('selector').click();
+}
+
+// Deja la foto en el producto, venga de donde venga: nueva, pendiente
+// (grupos/sueltas) o asignada a otro producto (entonces es un "mover").
+function incorporarFoto(sku, h, archivo) {
+  DATOS.grupos = DATOS.grupos.map(g => g.filter(x => x !== h)).filter(g => g.length);
+  DATOS.sueltas = DATOS.sueltas.filter(x => x !== h);
+  DATOS.asignados.forEach(p => { if (p.sku !== sku && p.fotos.includes(h)) sacarDeProducto(p, h); });
+  if (!DATOS.fotos[h]) DATOS.fotos[h] = { archivo, fecha: '', recorte: null };
+  let destino = prodDe(sku);
+  if (!destino) {
+    const p = DATOS.productos.find(x => x.sku === sku);
+    destino = { sku, nombre: p.nombre, slug: p.slug, fotos: [], principal: null, hover: null, circulo: null };
+    DATOS.asignados.push(destino);
+    DATOS.asignados.sort((a, b) => a.sku.localeCompare(b.sku));
+  }
+  if (!destino.fotos.includes(h)) destino.fotos.push(h);
+  if (!destino.principal) destino.principal = h;
+  cambios.asignar[h] = sku;
+  delete cambios.quitar[h];
+  delete cambios.descartar[h];
+}
+
+async function subirArchivos(sku, archivos) {
+  const lista = Array.from(archivos || []).filter(a => a.size);
+  if (!sku || !lista.length) return;
+  accion('subir');
+  const est = subidas[sku] = { texto: '', errores: [] };
+  let nuevas = 0, repetidas = 0;
+  for (let i = 0; i < lista.length; i++) {
+    const a = lista[i];
+    est.texto = `Subiendo ${i + 1} de ${lista.length}: ${a.name}…`;
+    pintar();
+    try {
+      const resp = await fetch(`/subir?sku=${encodeURIComponent(sku)}&nombre=${encodeURIComponent(a.name)}`, {
+        method: 'POST', body: a,
+      });
+      const r = await resp.json().catch(() => ({}));
+      if (!resp.ok) throw new Error(r.error || `error ${resp.status}`);
+      incorporarFoto(sku, r.hash, r.archivo);
+      if (r.repetida) repetidas++; else nuevas++;
+    } catch (e) {
+      est.errores.push(`${a.name}: ${e.message}`);
+    }
+  }
+  est.texto = `${nuevas} copiada${nuevas === 1 ? '' : 's'} a la carpeta` +
+    (repetidas ? `, ${repetidas} ya estaba${repetidas === 1 ? '' : 'n'}` : '') +
+    '. Pulsa Guardar para asignar y subir a Cloudinary.';
+  pintar(); refrescarEstado();
 }
 
 // --- Previsualizaciones fieles: misma matemática de cover que el sitio ---
@@ -1147,8 +1302,9 @@ def datos_revision(mapa, rutas, productos):
     }
 
 
-def servir_revision(env, mapa, rutas, productos, puerto):
-    """Levanta la pagina en localhost y bloquea hasta 'Guardar y terminar'."""
+def servir_revision(env, mapa, rutas, productos, puerto, carpeta=None):
+    """Levanta la pagina en localhost y bloquea hasta 'Guardar y terminar'.
+    Con carpeta, la pagina permite subir fotos (se copian ahi)."""
     terminado = threading.Event()
     base_cloud = f"https://res.cloudinary.com/{env['CLOUDINARY_CLOUD_NAME']}/image/upload"
 
@@ -1172,7 +1328,11 @@ def servir_revision(env, mapa, rutas, productos, puerto):
         def do_GET(self):
             if self.path == "/":
                 datos = datos_revision(mapa, rutas, productos)
-                pagina = PAGINA_HTML.replace("__DATOS__", json.dumps(datos, ensure_ascii=False))
+                pagina = (
+                    PAGINA_HTML
+                    .replace("__DATOS__", json.dumps(datos, ensure_ascii=False))
+                    .replace("__CARPETA__", json.dumps(carpeta))
+                )
                 self.responder(pagina.encode("utf-8"))
             elif self.path.startswith("/miniatura/"):
                 h = self.path.rsplit("/", 1)[1]
@@ -1215,7 +1375,13 @@ def servir_revision(env, mapa, rutas, productos, puerto):
             else:
                 self.responder(b"no", "text/plain", 404)
 
+        def responder_json(self, datos, codigo=200):
+            self.responder(json.dumps(datos, ensure_ascii=False).encode("utf-8"), "application/json", codigo)
+
         def do_POST(self):
+            if self.path.startswith("/subir?"):
+                self.subir()
+                return
             if self.path != "/decisiones":
                 self.responder(b"no", "text/plain", 404)
                 return
@@ -1307,6 +1473,33 @@ def servir_revision(env, mapa, rutas, productos, puerto):
             if carga.get("terminar"):
                 terminado.set()
 
+        def subir(self):
+            """Copia a la carpeta una foto que viene del navegador (cuerpo
+            crudo; sku y nombre en la query). No toca el mapa en disco ni
+            Cloudinary: eso pasa al Guardar, con la asignacion."""
+            largo = int(self.headers.get("Content-Length", "0"))
+            if not carpeta:
+                self.rfile.read(largo)
+                self.responder_json({"error": "el script corrio sin carpeta de fotos"}, 400)
+                return
+            if largo > MAX_SUBIDA:
+                self.responder_json({"error": f"supera el tope de {MAX_SUBIDA // 1_000_000} MB"}, 413)
+                return
+            consulta = urllib.parse.parse_qs(urllib.parse.urlsplit(self.path).query)
+            sku = (consulta.get("sku") or [""])[0]
+            nombre = (consulta.get("nombre") or [""])[0]
+            datos = self.rfile.read(largo)
+            if sku not in {p["sku"] for p in productos}:
+                self.responder_json({"error": "producto desconocido"}, 400)
+                return
+            if not es_imagen(datos):
+                self.responder_json({"error": "no es una imagen (JPEG, PNG, WebP o HEIC)"}, 422)
+                return
+            with candado:
+                h, archivo, repetida = registrar_subida(mapa, rutas, carpeta, nombre, datos)
+            self.responder_json({"hash": h, "archivo": archivo, "repetida": repetida})
+
+    candado = threading.Lock()  # subidas en paralelo no pisan el mapa en memoria
     servidor = ThreadingHTTPServer(("127.0.0.1", puerto), Manejador)
     hilo = threading.Thread(target=servidor.serve_forever, daemon=True)
     hilo.start()
@@ -1354,7 +1547,7 @@ def main():
     productos, fotos_previas = cargar_catalogo()
     mapa = cargar_mapa()
 
-    rutas, nuevas = {}, []
+    rutas, nuevas, carpeta = {}, [], None
     if args.carpeta:
         carpeta = os.path.expanduser(args.carpeta)
         if not os.path.isdir(carpeta):
@@ -1368,7 +1561,7 @@ def main():
 
     pendientes = [h for h in pendientes_de(mapa) if h in rutas]
     if (pendientes and not args.sin_revision) or args.solo_revision or args.catalogo:
-        servir_revision(env, mapa, rutas, productos, args.puerto)
+        servir_revision(env, mapa, rutas, productos, args.puerto, carpeta)
         mapa = cargar_mapa()  # relee las decisiones guardadas
         pendientes = [h for h in pendientes_de(mapa) if h in rutas]
 
