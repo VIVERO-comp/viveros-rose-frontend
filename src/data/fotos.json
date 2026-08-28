@@ -1,21 +1,57 @@
 {
   "cloud": "yb93cnmu",
   "macetasPorSku": {},
+  "manoPorSku": {
+    "PL-AJI-BOLITA": "8b125605186d",
+    "PL-ALBAHACA-VERDE": "240dd5e2111b",
+    "PL-ANTHURIO-FLOR": "e0e860e092e6",
+    "PL-CACTUS-GRANDE": "d27a27678ace",
+    "PL-CIELITO-AZUL": "1caa63a836d4",
+    "PL-CLAVELITO": "221a06da1630",
+    "PL-FICUS-TRIANGULAR-GRANDE": "d338d33484ce",
+    "PL-HELECHOS": "024ad5db9ce0",
+    "PL-LENGUA-DE-SUEGRA-ENANA": "83c3925ae31d",
+    "PL-LENGUA-DE-SUEGRA-MINI": "3ef1e03b84f1",
+    "PL-MINI-JADE": "e32e9708ad99",
+    "PL-OREGANO": "6ced31823982",
+    "PL-PALMA-ABANICO": "3e9b9379a399",
+    "PL-ROMERO": "b9ded11b46d4",
+    "PL-ROSITA-MINIATURA": "32caba1ca20b",
+    "PL-SUCULENTA-PEQUENA": "73408df239fc",
+    "PL-SUCULENTAS-GRANDE": "578042c1228b",
+    "PL-TRASDESCANTIA": "7db61b458983",
+    "PLT-CHAVELITAS-01": "97c414192043",
+    "PLT-HIERBABUENA-01": "0a1431e20aee",
+    "PLT-MENTA-01": "220026b0bdec",
+    "PLT-RUDA-01": "6d4f6fd5d5e9"
+  },
   "porSku": {
+    "PL-AJI-BOLITA": [
+      "8b125605186d"
+    ],
     "PL-ALBAHACA-ROJA": [
-      "39477335ae22"
+      "93e8911b0c3c"
     ],
     "PL-ALBAHACA-VERDE": [
+      "240dd5e2111b",
       "98d20e11c51f"
     ],
+    "PL-ALCANCEL": [
+      "1ca6c3fd21f6"
+    ],
     "PL-ANTHURIO-FLOR": [
-      "3abb5e90ac5f"
+      "3abb5e90ac5f",
+      "e0e860e092e6",
+      "25e4c5f5a6d0"
     ],
     "PL-BAMBU-ENTRENZAS": [
       "e7dd11ae1488"
     ],
     "PL-BIJAO-TRICOLOR": [
       "8f64655e0282"
+    ],
+    "PL-CACTUS-GRANDE": [
+      "d27a27678ace"
     ],
     "PL-CACTUS-HUESO-DE-DRAGON": [
       "1df576063aff"
@@ -24,16 +60,29 @@
       "beeaaf274d6e"
     ],
     "PL-CALATHEA-CEBRINA": [
-      "29debd6f2508"
+      "29debd6f2508",
+      "6487f0697028"
+    ],
+    "PL-CIELITO-AZUL": [
+      "1caa63a836d4"
+    ],
+    "PL-CIPRE-RASTRERO": [
+      "011f3f45bc69"
     ],
     "PL-CLAVEL-CHINO": [
-      "c5885cc086a0"
+      "c5885cc086a0",
+      "6ad5e5007536"
     ],
     "PL-CLAVELITO": [
-      "fa416c7b9195"
+      "221a06da1630",
+      "fa416c7b9195",
+      "044e7b38da5e"
     ],
     "PL-COLEOS": [
-      "8c822e07d824"
+      "f25d513a8b85",
+      "8c822e07d824",
+      "559f67c8ec3c",
+      "1b474b91fa6b"
     ],
     "PL-CRINUM-ASIATICO-VARIEGADO": [
       "a163d864940e"
@@ -43,6 +92,9 @@
     ],
     "PL-DRACAENA-ROJA": [
       "f212acbfea6a"
+    ],
+    "PL-ESCUDO-PERSA": [
+      "368c35d72737"
     ],
     "PL-FICUS-ELASTICA": [
       "01f835488b10"
@@ -54,29 +106,46 @@
       "e3128ed07d26"
     ],
     "PL-FICUS-TRIANGULAR-GRANDE": [
-      "c54eb3be1972"
+      "c54eb3be1972",
+      "d338d33484ce"
+    ],
+    "PL-GINGER": [
+      "4c01bab2b04f"
+    ],
+    "PL-HELECHOS": [
+      "024ad5db9ce0"
     ],
     "PL-JAZMIN-BLANCO-ENANO": [
       "18f7ae9f65e4"
     ],
     "PL-KALANCHOE": [
-      "2daab0b5a783"
+      "2daab0b5a783",
+      "219d73a31a17"
     ],
     "PL-LENGUA-DE-SUEGRA-ENANA": [
       "0bbfcefc57be",
-      "76db66709cc2"
+      "83c3925ae31d"
     ],
     "PL-LENGUA-DE-SUEGRA-MINI": [
-      "7798a5e8d79e"
+      "7798a5e8d79e",
+      "3ef1e03b84f1",
+      "76db66709cc2"
+    ],
+    "PL-LIRIO": [
+      "3e7b517adb4b"
     ],
     "PL-MINI-JADE": [
-      "9d091d10862a"
+      "9d091d10862a",
+      "e32e9708ad99"
     ],
     "PL-MONSTERA-ADANSONII": [
       "c2bf7eddfd94"
     ],
     "PL-MONSTERA-DELICIOSA": [
       "3cd7e4b43d15"
+    ],
+    "PL-OREGANO": [
+      "6ced31823982"
     ],
     "PL-PALMA-ABANICO": [
       "3e9b9379a399"
@@ -96,8 +165,14 @@
     "PL-PALMA-MULTIPLE": [
       "ead76ccf6693"
     ],
+    "PL-PALMA-NAVIDAD": [
+      "d22f5f63846a"
+    ],
     "PL-PALMA-ZICA": [
       "582fecd58698"
+    ],
+    "PL-PINO-ENANO": [
+      "47a4332ad831"
     ],
     "PL-PINO-HINDU": [
       "b74eaf1402e1"
@@ -111,14 +186,50 @@
     "PL-POTHOS": [
       "2b5e5f3b4a31"
     ],
+    "PL-ROMERO": [
+      "b9ded11b46d4"
+    ],
+    "PL-ROSITA-MINIATURA": [
+      "b13a789dc1ee",
+      "c4f1f85a5446",
+      "9c42a839db3b",
+      "32caba1ca20b"
+    ],
     "PL-SUCULENTA-PEQUENA": [
-      "f35bf487bf59"
+      "f35bf487bf59",
+      "73408df239fc"
     ],
     "PL-SUCULENTAS-GRANDE": [
-      "215d5da20753"
+      "215d5da20753",
+      "89dc602d74f7",
+      "a1a5b40bea66",
+      "578042c1228b"
+    ],
+    "PL-TRASDESCANTIA": [
+      "7db61b458983"
+    ],
+    "PLT-CHAVELITAS-01": [
+      "97c414192043",
+      "b01a40787659"
+    ],
+    "PLT-CRISANTEMOS-01": [
+      "954d03c7a83c"
+    ],
+    "PLT-HIERBABUENA-01": [
+      "0a1431e20aee"
     ],
     "PLT-JADE-01": [
       "253c22f0869f"
+    ],
+    "PLT-MENTA-01": [
+      "220026b0bdec"
+    ],
+    "PLT-RUDA-01": [
+      "6d4f6fd5d5e9"
+    ],
+    "PLT-TORENIA-01": [
+      "853a3c9aa66c"
     ]
-  }
+  },
+  "recortesPorHash": {}
 }
