@@ -12,6 +12,11 @@
 //            con confirmacion explicita y constancia de quien lo hizo.
 //   STOCK    buscar una planta y ver su disponibilidad (via stock-proxy).
 //
+// Los avisos Web Push de pedido nuevo se activan desde Inicio: la misma
+// suscripcion del repartidor, pero con la clave de admin en el header, y el
+// order-api la guarda con rol "dueno". Un aviso tocado abre
+// /admin?pantalla=validar.
+//
 // La credencial es el enlace personal ...?clave=... de la etiqueta "Admin"
 // en Odoo. La clave se guarda en el navegador, se limpia de la URL con
 // replaceState y viaja SIEMPRE en el header X-Clave-Admin (peticionAdmin la
@@ -84,6 +89,14 @@ const CATALOGO = products.map((p) => ({
         <p class="kicker">VIVERO ROSE · ADMIN</p>
         <h1 class="saludo">Hola<span data-nombre></span></h1>
       </header>
+
+      <!-- Avisos push: suena el telefono con cada pedido nuevo. Solo se
+           ofrece si el navegador lo soporta y aun no se activo aqui. -->
+      <div class="banda-push" data-banda-push hidden>
+        <p>Activa los avisos para que te suene el teléfono con cada pedido nuevo.</p>
+        <button class="btn btn--green" data-activar-push type="button">Activar avisos</button>
+      </div>
+      <p class="push-estado" data-push-estado hidden></p>
 
       <!-- Selector de periodo: segmentado, tocable con el pulgar. -->
       <div class="periodos" role="group" aria-label="Periodo del resumen">
@@ -195,12 +208,44 @@ const CATALOGO = products.map((p) => ({
 
   const parametros = new URLSearchParams(location.search);
   const claveUrl = parametros.get('clave');
-  if (claveUrl) {
-    localStorage.setItem('vr_clave_admin', claveUrl);
+  if (claveUrl) localStorage.setItem('vr_clave_admin', claveUrl);
+  // Un aviso push abre directo la pantalla que toca (/admin?pantalla=validar).
+  const pantallaUrl = parametros.get('pantalla');
+  if (claveUrl || pantallaUrl) {
     // La clave no se queda en la barra, en el historial ni en logs.
     history.replaceState(null, '', '/admin');
   }
   const clave = claveUrl || localStorage.getItem('vr_clave_admin') || '';
+
+  // -- errores --------------------------------------------------------------
+
+  // "Revisa tu señal" es solo para cuando NO hubo respuesta (fetch lanzo).
+  // Si el servidor respondio, se muestra lo que dijo: un 403 o un 404
+  // tapados con el mensaje de señal mandan a la gente a buscar cobertura
+  // por un problema que no es de red.
+  class ErrorServidor extends Error {}
+
+  async function errorDe(res: Response): Promise<ErrorServidor> {
+    let detalle = '';
+    try {
+      const texto = await res.text();
+      try {
+        const datos = JSON.parse(texto);
+        detalle = datos?.message || datos?.error || '';
+      } catch {
+        detalle = texto.trim().slice(0, 120);
+      }
+    } catch {
+      // sin cuerpo legible: queda solo el codigo
+    }
+    return new ErrorServidor(
+      detalle ? `${detalle} (HTTP ${res.status})` : `El servidor respondió HTTP ${res.status}.`,
+    );
+  }
+
+  function textoDeError(error: unknown, sinRespuesta: string): string {
+    return error instanceof ErrorServidor ? error.message : sinRespuesta;
+  }
 
   function mensaje(texto: string) {
     mensajeEl.textContent = texto;
@@ -311,11 +356,11 @@ const CATALOGO = products.map((p) => ({
         manejar401();
         return;
       }
-      if (!res.ok) throw new Error();
+      if (!res.ok) throw await errorDe(res);
       pintarResumen(await res.json());
-    } catch {
+    } catch (error) {
       resumenEl.innerHTML = '';
-      mensaje('No pudimos cargar el resumen. Revisa tu señal e intenta de nuevo.');
+      mensaje(textoDeError(error, 'No pudimos cargar el resumen. Revisa tu señal e intenta de nuevo.'));
     }
   }
 
@@ -385,16 +430,16 @@ const CATALOGO = products.map((p) => ({
         manejar401();
         return;
       }
-      if (!res.ok) throw new Error();
+      if (!res.ok) throw await errorDe(res);
       const datos = await res.json();
       porValidar = datos.por_validar ?? [];
       pintarPedidos(datos.activos ?? []);
       pintarValidar();
       pintarGlobitoValidar();
-    } catch {
+    } catch (error) {
       listaEl.innerHTML = '';
       validarEl.innerHTML = '';
-      mensaje('No pudimos cargar los pedidos. Revisa tu señal y toca “Actualizar”.');
+      mensaje(textoDeError(error, 'No pudimos cargar los pedidos. Revisa tu señal y toca “Actualizar”.'));
     }
   }
 
@@ -601,14 +646,20 @@ const CATALOGO = products.map((p) => ({
     boton.disabled = true;
     boton.textContent = 'Validando…';
     try {
+      // Con Content-Type JSON y cuerpo, aunque vaya vacio: un POST sin
+      // Content-Type lo frena la proteccion CSRF de Astro en Vercel (403
+      // "Cross-site POST form submissions are forbidden") antes de llegar
+      // al order-api.
       const res = await pedirAdmin(`/api/admin/pedidos/${encodeURIComponent(numero)}/validar-pago`, {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: '{}',
       });
       if (res.status === 401) {
         manejar401();
         return;
       }
-      if (!res.ok) throw new Error();
+      if (!res.ok) throw await errorDe(res);
       tarjeta.querySelector<HTMLElement>('[data-confirmacion]')!.hidden = true;
       estado.hidden = false;
       estado.textContent = `✅ ${numero} quedó listo para salir.`;
@@ -622,11 +673,14 @@ const CATALOGO = products.map((p) => ({
           if (!porValidar.length) pintarValidar();
         }, 220);
       }, 1200);
-    } catch {
+    } catch (error) {
       boton.disabled = false;
       boton.textContent = 'Sí, marcar pagado';
       estado.hidden = false;
-      estado.textContent = 'No se pudo validar. Revisa tu señal e intenta de nuevo (reintentar es seguro).';
+      estado.textContent = textoDeError(
+        error,
+        'No se pudo validar. Revisa tu señal e intenta de nuevo (reintentar es seguro).',
+      );
     }
   }
 
@@ -656,6 +710,7 @@ const CATALOGO = products.map((p) => ({
     stockEl.innerHTML = '<p class="cargando">Consultando stock…</p>';
     let disponibles: Record<string, number> = {};
     let sinStock = false;
+    let errorStock = '';
     try {
       const res = await pedirAdmin(
         `/api/admin/stock?skus=${encodeURIComponent(coincidencias.map((p) => p.sku).join(','))}`,
@@ -664,14 +719,15 @@ const CATALOGO = products.map((p) => ({
         manejar401();
         return;
       }
-      if (!res.ok) throw new Error();
+      if (!res.ok) throw await errorDe(res);
       disponibles = (await res.json()).disponibles ?? {};
-    } catch {
+    } catch (error) {
       sinStock = true;
+      errorStock = textoDeError(error, 'El stock no respondió (¿sin señal?)');
     }
     stockEl.innerHTML =
       (sinStock
-        ? '<p class="suave">El stock no respondió: se muestra el catálogo sin cantidades.</p>'
+        ? `<p class="suave">${escapar(errorStock)}: se muestra el catálogo sin cantidades.</p>`
         : '') +
       coincidencias
         .map((p) => {
@@ -745,22 +801,96 @@ const CATALOGO = products.map((p) => ({
     },
   });
 
+  // -- avisos push ----------------------------------------------------------
+
+  const PUSH_ACTIVADO = 'vr_push_admin_activado';
+
+  function mostrarBandaPush() {
+    const soporta = 'serviceWorker' in navigator && 'PushManager' in window;
+    if (!soporta || localStorage.getItem(PUSH_ACTIVADO)) return;
+    $('[data-banda-push]').hidden = false;
+  }
+
+  function base64aBytes(base64: string): Uint8Array {
+    const relleno = '='.repeat((4 - (base64.length % 4)) % 4);
+    const crudo = atob((base64 + relleno).replace(/-/g, '+').replace(/_/g, '/'));
+    return Uint8Array.from(crudo, (c) => c.charCodeAt(0));
+  }
+
+  // Misma activacion que en /repartidor; la diferencia es la credencial: la
+  // clave de admin viaja en el header (pedirAdmin) y el order-api guarda la
+  // suscripcion con rol "dueno".
+  async function activarAvisos() {
+    const estado = $('[data-push-estado]');
+    const banda = $('[data-banda-push]');
+    estado.hidden = false;
+    try {
+      const permiso = await Notification.requestPermission();
+      if (permiso !== 'granted') {
+        estado.textContent = 'Los avisos quedaron bloqueados en el navegador.';
+        return;
+      }
+      const registro = await navigator.serviceWorker.register('/sw-avisos.js');
+      await navigator.serviceWorker.ready;
+      const resClave = await fetch('/api/push/clave-publica');
+      if (!resClave.ok) {
+        estado.textContent = 'Los avisos no están configurados todavía en el servidor.';
+        return;
+      }
+      const { clave_publica } = await resClave.json();
+      const suscripcion = await registro.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: base64aBytes(clave_publica),
+      });
+      const res = await pedirAdmin('/api/push/suscribir', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ suscripcion: suscripcion.toJSON() }),
+      });
+      if (res.status === 401) {
+        manejar401();
+        return;
+      }
+      if (!res.ok) throw await errorDe(res);
+      localStorage.setItem(PUSH_ACTIVADO, '1');
+      banda.hidden = true;
+      estado.textContent = '✅ Avisos activados en este teléfono.';
+    } catch (error) {
+      estado.textContent = textoDeError(
+        error,
+        'No se pudieron activar los avisos. Revisa tu señal e intenta de nuevo.',
+      );
+    }
+  }
+
+  $('[data-activar-push]').addEventListener('click', activarAvisos);
+
+  // -- arranque -------------------------------------------------------------
+
+  const PANTALLAS: Pantalla[] = ['inicio', 'pedidos', 'validar', 'stock'];
+  const pantallaInicial: Pantalla | null =
+    pantallaUrl && (PANTALLAS as string[]).includes(pantallaUrl) ? (pantallaUrl as Pantalla) : null;
+
   async function arrancar() {
     if (!clave) {
       sinClave();
       return;
     }
+    // Un aviso tocado abre directo su pantalla (cambiarPantalla ya la carga).
+    if (pantallaInicial && pantallaInicial !== 'inicio') cambiarPantalla(pantallaInicial);
     try {
       const res = await pedirAdmin(`/api/admin/resumen?periodo=${periodoActual}`);
       if (res.status === 401) {
         manejar401();
         return;
       }
-      if (!res.ok) throw new Error();
+      if (!res.ok) throw await errorDe(res);
       pintarResumen(await res.json());
-      cargarPedidos(); // precarga pedidos y el conteo de "Validar"
-    } catch {
-      mensaje('No pudimos cargar el panel. Revisa tu señal e intenta de nuevo.');
+      mostrarBandaPush();
+      // Precarga pedidos y el conteo de "Validar" (salvo que ya se este cargando).
+      if (pantallaInicial !== 'pedidos' && pantallaInicial !== 'validar') cargarPedidos();
+    } catch (error) {
+      mensaje(textoDeError(error, 'No pudimos cargar el panel. Revisa tu señal e intenta de nuevo.'));
     }
   }
 
@@ -1003,6 +1133,22 @@ const CATALOGO = products.map((p) => ({
   .app .metrica-nombre { font-size: 0.85rem; }
 
   /* -- tarjetas y listas -------------------------------------------------- */
+
+  .app .banda-push {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background: var(--green-tint);
+    border: 1px solid rgba(21, 102, 47, 0.25);
+    border-radius: var(--radius-cart);
+    padding: 1rem 1.2rem;
+    margin: 0.9rem 0;
+  }
+
+  .app .banda-push p { margin: 0; font-size: 0.92rem; }
+  .app .banda-push .btn { flex-shrink: 0; }
+
+  .app .push-estado { color: var(--ink-soft); font-size: 0.92rem; }
 
   .app .tarjeta {
     background: var(--surface);
