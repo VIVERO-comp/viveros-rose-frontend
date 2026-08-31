@@ -33,3 +33,4 @@ scripts/__pycache__/
 scripts/.miniaturas/
 scripts/.originales/
 scripts/respaldos-fotos-mapa/
+.env*.local

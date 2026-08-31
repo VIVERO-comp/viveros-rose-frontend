@@ -233,7 +233,7 @@ const CATALOGO = products.map((p) => ({
 </script>
 
 <script>
-  import { ETIQUETA_ESTADO, agruparPedidos, duracionLegible, minutosDesde, peticionAdmin } from '../lib/admin';
+  import { ETIQUETA_ESTADO, agruparPedidos, metodoPagoCorto, duracionLegible, minutosDesde, peticionAdmin } from '../lib/admin';
   import { instalarTirarParaRefrescar } from '../lib/refrescar';
 
   const $ = <T extends HTMLElement>(sel: string) => document.querySelector<T>(sel)!;
@@ -416,20 +416,46 @@ const CATALOGO = products.map((p) => ({
 
   function pintarResumen(datos: any) {
     const pedidos = datos.pedidos;
+    const vendido = datos.vendido;
+    const retenido = datos.retenido;
     const calle = datos.calle ?? {};
     const tiempos = datos.tiempos ?? {};
     const retrasoAlto = (calle.con_retraso ?? 0) > 0;
+    // Retenido > 0 es una decision pendiente (capturar o reversar): se
+    // resalta como el retraso.
+    const retenidoAlto = (retenido?.pedidos ?? 0) > 0;
     resumenEl.innerHTML = `
       <div class="tarjeta-valor">
         <p class="valor-etiqueta">Vendido ${ETIQUETA_PERIODO[datos.periodo] ?? ''}</p>
-        <p class="valor-monto">${pedidos ? dinero(pedidos.valor_centavos) : '—'}</p>
+        <p class="valor-monto">${vendido ? dinero(vendido.valor_centavos) : '—'}</p>
         <p class="valor-detalle">${
-          pedidos
-            ? `${pedidos.generados === 1 ? '1 pedido' : `${pedidos.generados} pedidos`} · ${
-                pedidos.plantas === 1 ? '1 planta' : `${pedidos.plantas} plantas`
+          vendido
+            ? `${vendido.pedidos === 1 ? '1 pedido cobrado o validado' : `${vendido.pedidos} pedidos cobrados o validados`} · ${
+                vendido.plantas === 1 ? '1 planta' : `${vendido.plantas} plantas`
               }`
             : 'Sin datos de la tienda ahora mismo'
         }</p>
+      </div>
+
+      <div class="metricas">
+        <div class="metrica">
+          <span class="metrica-numero">${pedidos?.generados ?? '—'}</span>
+          <span class="metrica-nombre">Pedidos ${ETIQUETA_PERIODO[datos.periodo] ?? ''}${
+            pedidos
+              ? ` (${dinero(pedidos.valor_centavos)} · ${
+                  pedidos.plantas === 1 ? '1 planta' : `${pedidos.plantas} plantas`
+                })`
+              : ''
+          }</span>
+        </div>
+        <div class="metrica ${retenidoAlto ? 'metrica--alerta' : ''}">
+          <span class="metrica-numero metrica-numero--chica">${retenido ? dinero(retenido.valor_centavos) : '—'}</span>
+          <span class="metrica-nombre">Retenido esperando captura${
+            retenido
+              ? ` (${retenido.pedidos === 1 ? '1 pedido' : `${retenido.pedidos} pedidos`})`
+              : ''
+          }</span>
+        </div>
       </div>
 
       <h2 class="bloque-titulo">La calle ahora</h2>
@@ -484,8 +510,10 @@ const CATALOGO = products.map((p) => ({
       }
       if (!res.ok) throw await errorDe(res);
       const datos = await res.json();
-      porValidar = datos.por_validar ?? [];
       bloques = agruparPedidos(datos);
+      // Solo lo que espera una decision: pagos coordinados por confirmar y
+      // tarjetas autorizadas por capturar. Lo demas no cuenta en el globito.
+      porValidar = bloques.porValidar;
       cursorAntesDe = datos.siguiente_antes_de ?? null;
       cursorNumero = datos.siguiente_numero ?? null;
       pintarPedidos();
@@ -560,9 +588,27 @@ const CATALOGO = products.map((p) => ({
       </button>`;
   }
 
+  // Fila compacta para lo que espera decision o pago: se ve el estado y
+  // abre el detalle, sin repetir la tarjeta completa (las acciones viven
+  // SOLO en la pestaña Validar).
+  function filaPendiente(p: any, etiqueta: string, chip: string): string {
+    const metodo = metodoPagoCorto(p);
+    return `
+      <button class="tarjeta pedido-card pedido-card--compacta" data-numero="${escapar(p.numero)}" type="button">
+        <span class="pedido-linea1">
+          <span class="pedido-numero">${escapar(p.numero)}</span>
+          <span class="chip ${chip}">${etiqueta}</span>
+        </span>
+        <span class="pedido-linea2 suave">
+          <span>${escapar(p.cliente ?? 'Cliente')}${metodo ? ' · ' + escapar(metodo) : ''}</span>
+          <span class="pedido-total">$${Number(p.total).toFixed(2)}</span>
+        </span>
+      </button>`;
+  }
+
   function pintarPedidos() {
-    const { porValidar: nuevos, conRetraso, enProceso, terminados } = bloques;
-    if (!nuevos.length && !conRetraso.length && !enProceso.length && !terminados.length) {
+    const { porValidar: nuevos, esperandoPago, conRetraso, enProceso, terminados } = bloques;
+    if (!nuevos.length && !esperandoPago.length && !conRetraso.length && !enProceso.length && !terminados.length) {
       listaEl.innerHTML = '<div class="tarjeta vacio"><p>No hay pedidos todavía.</p></div>';
       return;
     }
@@ -576,7 +622,14 @@ const CATALOGO = products.map((p) => ({
            </div>`
         : '',
       nuevos.length
-        ? '<h2 class="bloque-titulo">Por validar</h2>' + nuevos.map(tarjetaPedido).join('')
+        ? '<h2 class="bloque-titulo">Por validar</h2>' +
+          nuevos.map((p: any) => filaPendiente(p, 'Por validar', 'chip--por_validar')).join('')
+        : '',
+      // Tarjetas sin autorizar: el cliente no completo el pago; no hay nada
+      // que decidir, pero el pedido existe y se ve aqui.
+      esperandoPago.length
+        ? '<h2 class="bloque-titulo">Esperando pago</h2>' +
+          esperandoPago.map((p: any) => filaPendiente(p, 'Esperando pago', 'chip--esperando')).join('')
         : '',
       conRetraso.length
         ? '<h2 class="bloque-titulo bloque-titulo--alerta">Con retraso</h2>' +
@@ -630,8 +683,36 @@ const CATALOGO = products.map((p) => ({
 
   let numeroDetalleAbierto = '';
 
+  // Al abrir un pedido, sus notificaciones push (que llevan el numero VR-…
+  // en el titulo o el cuerpo) se dan por vistas: se cierran en el centro de
+  // notificaciones y el globito del icono se recalcula (el service worker
+  // cuenta las que siguen abiertas; con cero, clearAppBadge lo quita).
+  // Fire-and-forget y silencioso: sin service worker o sin permiso de
+  // avisos no hay nada que limpiar.
+  async function limpiarAvisosDelPedido(numero: string) {
+    try {
+      const registro = await navigator.serviceWorker?.getRegistration();
+      if (!registro) return;
+      const avisos = await registro.getNotifications();
+      let cerrados = 0;
+      for (const aviso of avisos) {
+        if (`${aviso.title} ${aviso.body ?? ''}`.includes(numero)) {
+          aviso.close();
+          cerrados++;
+        }
+      }
+      if (!cerrados || !('setAppBadge' in navigator)) return;
+      const restantes = avisos.length - cerrados;
+      if (restantes > 0) await navigator.setAppBadge(restantes);
+      else await (navigator as any).clearAppBadge?.();
+    } catch {
+      // sin soporte o sin permiso: no hay globito que limpiar
+    }
+  }
+
   async function abrirDetalle(numero: string) {
     numeroDetalleAbierto = numero;
+    void limpiarAvisosDelPedido(numero);
     vistaLista.hidden = true;
     vistaDetalle.hidden = false;
     animarEntrada(vistaDetalle, 'detalle-entrando');
@@ -722,9 +803,14 @@ const CATALOGO = products.map((p) => ({
         '<p class="suave">Cuando entre un pedido nuevo aparecerá aquí.</p></div>';
       return;
     }
-    validarEl.innerHTML = porValidar
-      .map(
-        (p: any) => `
+    // Dos grupos, sin mezclar decisiones distintas: confirmar un pago
+    // coordinado (Yappy/transferencia/efectivo) y capturar o reversar una
+    // tarjeta autorizada.
+    const coordinados = porValidar.filter((p: any) => !p.pago?.tarjeta);
+    const tarjetas = porValidar.filter((p: any) => p.pago?.tarjeta);
+    const tarjetaValidar = (p: any) => {
+      const metodo = metodoPagoCorto(p);
+      return `
         <div class="tarjeta por-validar" data-validar-numero="${escapar(p.numero)}">
           <p class="pedido-linea1">
             <span class="pedido-numero">${escapar(p.numero)}</span>
@@ -734,11 +820,20 @@ const CATALOGO = products.map((p) => ({
             <span>${escapar(p.cliente ?? 'Cliente')}</span>
             <span class="suave">${p.creado_en ? cuando(p.creado_en) : ''}</span>
           </p>
-          <p class="suave">${resumenArticulos(p.articulos ?? [])}</p>
+          <p class="suave">${resumenArticulos(p.articulos ?? [])}${metodo ? ' · ' + escapar(metodo) : ''}</p>
           ${zonaValidar(p)}
-        </div>`,
-      )
-      .join('');
+        </div>`;
+    };
+    validarEl.innerHTML = [
+      coordinados.length
+        ? '<h2 class="bloque-titulo bloque-titulo--dentro">Pagos por confirmar</h2>' +
+          coordinados.map(tarjetaValidar).join('')
+        : '',
+      tarjetas.length
+        ? '<h2 class="bloque-titulo">Tarjetas autorizadas · capturar o reversar</h2>' +
+          tarjetas.map(tarjetaValidar).join('')
+        : '',
+    ].join('');
     validarEl.querySelectorAll<HTMLElement>('[data-validar-numero]').forEach((tarjeta) => {
       const numero = tarjeta.getAttribute('data-validar-numero')!;
       // Confirmacion explicita en dos pasos, nunca un toque suelto.
@@ -1631,6 +1726,8 @@ const CATALOGO = products.map((p) => ({
 
   .app .pedido-card--terminado { opacity: 0.85; }
 
+  .app .pedido-card--compacta { padding: 0.65rem 0.9rem; gap: 0.25rem; }
+
   .app .btn-ver-mas { width: 100%; margin-top: 0.2rem; }
 
   .app .pedido-linea1,
@@ -1672,6 +1769,7 @@ const CATALOGO = products.map((p) => ({
   .app .chip--retraso { background: #f7e3e0; color: #a4322a; align-self: flex-start; }
   .app .chip--stock { background: var(--green-tint); color: var(--green-deep); }
   .app .chip--agotado { background: #f7e3e0; color: #a4322a; }
+  .app .chip--esperando { background: var(--surface-tint); color: var(--ink-soft); }
 
   .app .pago-tarjeta { margin: 0.2rem 0 0.6rem; font-size: 0.92rem; }
 

@@ -69,6 +69,13 @@ export interface PedidoLista {
   creado_en?: string | null;
   pagado_en?: string | null;
   terminado_en?: string | null;
+  pago?: {
+    tarjeta: boolean;
+    estado?: string | null;
+    metodo_pago?: string | null;
+    autorizada_en?: string | null;
+    vence_en?: string | null;
+  } | null;
   [otro: string]: unknown;
 }
 
@@ -80,6 +87,7 @@ export interface ListaPedidos {
 
 export interface BloquesPedidos {
   porValidar: PedidoLista[];
+  esperandoPago: PedidoLista[];
   conRetraso: PedidoLista[];
   enProceso: PedidoLista[];
   terminados: PedidoLista[];
@@ -103,10 +111,30 @@ const porFecha =
  */
 export function agruparPedidos(lista: ListaPedidos): BloquesPedidos {
   const activos = lista.activos ?? [];
+  // De los "por validar" del order-api, solo esperan una DECISION los pagos
+  // coordinados (marcar pagado) y las tarjetas autorizadas (capturar o
+  // reversar). Una tarjeta sin autorizar no es accionable: el cliente no
+  // completo el pago, y el pedido solo figura como "esperando pago" en la
+  // lista general. Sin anotacion de pago (base tienda caida) se trata como
+  // decision, igual que siempre: degradar, no esconder.
+  const pendientes = [...(lista.por_validar ?? [])].sort(porFecha('creado_en', 1));
+  const sinDecision = (p: PedidoLista) =>
+    Boolean(p.pago?.tarjeta) && p.pago?.estado !== 'autorizada';
   return {
-    porValidar: [...(lista.por_validar ?? [])].sort(porFecha('creado_en', 1)),
+    porValidar: pendientes.filter((p) => !sinDecision(p)),
+    esperandoPago: pendientes.filter(sinDecision),
     conRetraso: activos.filter((p) => p.con_retraso).sort(porFecha('pagado_en', 1)),
     enProceso: activos.filter((p) => !p.con_retraso).sort(porFecha('pagado_en', 1)),
     terminados: [...(lista.terminados ?? [])].sort(porFecha('terminado_en', -1)),
   };
+}
+
+/** Etiqueta corta del metodo de pago que el cliente eligio en el checkout. */
+export function metodoPagoCorto(p: PedidoLista): string | null {
+  if (p.pago?.tarjeta) return 'Tarjeta';
+  const metodo = p.pago?.metodo_pago;
+  if (!metodo) return null;
+  // "Transferencia bancaria" -> "Transferencia"; "Efectivo contra entrega"
+  // -> "Efectivo"; "Yappy" queda igual.
+  return metodo.split(' ')[0];
 }
