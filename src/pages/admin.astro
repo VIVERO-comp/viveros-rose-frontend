@@ -541,6 +541,25 @@ const CATALOGO = products.map((p) => ({
     return total === 1 ? '1 artículo' : `${total} artículos`;
   }
 
+  // La descripcion de Odoo llega como "[SKU] NOMBRE": en la tarjeta de la
+  // lista alcanza con el nombre; el SKU vive en el detalle.
+  function nombrePlanta(descripcion: string): string {
+    return (descripcion ?? '').replace(/^\[[^\]]*\]\s*/, '');
+  }
+
+  // Que plantas lleva el pedido, como en el portal del repartidor: las
+  // primeras con su cantidad, y "+N más" si son muchas. Devuelve la linea
+  // completa (o nada) para no dejar un hueco cuando no hay articulos.
+  function lineaPlantas(articulos: any[], maximo = 3): string {
+    if (!articulos?.length) return '';
+    const partes = articulos
+      .slice(0, maximo)
+      .map((a) => `${Math.round(a.cantidad ?? 0)}× ${nombrePlanta(a.descripcion)}`);
+    const resto = articulos.length - maximo;
+    const texto = escapar(partes.join(' · ') + (resto > 0 ? ` +${resto} más` : ''));
+    return `<span class="pedido-plantas">${texto}</span>`;
+  }
+
   function tarjetaPedido(p: any): string {
     const desde = p.en_camino_desde
       ? `hace ${duracionLegible(minutosDesde(p.en_camino_desde, new Date()))}`
@@ -565,6 +584,7 @@ const CATALOGO = products.map((p) => ({
           <span>${escapar(p.cliente ?? 'Cliente')}${p.zona ? ' · ' + escapar(p.zona) : ''}</span>
           <span class="pedido-total">$${Number(p.total).toFixed(2)}</span>
         </span>
+        ${lineaPlantas(p.articulos ?? [])}
         <span class="pedido-linea2 suave">
           <span>${resumenArticulos(p.articulos ?? [])}</span>
           <span>${derecha}</span>
@@ -586,6 +606,7 @@ const CATALOGO = products.map((p) => ({
           <span>${escapar(p.cliente ?? 'Cliente')}${p.zona ? ' · ' + escapar(p.zona) : ''}</span>
           <span class="pedido-total">$${Number(p.total).toFixed(2)}</span>
         </span>
+        ${lineaPlantas(p.articulos ?? [])}
         <span class="pedido-linea2 suave">
           <span>${ETIQUETA_ESTADO[p.estado] ?? ''} el ${p.terminado_en ? cuando(p.terminado_en) : '—'}</span>
         </span>
@@ -603,8 +624,9 @@ const CATALOGO = products.map((p) => ({
           <span class="pedido-numero">${escapar(p.numero)}</span>
           <span class="chip ${chip}">${etiqueta}</span>
         </span>
+        ${lineaPlantas(p.articulos ?? [])}
         <span class="pedido-linea2 suave">
-          <span>${escapar(p.cliente ?? 'Cliente')}${metodo ? ' · ' + escapar(metodo) : ''}</span>
+          <span>${escapar(p.cliente ?? 'Cliente')}${p.zona ? ' · ' + escapar(p.zona) : ''}${metodo ? ' · ' + escapar(metodo) : ''}</span>
           <span class="pedido-total">$${Number(p.total).toFixed(2)}</span>
         </span>
       </button>`;
@@ -1758,7 +1780,20 @@ const CATALOGO = products.map((p) => ({
     width: 100%;
   }
 
-  .app .pedido-numero { font-weight: 600; }
+  /* El numero acompaña, no domina: lo que importa de un vistazo son las
+     plantas, la zona y el estado. */
+  .app .pedido-numero {
+    font-weight: 600;
+    font-size: 0.82rem;
+    color: var(--ink-soft);
+    letter-spacing: 0.02em;
+  }
+
+  .app .pedido-plantas {
+    display: block;
+    font-size: 0.95rem;
+    line-height: 1.35;
+  }
 
   .app .pedido-total {
     font-weight: 600;
