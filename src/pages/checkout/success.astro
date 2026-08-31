@@ -121,7 +121,15 @@ import { whatsappLink } from '../../lib/site';
     const el = document.querySelector('[data-order-number]');
     if (el) el.textContent = order;
     const link = document.querySelector<HTMLAnchorElement>('[data-track-link]');
-    if (link) link.href = `/pedido?n=${encodeURIComponent(order)}`;
+    if (link) {
+      // El token de rastreo (t) llega del checkout o del retorno de
+      // PagueloFacil: autentica el enlace, porque el numero correlativo es
+      // enumerable y ya no es credencial por si solo.
+      const rastreo = new URLSearchParams({ n: order });
+      const token = params.get('t');
+      if (token) rastreo.set('t', token);
+      link.href = `/pedido?${rastreo.toString()}`;
+    }
     // Con el pago rechazado el carrito queda intacto: "Intentar el pago de
     // nuevo" vuelve al checkout con todo cargado.
     if (!pagoRechazado) clearCart();

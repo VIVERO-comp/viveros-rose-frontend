@@ -573,6 +573,7 @@ const GOOGLE_MAPS_KEY = import.meta.env.PUBLIC_GOOGLE_MAPS_KEY ?? '';
     }
     let pedido: {
       numero_pedido: string;
+      token_rastreo?: string;
       subtotal_centavos: number;
       envio_centavos: number;
       total_centavos: number;
@@ -674,7 +675,11 @@ const GOOGLE_MAPS_KEY = import.meta.env.PUBLIC_GOOGLE_MAPS_KEY ?? '';
       // sin sessionStorage no hay respaldo, pero el flujo sigue
     }
     window.open(whatsappLink(message), '_blank', 'noopener');
-    window.location.assign(`/checkout/success?order=${encodeURIComponent(pedido.numero_pedido)}`);
+    // El token de rastreo viaja a la pagina de exito para armar el enlace
+    // autenticado de /pedido (el numero correlativo es enumerable).
+    const exito = new URLSearchParams({ order: pedido.numero_pedido });
+    if (pedido.token_rastreo) exito.set('t', pedido.token_rastreo);
+    window.location.assign(`/checkout/success?${exito.toString()}`);
   });
 </script>
 

@@ -35,10 +35,20 @@ const steps = [
             type="text"
             id="order-number"
             name="order-number"
-            placeholder="VR-20260820-K7M2QX9P4T"
+            placeholder="VR-549301"
             required
           />
           <p class="help">Está en el mensaje de WhatsApp con el que confirmaste tu compra.</p>
+        </div>
+        <!-- Verificacion para numeros correlativos escritos a mano: el
+             enlace del correo trae su token y no la necesita. Se muestra
+             solo cuando el backend responde verification_required. -->
+        <div class="field" data-verify-field hidden>
+          <label for="order-phone">WhatsApp del pedido</label>
+          <input type="tel" id="order-phone" name="order-phone" placeholder="6567-3062" />
+          <p class="help">
+            Por seguridad, confirma el número de WhatsApp con el que hiciste el pedido.
+          </p>
         </div>
         <button type="submit" class="btn btn--green">Consultar estado</button>
       </form>
@@ -82,6 +92,8 @@ const steps = [
 
   const form = document.querySelector<HTMLFormElement>('.tracking-form');
   const input = document.querySelector<HTMLInputElement>('#order-number');
+  const verifyField = document.querySelector<HTMLElement>('[data-verify-field]');
+  const phoneInput = document.querySelector<HTMLInputElement>('#order-phone');
   const result = document.querySelector<HTMLElement>('.tracking-result');
   const numberEl = document.querySelector<HTMLElement>('[data-result-number]');
   const messageEl = document.querySelector<HTMLElement>('[data-result-message]');
@@ -128,8 +140,18 @@ const steps = [
       waLink.href = whatsappLink(`Hola, quiero información de mi pedido ${orderNumber}.`);
     }
 
+    // El numero correlativo (VR-549301) es enumerable, asi que solo no
+    // alcanza: el enlace del correo o de la pagina de exito trae un token
+    // (?t=), y quien escribe el numero a mano confirma su WhatsApp. Los
+    // numeros viejos (VR-fecha-codigo) entran solos, como siempre.
+    const credenciales = new URLSearchParams();
+    if (token) credenciales.set('t', token);
+    const telefono = phoneInput?.value.trim();
+    if (telefono) credenciales.set('tel', telefono);
+    const sufijo = credenciales.size > 0 ? `?${credenciales.toString()}` : '';
+
     try {
-      const res = await fetch(`/api/orders/${encodeURIComponent(orderNumber)}`);
+      const res = await fetch(`/api/orders/${encodeURIComponent(orderNumber)}${sufijo}`);
       if (res.ok) {
         const data = await res.json();
         pintarProgreso(data.estado);
@@ -147,12 +169,23 @@ const steps = [
         result?.removeAttribute('hidden');
         return;
       }
+      if (res.status === 403) {
+        // El backend pide verificar: se muestra el campo de WhatsApp y no
+        // se pinta ningun resultado (no sabemos si el pedido existe).
+        if (verifyField) verifyField.hidden = false;
+        if (telefono === undefined || telefono === '') {
+          phoneInput?.focus();
+        }
+        result?.setAttribute('hidden', '');
+        return;
+      }
       if (res.status === 404) {
         pintarProgreso('');
         if (delayEl) delayEl.hidden = true;
         if (messageEl) {
-          messageEl.textContent =
-            'No encontramos un pedido con ese número. Revisa que esté completo (VR-fecha-código) o escríbenos:';
+          messageEl.textContent = verifyField && !verifyField.hidden
+            ? 'No encontramos un pedido con ese número y ese WhatsApp. Revisa ambos o escríbenos:'
+            : 'No encontramos un pedido con ese número. Revisa que esté completo o escríbenos:';
         }
         result?.removeAttribute('hidden');
         return;
@@ -176,8 +209,11 @@ const steps = [
     if (value) lookup(value);
   });
 
-  // Soporta llegar con ?n=VR-... desde el correo o la pagina de exito.
-  const prefill = new URLSearchParams(window.location.search).get('n');
+  // Soporta llegar con ?n=VR-... desde el correo o la pagina de exito; el
+  // enlace de un pedido correlativo trae ademas su token en ?t=.
+  const llegada = new URLSearchParams(window.location.search);
+  const token = llegada.get('t')?.trim() ?? '';
+  const prefill = llegada.get('n');
   if (prefill && input) {
     input.value = prefill;
     lookup(prefill);
