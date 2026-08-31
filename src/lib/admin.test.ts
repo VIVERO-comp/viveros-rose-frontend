@@ -73,6 +73,12 @@ test('terminados en el mismo segundo se desempatan por numero, como el cursor', 
 
 test('una respuesta sin alguna lista no rompe la agrupacion', () => {
   const bloques = agruparPedidos({});
-  assert.deepEqual(bloques, { porValidar: [], conRetraso: [], enProceso: [], terminados: [] });
+  assert.deepEqual(bloques, {
+    porValidar: [],
+    esperandoPago: [],
+    conRetraso: [],
+    enProceso: [],
+    terminados: [],
+  });
   assert.equal(ETIQUETA_ESTADO.por_validar, 'Por validar');
 });

@@ -617,12 +617,13 @@ const CATALOGO = products.map((p) => ({
       return;
     }
     listaEl.innerHTML = [
-      // El contador de arriba: cuantos esperan validacion, con el salto
-      // directo a la pestaña Validar. Con cero no se pinta.
+      // El contador de arriba: cuantos esperan validacion. Solo informa y
+      // remite a la pestaña Validar: aca no hay botones de accion (Pedidos
+      // es vista de consulta; validar, capturar y reversar viven SOLO en la
+      // pestaña Validar). Con cero no se pinta.
       nuevos.length
         ? `<div class="banda-validar">
-             <p>${nuevos.length === 1 ? '1 pedido espera' : `${nuevos.length} pedidos esperan`} tu validación</p>
-             <button class="btn btn--green" data-ir-validar type="button">Validar</button>
+             <p>${nuevos.length === 1 ? '1 pedido espera' : `${nuevos.length} pedidos esperan`} tu decisión en la pestaña <strong>Validar</strong></p>
            </div>`
         : '',
       nuevos.length
@@ -653,9 +654,6 @@ const CATALOGO = products.map((p) => ({
     listaEl.querySelectorAll('[data-numero]').forEach((el) =>
       el.addEventListener('click', () => abrirDetalle(el.getAttribute('data-numero')!)),
     );
-    listaEl
-      .querySelector('[data-ir-validar]')
-      ?.addEventListener('click', () => cambiarPantalla('validar'));
     listaEl.querySelector('[data-ver-mas]')?.addEventListener('click', verMasTerminados);
   }
 
@@ -774,12 +772,17 @@ const CATALOGO = products.map((p) => ({
         </p>`,
       )
       .join('');
+    // Pedidos es vista de consulta: si este pedido espera una decision
+    // (pago coordinado por confirmar o tarjeta autorizada por capturar),
+    // aca solo se avisa; los botones viven SOLO en la pestaña Validar.
+    const esperaDecision = porValidar.some((v: any) => v.numero === p.numero);
     detalleEl.innerHTML = `
       <div class="tarjeta ${p.con_retraso ? 'pedido-card--retraso' : ''}">
         <p class="pedido-linea1">
           <span class="pedido-numero">${escapar(p.numero)}</span>
           <span class="chip chip--${p.estado}">${ETIQUETA_ESTADO[p.estado] ?? p.estado ?? 'Sin validar'}</span>
         </p>
+        ${esperaDecision ? '<p class="suave">⏳ Este pedido espera tu decisión: está en la pestaña <strong>Validar</strong>.</p>' : ''}
         <p class="detalle-cliente">${escapar(p.cliente ?? 'Cliente')}</p>
         ${p.repartidor ? `<p class="suave">Lo lleva ${escapar(p.repartidor)}</p>` : ''}
         ${p.con_retraso ? '<span class="chip chip--retraso">Con retraso</span>' : ''}
@@ -1703,7 +1706,6 @@ const CATALOGO = products.map((p) => ({
   }
 
   .app .banda-validar p { margin: 0; font-weight: 600; }
-  .app .banda-validar .btn { flex-shrink: 0; }
 
   .app .tarjeta {
     background: var(--surface);
