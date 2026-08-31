@@ -959,12 +959,14 @@ const FOTOS_CATALOGO = Object.fromEntries(
         ? 'Confirmaste el pedido'
         : `${a.detalle ?? 'Otro repartidor'} confirmó el pedido`,
     retraso: () => 'Pedido con retraso',
+    mensaje: () => 'Aviso del vivero',
   };
 
   const ICONO_AVISO: Record<string, string> = {
     pedido_listo: '📦',
     agarrado: '🤝',
     retraso: '⏰',
+    mensaje: '📣',
   };
 
   function etiquetaDia(fecha: Date): string {
@@ -999,7 +1001,7 @@ const FOTOS_CATALOGO = Object.fromEntries(
     if (!avisos.length) {
       avisosEl.innerHTML =
         '<div class="tarjeta vacio"><p>Sin avisos por ahora.</p>' +
-        '<p class="suave">Aquí verás los pedidos nuevos, los que confirma cada quien y los retrasos.</p></div>';
+        '<p class="suave">Aquí verás los pedidos nuevos, los que confirma cada quien, los retrasos y los avisos del vivero.</p></div>';
       return;
     }
     // Vienen del mas nuevo al mas viejo: se agrupan por dia conservando el orden.
@@ -1019,12 +1021,16 @@ const FOTOS_CATALOGO = Object.fromEntries(
               const titulo = (TITULO_AVISO[aviso.tipo] ?? (() => aviso.tipo))(aviso);
               const extra =
                 aviso.tipo === 'pedido_listo' && aviso.detalle ? ` · ${aviso.detalle}` : '';
+              // El aviso manual del vivero no pertenece a un pedido: la
+              // segunda linea es el mensaje mismo.
+              const secundario =
+                aviso.tipo === 'mensaje' ? (aviso.detalle ?? '') : `${aviso.numero ?? ''}${extra}`;
               return `
               <div class="tarjeta aviso aviso--${aviso.tipo}">
                 <span class="aviso-icono">${ICONO_AVISO[aviso.tipo] ?? '🔔'}</span>
                 <span class="aviso-datos">
                   <span class="aviso-titulo">${escapar(titulo)}</span>
-                  <span class="suave">${escapar(aviso.numero)}${escapar(extra)}</span>
+                  <span class="suave">${escapar(secundario)}</span>
                 </span>
                 <span class="aviso-hora">${hora(new Date(aviso.creado_en))}</span>
               </div>`;
@@ -1183,7 +1189,15 @@ const FOTOS_CATALOGO = Object.fromEntries(
     document.querySelectorAll<HTMLElement>('.pantalla').forEach((el) => (el.hidden = true));
     ($('[data-tabs]') as HTMLElement).style.display = 'none';
   } else {
-    cargarInicio();
+    // Un aviso del vivero tocado abre directo la pantalla de avisos
+    // (/repartidor?pantalla=avisos), como hace /admin con las suyas.
+    const pantallaUrl = new URLSearchParams(location.search).get('pantalla');
+    if (pantallaUrl) history.replaceState(null, '', '/repartidor');
+    if (pantallaUrl === 'avisos') {
+      cambiarPantalla('avisos');
+    } else {
+      cargarInicio();
+    }
     revisarAvisosNuevos();
   }
 </script>

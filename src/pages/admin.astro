@@ -154,6 +154,51 @@ const CATALOGO = products.map((p) => ({
         <p class="suave">Escribe al menos 2 letras para buscar en el catálogo.</p>
       </div>
     </section>
+
+    <!-- Pantalla 5: AVISOS -->
+    <section class="pantalla" data-pantalla="avisos" hidden>
+      <header class="pantalla-head">
+        <h1>Avisos</h1>
+      </header>
+      <p class="suave intro-avisos">
+        Un mensaje corto que les suena como notificación a todos los
+        repartidores y queda en la pantalla de avisos de su portal.
+      </p>
+      <form class="tarjeta form-aviso" data-form-aviso>
+        <textarea
+          data-texto-aviso
+          rows="3"
+          maxlength="300"
+          placeholder="Ej.: Mañana salimos a las 8:00, hay muchos pedidos"
+          autocomplete="off"
+        ></textarea>
+        <div class="aviso-pie">
+          <p class="contador" data-contador-aviso>0/120</p>
+          <button type="submit" class="btn btn--green" data-boton-aviso>Revisar y mandar</button>
+        </div>
+        <p class="alcance-aviso" data-alcance-aviso></p>
+        <p class="field-error" data-error-aviso hidden></p>
+      </form>
+      <div class="tarjeta confirmar-aviso" data-confirmar-aviso hidden>
+        <p class="suave">Así les va a llegar:</p>
+        <div class="notif-preview">
+          <img class="notif-icono" src="/icono-192.png" alt="" />
+          <span class="notif-textos">
+            <span class="notif-titulo">Aviso del vivero</span>
+            <span class="notif-cuerpo" data-preview-cuerpo></span>
+            <span class="notif-origen">plantaspanama.com · ahora</span>
+          </span>
+        </div>
+        <p class="confirmar-texto" data-confirmar-texto></p>
+        <div class="confirmar-botones">
+          <button type="button" class="btn btn--ghost" data-cancelar-aviso>Cancelar</button>
+          <button type="button" class="btn btn--green" data-mandar-aviso>Mandar ahora</button>
+        </div>
+      </div>
+      <p class="push-estado" data-estado-aviso hidden></p>
+      <h2 class="bloque-titulo bloque-titulo--dentro">Últimos avisos</h2>
+      <div data-historial-avisos><p class="cargando">Cargando…</p></div>
+    </section>
   </div>
 
   <nav class="tabs" data-tabs aria-label="Pantallas">
@@ -173,6 +218,10 @@ const CATALOGO = products.map((p) => ({
     <button class="tab" type="button" data-tab="stock" aria-label="Stock">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
       <span>Stock</span>
+    </button>
+    <button class="tab" type="button" data-tab="avisos" aria-label="Avisos a repartidores">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 9 20 4v16L7 15H4.5A1.5 1.5 0 0 1 3 13.5v-3A1.5 1.5 0 0 1 4.5 9H7Z"/><path d="M9 15v3.5A1.5 1.5 0 0 0 10.5 20H11"/></svg>
+      <span>Avisos</span>
     </button>
   </nav>
 </Base>
@@ -288,7 +337,7 @@ const CATALOGO = products.map((p) => ({
 
   // -- pantallas y navegacion -----------------------------------------------
 
-  type Pantalla = 'inicio' | 'pedidos' | 'validar' | 'stock';
+  type Pantalla = 'inicio' | 'pedidos' | 'validar' | 'stock' | 'avisos';
   let pantallaActual: Pantalla = 'inicio';
 
   function animarEntrada(el: HTMLElement, clase: string) {
@@ -302,6 +351,7 @@ const CATALOGO = products.map((p) => ({
     pedidos: cargarPedidos,
     validar: cargarPedidos,
     stock: () => {},
+    avisos: cargarAvisos,
   };
 
   function cambiarPantalla(destino: Pantalla) {
@@ -832,6 +882,162 @@ const CATALOGO = products.map((p) => ({
         .join('');
   }
 
+  // -- pantalla AVISOS ------------------------------------------------------
+
+  // El limite real lo manda (y lo vuelve a validar) el order-api; aqui solo
+  // se pinta el contador y se frena el boton. Mandar tiene dos pasos a
+  // proposito: un aviso mandado no se puede retirar.
+  let maximoAviso = 120;
+  let alcanceAviso: { con_push: number; total: number } | null = null;
+
+  const textoAvisoEl = () => $('[data-texto-aviso]') as unknown as HTMLTextAreaElement;
+
+  function errorAviso(texto: string) {
+    const el = $('[data-error-aviso]');
+    el.textContent = texto;
+    el.hidden = !texto;
+  }
+
+  function estadoAviso(texto: string) {
+    const el = $('[data-estado-aviso]');
+    el.textContent = texto;
+    el.hidden = !texto;
+  }
+
+  function pintarContadorAviso() {
+    const largo = textoAvisoEl().value.replace(/\s+/g, ' ').trim().length;
+    const contador = $('[data-contador-aviso]');
+    contador.textContent = `${largo}/${maximoAviso}`;
+    contador.classList.toggle('contador--rojo', largo > maximoAviso);
+    if (largo > maximoAviso) {
+      errorAviso(`Te pasaste por ${largo - maximoAviso}: recorta el aviso para que la notificación no se corte.`);
+    } else {
+      errorAviso('');
+    }
+  }
+
+  async function cargarAvisos() {
+    try {
+      const res = await pedirAdmin('/api/admin/avisos');
+      if (res.status === 401) {
+        manejar401();
+        return;
+      }
+      if (!res.ok) throw await errorDe(res);
+      pintarAvisosAdmin(await res.json());
+    } catch (error) {
+      $('[data-historial-avisos]').innerHTML = '';
+      mensaje(textoDeError(error, 'No pudimos cargar los avisos. Revisa tu señal e intenta de nuevo.'));
+    }
+  }
+
+  function pintarAvisosAdmin(datos: any) {
+    maximoAviso = datos.maximo_caracteres ?? 120;
+    alcanceAviso = { con_push: datos.con_push ?? 0, total: datos.total ?? 0 };
+    const sinPush = (datos.repartidores ?? []).filter((r: any) => !r.con_push);
+    const alcanceEl = $('[data-alcance-aviso]');
+    if (!alcanceAviso.total) {
+      alcanceEl.innerHTML = '<span class="suave">No hay contactos con la etiqueta Repartidor en Odoo.</span>';
+    } else {
+      const linea = `${alcanceAviso.con_push} de ${alcanceAviso.total} repartidores recibirán este aviso.`;
+      const detalle = sinPush.length
+        ? `<br /><span class="suave">Sin avisos activos: ${escapar(
+            sinPush.map((r: any) => r.nombre).join(', '),
+          )}. Lo verán igual al abrir su portal.</span>`
+        : '';
+      alcanceEl.innerHTML = `${escapar(linea)}${detalle}`;
+    }
+    pintarContadorAviso();
+    pintarHistorialAvisos(datos.avisos ?? []);
+  }
+
+  function pintarHistorialAvisos(avisos: any[]) {
+    const historialEl = $('[data-historial-avisos]');
+    if (!avisos.length) {
+      historialEl.innerHTML =
+        '<div class="tarjeta vacio"><p>Todavía no has mandado ningún aviso.</p></div>';
+      return;
+    }
+    historialEl.innerHTML = avisos
+      .map((a) => {
+        const fecha = new Date(a.creado_en).toLocaleString('es-PA', {
+          day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit',
+        });
+        return `
+        <div class="tarjeta aviso-mandado">
+          <p class="aviso-mandado-texto">${escapar(a.mensaje)}</p>
+          <p class="suave">${escapar(fecha)} · ${escapar(a.enviado_por)} · llegó a ${a.alcanzados} de ${a.total_repartidores}</p>
+        </div>`;
+      })
+      .join('');
+  }
+
+  function cerrarConfirmacionAviso() {
+    $('[data-confirmar-aviso]').hidden = true;
+  }
+
+  $('[data-form-aviso]').addEventListener('submit', (e) => {
+    e.preventDefault();
+    estadoAviso('');
+    const texto = textoAvisoEl().value.replace(/\s+/g, ' ').trim();
+    if (!texto) {
+      errorAviso('Escribe el aviso primero.');
+      return;
+    }
+    if (texto.length > maximoAviso) {
+      pintarContadorAviso();
+      return;
+    }
+    errorAviso('');
+    $('[data-preview-cuerpo]').textContent = texto;
+    $('[data-confirmar-texto]').textContent = alcanceAviso
+      ? `Se mandará a ${alcanceAviso.con_push} de ${alcanceAviso.total} repartidores. Un aviso mandado no se puede retirar.`
+      : 'Un aviso mandado no se puede retirar.';
+    const confirmacion = $('[data-confirmar-aviso]');
+    confirmacion.hidden = false;
+    animarEntrada(confirmacion, 'pantalla-entrando');
+  });
+
+  $('[data-cancelar-aviso]').addEventListener('click', cerrarConfirmacionAviso);
+
+  $('[data-texto-aviso]').addEventListener('input', () => {
+    // El texto cambio: la vista previa abierta ya no corresponde.
+    cerrarConfirmacionAviso();
+    estadoAviso('');
+    pintarContadorAviso();
+  });
+
+  $('[data-mandar-aviso]').addEventListener('click', async () => {
+    const boton = $('[data-mandar-aviso]') as unknown as HTMLButtonElement;
+    const texto = textoAvisoEl().value.replace(/\s+/g, ' ').trim();
+    if (!texto || boton.disabled) return;
+    boton.disabled = true;
+    boton.textContent = 'Mandando…';
+    try {
+      const res = await pedirAdmin('/api/admin/avisos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mensaje: texto }),
+      });
+      if (res.status === 401) {
+        manejar401();
+        return;
+      }
+      if (!res.ok) throw await errorDe(res);
+      const datos = await res.json();
+      textoAvisoEl().value = '';
+      cerrarConfirmacionAviso();
+      estadoAviso(`✅ Aviso mandado: llegó a ${datos.alcanzados} de ${datos.total} repartidores.`);
+      cargarAvisos();
+    } catch (error) {
+      cerrarConfirmacionAviso();
+      errorAviso(textoDeError(error, 'El aviso no salió (¿sin señal?). Intenta de nuevo.'));
+    } finally {
+      boton.disabled = false;
+      boton.textContent = 'Mandar ahora';
+    }
+  });
+
   // -- enlace pegado a mano y arranque --------------------------------------
 
   function extraerClave(texto: string): string {
@@ -867,6 +1073,8 @@ const CATALOGO = products.map((p) => ({
       if (!clave) return;
       if (pantallaActual === 'inicio') {
         await cargarResumen();
+      } else if (pantallaActual === 'avisos') {
+        await cargarAvisos();
       } else if (pantallaActual === 'stock') {
         const texto = ($('[data-buscador]') as unknown as HTMLInputElement).value
           .trim()
@@ -946,7 +1154,7 @@ const CATALOGO = products.map((p) => ({
 
   // -- arranque -------------------------------------------------------------
 
-  const PANTALLAS: Pantalla[] = ['inicio', 'pedidos', 'validar', 'stock'];
+  const PANTALLAS: Pantalla[] = ['inicio', 'pedidos', 'validar', 'stock', 'avisos'];
   const pantallaInicial: Pantalla | null =
     pantallaUrl && (PANTALLAS as string[]).includes(pantallaUrl) ? (pantallaUrl as Pantalla) : null;
 
@@ -1536,6 +1744,77 @@ const CATALOGO = products.map((p) => ({
   .tabs .tab svg { width: 24px; height: 24px; }
 
   .tabs .tab--activa { color: var(--green-deep); }
+
+  /* -- pantalla de avisos ------------------------------------------------- */
+
+  .app .form-aviso textarea {
+    width: 100%;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 0.7rem 0.8rem;
+    font: inherit;
+    resize: vertical;
+    background: var(--surface);
+  }
+
+  .app .aviso-pie {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.8rem;
+    margin-top: 0.5rem;
+  }
+
+  .app .contador {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--ink-soft);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .app .contador--rojo { color: #a4322a; font-weight: 700; }
+
+  .app .alcance-aviso { margin: 0.6rem 0 0; font-size: 0.92rem; }
+
+  /* La vista previa imita una notificacion real: icono, titulo fijo y el
+     texto tal cual va a sonar en el telefono. */
+  .app .notif-preview {
+    display: flex;
+    gap: 0.7rem;
+    align-items: flex-start;
+    background: var(--surface-tint);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 0.75rem 0.9rem;
+  }
+
+  .app .notif-icono {
+    width: 38px;
+    height: 38px;
+    border-radius: 9px;
+    flex-shrink: 0;
+  }
+
+  .app .notif-textos {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    min-width: 0;
+  }
+
+  .app .notif-titulo { font-weight: 600; font-size: 0.95rem; }
+  .app .notif-cuerpo { font-size: 0.92rem; overflow-wrap: anywhere; }
+  .app .notif-origen { font-size: 0.78rem; color: var(--ink-faint); }
+
+  .app .confirmar-texto { font-weight: 600; margin: 0.8rem 0 0.6rem; }
+
+  .app .confirmar-botones {
+    display: flex;
+    gap: 0.7rem;
+    justify-content: flex-end;
+  }
+
+  .app .aviso-mandado-texto { margin: 0 0 0.3rem; font-weight: 600; }
 
   .tabs .tab-globito {
     position: absolute;
