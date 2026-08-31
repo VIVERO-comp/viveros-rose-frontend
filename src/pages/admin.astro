@@ -437,24 +437,28 @@ const CATALOGO = products.map((p) => ({
         }</p>
       </div>
 
-      <div class="metricas">
+      <div class="metricas metricas--resumen">
         <div class="metrica">
           <span class="metrica-numero">${pedidos?.generados ?? '—'}</span>
-          <span class="metrica-nombre">Pedidos ${ETIQUETA_PERIODO[datos.periodo] ?? ''}${
+          <span class="metrica-nombre">Pedidos ${ETIQUETA_PERIODO[datos.periodo] ?? ''}</span>
+          ${
             pedidos
-              ? ` (${dinero(pedidos.valor_centavos)} · ${
+              ? `<span class="metrica-detalle">${dinero(pedidos.valor_centavos)} · ${
                   pedidos.plantas === 1 ? '1 planta' : `${pedidos.plantas} plantas`
-                })`
+                }</span>`
               : ''
-          }</span>
+          }
         </div>
         <div class="metrica ${retenidoAlto ? 'metrica--alerta' : ''}">
           <span class="metrica-numero metrica-numero--chica">${retenido ? dinero(retenido.valor_centavos) : '—'}</span>
-          <span class="metrica-nombre">Retenido esperando captura${
+          <span class="metrica-nombre">Retenido por capturar</span>
+          ${
             retenido
-              ? ` (${retenido.pedidos === 1 ? '1 pedido' : `${retenido.pedidos} pedidos`})`
+              ? `<span class="metrica-detalle">${
+                  retenido.pedidos === 1 ? '1 pedido' : `${retenido.pedidos} pedidos`
+                }</span>`
               : ''
-          }</span>
+          }
         </div>
       </div>
 
@@ -1636,6 +1640,10 @@ const CATALOGO = products.map((p) => ({
 
   .app .metricas--tres { grid-template-columns: 1fr 1fr 1fr; }
 
+  /* Las fichas del resumen van pegadas debajo de la tarjeta de vendido:
+     necesitan su propio aire (los demas bloques lo heredan del titulo). */
+  .app .metricas--resumen { margin-top: 0.8rem; }
+
   .app .metrica {
     display: flex;
     flex-direction: column;
@@ -1661,6 +1669,8 @@ const CATALOGO = products.map((p) => ({
   .app .metrica-numero--chica { font-size: 1.35rem; }
 
   .app .metrica-nombre { font-size: 0.85rem; }
+
+  .app .metrica-detalle { font-size: 0.8rem; opacity: 0.75; }
 
   /* -- tarjetas y listas -------------------------------------------------- */
 
