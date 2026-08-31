@@ -131,9 +131,11 @@ const CATALOGO = products.map((p) => ({
         <button class="btn btn--ghost btn-refrescar" data-refrescar-validar type="button">Actualizar</button>
       </header>
       <p class="suave intro-validar">
-        Pedidos del checkout esperando que confirmes el pago (Yappy,
-        transferencia o efectivo). Validar hace lo mismo que el botón
-        “Pagado” de Odoo y queda registrado a tu nombre.
+        Pedidos del checkout esperando tu validación. Los pagos coordinados
+        (Yappy, transferencia o efectivo) se marcan como pagados; con tarjeta
+        (PagueloFacil) los fondos ya están retenidos y aquí decides: capturar
+        (cobra y prepara) o reversar (devuelve y cancela). Todo queda
+        registrado a tu nombre.
       </p>
       <div data-validar><p class="cargando">Cargando…</p></div>
     </section>
@@ -733,6 +735,89 @@ const CATALOGO = products.map((p) => ({
             <span class="suave">${p.creado_en ? cuando(p.creado_en) : ''}</span>
           </p>
           <p class="suave">${resumenArticulos(p.articulos ?? [])}</p>
+          ${zonaValidar(p)}
+        </div>`,
+      )
+      .join('');
+    validarEl.querySelectorAll<HTMLElement>('[data-validar-numero]').forEach((tarjeta) => {
+      const numero = tarjeta.getAttribute('data-validar-numero')!;
+      // Confirmacion explicita en dos pasos, nunca un toque suelto.
+      armarDosPasos(tarjeta, '[data-pedir-confirmacion]', '[data-confirmacion]', '[data-cancelar]');
+      tarjeta
+        .querySelector<HTMLButtonElement>('[data-confirmar]')
+        ?.addEventListener('click', (e) => validarPago(numero, tarjeta, e.target as HTMLButtonElement));
+      // Tarjeta pre-autorizada: capturar (cobra y prepara) o reversar
+      // (devuelve la retencion y cancela). Cada boton esconde al otro
+      // mientras su confirmacion esta abierta.
+      armarDosPasos(
+        tarjeta, '[data-pedir-captura]', '[data-confirmacion-captura]',
+        '[data-cancelar-captura]', ['[data-pedir-reverso]'],
+      );
+      armarDosPasos(
+        tarjeta, '[data-pedir-reverso]', '[data-confirmacion-reverso]',
+        '[data-cancelar-reverso]', ['[data-pedir-captura]'],
+      );
+      tarjeta
+        .querySelector<HTMLButtonElement>('[data-confirmar-captura]')
+        ?.addEventListener('click', (e) =>
+          accionTarjeta(numero, tarjeta, e.target as HTMLButtonElement, 'capturar'));
+      tarjeta
+        .querySelector<HTMLButtonElement>('[data-confirmar-reverso]')
+        ?.addEventListener('click', (e) =>
+          accionTarjeta(numero, tarjeta, e.target as HTMLButtonElement, 'reversar'));
+    });
+  }
+
+  // La zona de acciones de cada "por validar": un pago coordinado (Yappy,
+  // transferencia, efectivo) se marca pagado a mano; una tarjeta
+  // pre-autorizada (PagueloFacil) tiene los fondos retenidos y se captura o
+  // se reversa; una tarjeta que aun no autorizo no tiene nada que validar.
+  function zonaValidar(p: any): string {
+    const pago = p.pago;
+    if (pago?.tarjeta && pago.estado === 'autorizada') {
+      const vence = pago.vence_en ? cuandoVence(pago.vence_en) : null;
+      return `
+          <div class="zona-validar">
+            <p class="pago-tarjeta">💳 Tarjeta pre-autorizada: los fondos están retenidos, sin cobrar.${
+              vence ? ` Captura antes del <strong>${escapar(vence)}</strong>.` : ''
+            }</p>
+            <div class="confirmacion-botones">
+              <button class="btn btn--green btn-grande" type="button" data-pedir-captura>
+                Capturar pago
+              </button>
+              <button class="btn btn--ghost btn-reversar" type="button" data-pedir-reverso>Reversar</button>
+            </div>
+            <div class="confirmacion" data-confirmacion-captura hidden>
+              <p><strong>¿Hay stock y sale ${escapar(p.numero)}?</strong>
+                 Se cobra la tarjeta del cliente y el pedido queda listo para salir.</p>
+              <div class="confirmacion-botones">
+                <button class="btn btn--green btn-grande" type="button" data-confirmar-captura>Sí, capturar el pago</button>
+                <button class="btn btn--ghost" type="button" data-cancelar-captura>Cancelar</button>
+              </div>
+            </div>
+            <div class="confirmacion" data-confirmacion-reverso hidden>
+              <p><strong>¿Reversar ${escapar(p.numero)}?</strong>
+                 La retención se devuelve completa al cliente y el pedido se cancela.
+                 No se puede deshacer.</p>
+              <div class="confirmacion-botones">
+                <button class="btn btn--ghost btn-reversar btn-grande" type="button" data-confirmar-reverso>Sí, reversar y cancelar</button>
+                <button class="btn btn--ghost" type="button" data-cancelar-reverso>Cancelar</button>
+              </div>
+            </div>
+            <p class="validar-estado" data-validar-estado hidden></p>
+          </div>`;
+    }
+    if (pago?.tarjeta) {
+      // Tarjeta sin autorizar todavia (el cliente no completo el pago) o ya
+      // reversada: no hay nada que validar a mano.
+      return `
+          <div class="zona-validar">
+            <p class="pago-tarjeta suave">💳 Pago con tarjeta ${
+              pago.estado === 'reversada' ? 'reversado' : 'sin completar todavía'
+            }: no hay nada que validar por ahora.</p>
+          </div>`;
+    }
+    return `
           <div class="zona-validar">
             <button class="btn btn--green btn-grande" type="button" data-pedir-confirmacion>
               Marcar como pagado
@@ -746,28 +831,91 @@ const CATALOGO = products.map((p) => ({
               </div>
             </div>
             <p class="validar-estado" data-validar-estado hidden></p>
-          </div>
-        </div>`,
-      )
-      .join('');
-    validarEl.querySelectorAll<HTMLElement>('[data-validar-numero]').forEach((tarjeta) => {
-      const numero = tarjeta.getAttribute('data-validar-numero')!;
-      const abrir = tarjeta.querySelector<HTMLButtonElement>('[data-pedir-confirmacion]')!;
-      const confirmacion = tarjeta.querySelector<HTMLElement>('[data-confirmacion]')!;
-      // Confirmacion explicita en dos pasos, nunca un toque suelto.
-      abrir.addEventListener('click', () => {
-        abrir.hidden = true;
-        confirmacion.hidden = false;
-        animarEntrada(confirmacion, 'pantalla-entrando');
-      });
-      tarjeta.querySelector('[data-cancelar]')!.addEventListener('click', () => {
-        confirmacion.hidden = true;
-        abrir.hidden = false;
-      });
-      tarjeta
-        .querySelector<HTMLButtonElement>('[data-confirmar]')!
-        .addEventListener('click', (e) => validarPago(numero, tarjeta, e.target as HTMLButtonElement));
+          </div>`;
+  }
+
+  /** Fecha limite de captura (ISO con zona) en horario legible de Panama. */
+  function cuandoVence(valor: string): string {
+    return new Date(valor).toLocaleString('es-PA', {
+      day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit',
     });
+  }
+
+  /** Confirmacion en dos pasos: abrir esconde el disparador (y los botones
+      hermanos), cancelar lo restaura. Silencioso si la tarjeta no tiene
+      estos elementos (cada zona trae solo los suyos). */
+  function armarDosPasos(
+    tarjeta: HTMLElement,
+    abrirSel: string,
+    confirmacionSel: string,
+    cancelarSel: string,
+    ocultarTambien: string[] = [],
+  ) {
+    const abrir = tarjeta.querySelector<HTMLButtonElement>(abrirSel);
+    const confirmacion = tarjeta.querySelector<HTMLElement>(confirmacionSel);
+    if (!abrir || !confirmacion) return;
+    const hermanos = ocultarTambien
+      .map((sel) => tarjeta.querySelector<HTMLElement>(sel))
+      .filter((el): el is HTMLElement => el !== null);
+    abrir.addEventListener('click', () => {
+      abrir.hidden = true;
+      hermanos.forEach((el) => (el.hidden = true));
+      confirmacion.hidden = false;
+      animarEntrada(confirmacion, 'pantalla-entrando');
+    });
+    tarjeta.querySelector<HTMLButtonElement>(cancelarSel)?.addEventListener('click', () => {
+      confirmacion.hidden = true;
+      abrir.hidden = false;
+      hermanos.forEach((el) => (el.hidden = false));
+    });
+  }
+
+  async function accionTarjeta(
+    numero: string,
+    tarjeta: HTMLElement,
+    boton: HTMLButtonElement,
+    accion: 'capturar' | 'reversar',
+  ) {
+    const estado = tarjeta.querySelector<HTMLElement>('[data-validar-estado]')!;
+    const textoOriginal = boton.textContent ?? '';
+    boton.disabled = true;
+    boton.textContent = accion === 'capturar' ? 'Capturando…' : 'Reversando…';
+    try {
+      const res = await pedirAdmin(
+        `/api/admin/pedidos/${encodeURIComponent(numero)}/${accion}-pago`,
+        { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' },
+      );
+      if (res.status === 401) {
+        manejar401();
+        return;
+      }
+      if (!res.ok) throw await errorDe(res);
+      tarjeta.querySelectorAll<HTMLElement>('.confirmacion').forEach((c) => (c.hidden = true));
+      estado.hidden = false;
+      estado.textContent =
+        accion === 'capturar'
+          ? `✅ ${numero}: pago capturado, quedó listo para salir.`
+          : `↩️ ${numero}: la retención se devolvió y el pedido quedó cancelado.`;
+      porValidar = porValidar.filter((p) => p.numero !== numero);
+      pintarGlobitoValidar();
+      setTimeout(() => {
+        tarjeta.classList.add('por-validar--saliendo');
+        setTimeout(() => {
+          tarjeta.remove();
+          if (!porValidar.length) pintarValidar();
+        }, 220);
+      }, 1600);
+    } catch (error) {
+      boton.disabled = false;
+      boton.textContent = textoOriginal;
+      estado.hidden = false;
+      estado.textContent = textoDeError(
+        error,
+        accion === 'capturar'
+          ? 'No se pudo capturar. Revisa tu señal e intenta de nuevo (reintentar es seguro).'
+          : 'No se pudo reversar. Revisa tu señal e intenta de nuevo (reintentar es seguro).',
+      );
+    }
   }
 
   async function validarPago(numero: string, tarjeta: HTMLElement, boton: HTMLButtonElement) {
@@ -1524,6 +1672,10 @@ const CATALOGO = products.map((p) => ({
   .app .chip--retraso { background: #f7e3e0; color: #a4322a; align-self: flex-start; }
   .app .chip--stock { background: var(--green-tint); color: var(--green-deep); }
   .app .chip--agotado { background: #f7e3e0; color: #a4322a; }
+
+  .app .pago-tarjeta { margin: 0.2rem 0 0.6rem; font-size: 0.92rem; }
+
+  .app .btn-reversar { color: #a4322a; }
 
   .app .volver {
     border: none;

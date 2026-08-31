@@ -62,17 +62,36 @@ import { whatsappLink } from '../../lib/site';
   const params = new URLSearchParams(window.location.search);
   const order = params.get('order');
 
-  // Al volver de la pagina de pago de Wompi la URL trae ademas ?id=<la
-  // transaccion>: aqui no hay WhatsApp que abrir, el webhook confirma el
-  // pedido solo.
-  if (params.get('id')) {
+  // Al volver de la pagina de pago de PagueloFacil la URL trae ademas el
+  // resultado de la PRE-AUTORIZACION (Estado, Oper, Razon...). Aqui no hay
+  // WhatsApp que abrir; el texto dice "autorizada", no "pagada", porque el
+  // cliente ve una retencion en su tarjeta y el cobro real sale recien al
+  // validar el stock (la captura desde /admin).
+  const estadoPago = (params.get('Estado') ?? '').toLowerCase();
+  if (params.get('Estado') || params.get('Oper')) {
     const lead = document.querySelector<HTMLElement>('[data-lead]');
-    if (lead) {
-      lead.textContent =
-        'Recibimos tu pago y lo estamos confirmando con el banco. En unos minutos ' +
-        'tu pedido queda confirmado; puedes seguirlo con tu número de pedido.';
+    let texto: string;
+    let autorizada = false;
+    if (!estadoPago || estadoPago.startsWith('aprobad')) {
+      autorizada = true;
+      texto =
+        'Tu tarjeta quedó autorizada: los fondos están reservados, sin cobrar todavía. ' +
+        'Confirmamos tu pedido al validar el stock (normalmente el mismo día) y recién ' +
+        'ahí se hace el cobro. Si algo no está disponible, la retención se devuelve completa.';
+    } else if (estadoPago.startsWith('pendient')) {
+      texto =
+        'Tu pago con tarjeta quedó pendiente de confirmación del banco. Te avisamos por ' +
+        'correo en cuanto se resuelva; también puedes escribirnos por WhatsApp.';
+    } else {
+      const razon = params.get('Razon');
+      texto =
+        `No pudimos autorizar tu tarjeta${razon ? ` (${razon})` : ''}. No se hizo ningún ` +
+        'cobro. Puedes intentar de nuevo o escribirnos por WhatsApp para coordinar otro medio de pago.';
     }
-    document.querySelector<HTMLElement>('[data-wa-fallback]')?.setAttribute('hidden', '');
+    if (lead) lead.textContent = texto;
+    if (autorizada) {
+      document.querySelector<HTMLElement>('[data-wa-fallback]')?.setAttribute('hidden', '');
+    }
   }
 
   if (order) {
@@ -144,6 +163,6 @@ import { whatsappLink } from '../../lib/site';
   .success-cuenta[hidden] { display: none; }
 
   /* El display de .btn le gana al atributo hidden; sin esto el boton de
-     WhatsApp no se ocultaria al volver de Wompi. */
+     WhatsApp no se ocultaria al volver de PagueloFacil. */
   .success-actions .btn[hidden] { display: none; }
 </style>
