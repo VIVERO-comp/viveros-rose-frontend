@@ -891,7 +891,8 @@ const CATALOGO = products.map((p) => ({
             </div>
             <div class="confirmacion" data-confirmacion-captura hidden>
               <p><strong>¿Hay stock y sale ${escapar(p.numero)}?</strong>
-                 Se cobra la tarjeta del cliente y el pedido queda listo para salir.</p>
+                 El sistema va a cobrar la retención de la tarjeta del cliente y el
+                 pedido queda listo para salir.</p>
               <div class="confirmacion-botones">
                 <button class="btn btn--green btn-grande" type="button" data-confirmar-captura>Sí, capturar el pago</button>
                 <button class="btn btn--ghost" type="button" data-cancelar-captura>Cancelar</button>
@@ -919,16 +920,21 @@ const CATALOGO = products.map((p) => ({
             }: no hay nada que validar por ahora.</p>
           </div>`;
     }
+    // Pago coordinado (Yappy, transferencia, efectivo): la accion es que
+    // ABRAHAM confirma que el dinero ya le llego. Es distinta de la captura
+    // de tarjeta (donde el SISTEMA cobra la retencion) y el texto lo dice.
     return `
           <div class="zona-validar">
             <button class="btn btn--green btn-grande" type="button" data-pedir-confirmacion>
-              Marcar como pagado
+              Confirmar pago recibido
             </button>
             <div class="confirmacion" data-confirmacion hidden>
-              <p><strong>¿Confirmas que ${escapar(p.numero)} ya está pagado?</strong>
-                 El pedido quedará listo para salir y la validación se registra a tu nombre.</p>
+              <p><strong>¿Recibiste el pago de ${escapar(p.numero)}?</strong>
+                 Estás confirmando que el dinero ya te llegó (Yappy, transferencia o
+                 efectivo). El pedido quedará listo para salir y la validación se
+                 registra a tu nombre.</p>
               <div class="confirmacion-botones">
-                <button class="btn btn--green btn-grande" type="button" data-confirmar>Sí, marcar pagado</button>
+                <button class="btn btn--green btn-grande" type="button" data-confirmar>Sí, ya recibí el pago</button>
                 <button class="btn btn--ghost" type="button" data-cancelar>Cancelar</button>
               </div>
             </div>
@@ -1041,7 +1047,7 @@ const CATALOGO = products.map((p) => ({
       if (!res.ok) throw await errorDe(res);
       tarjeta.querySelector<HTMLElement>('[data-confirmacion]')!.hidden = true;
       estado.hidden = false;
-      estado.textContent = `✅ ${numero} quedó listo para salir.`;
+      estado.textContent = `✅ ${numero}: pago recibido, quedó listo para salir.`;
       // La tarjeta se despide sola y el conteo del tab se actualiza.
       porValidar = porValidar.filter((p) => p.numero !== numero);
       pintarGlobitoValidar();
@@ -1054,7 +1060,7 @@ const CATALOGO = products.map((p) => ({
       }, 1200);
     } catch (error) {
       boton.disabled = false;
-      boton.textContent = 'Sí, marcar pagado';
+      boton.textContent = 'Sí, ya recibí el pago';
       estado.hidden = false;
       estado.textContent = textoDeError(
         error,
