@@ -40,3 +40,73 @@ export function minutosDesde(desde: string, ahora: Date): number {
   const inicio = new Date(desde.replace(' ', 'T') + 'Z');
   return Math.max(0, Math.round((ahora.getTime() - inicio.getTime()) / 60000));
 }
+
+// -- lista de pedidos -------------------------------------------------------
+
+/** El estado unificado que manda el order-api en cada lista del panel. */
+export type EstadoPedido =
+  | 'por_validar'
+  | 'listo'
+  | 'saliendo'
+  | 'en_camino'
+  | 'entregado'
+  | 'cancelado';
+
+/** Texto de la insignia: siempre dice el estado, el color solo lo refuerza. */
+export const ETIQUETA_ESTADO: Record<EstadoPedido, string> = {
+  por_validar: 'Por validar',
+  listo: 'Listo para salir',
+  saliendo: 'Saliendo',
+  en_camino: 'En camino',
+  entregado: 'Entregado',
+  cancelado: 'Cancelado',
+};
+
+export interface PedidoLista {
+  numero: string;
+  estado: EstadoPedido;
+  con_retraso?: boolean;
+  creado_en?: string | null;
+  pagado_en?: string | null;
+  terminado_en?: string | null;
+  [otro: string]: unknown;
+}
+
+export interface ListaPedidos {
+  por_validar?: PedidoLista[];
+  activos?: PedidoLista[];
+  terminados?: PedidoLista[];
+}
+
+export interface BloquesPedidos {
+  porValidar: PedidoLista[];
+  conRetraso: PedidoLista[];
+  enProceso: PedidoLista[];
+  terminados: PedidoLista[];
+}
+
+const porFecha =
+  (campo: keyof PedidoLista, direccion: 1 | -1) =>
+  (a: PedidoLista, b: PedidoLista): number => {
+    const fa = String(a[campo] ?? '');
+    const fb = String(b[campo] ?? '');
+    if (fa !== fb) return fa < fb ? -direccion : direccion;
+    // Mismo segundo: el numero desempata, como en el cursor del order-api.
+    return a.numero < b.numero ? -direccion : a.numero > b.numero ? direccion : 0;
+  };
+
+/**
+ * Ordena la lista del panel por lo que pide atencion: primero los nuevos
+ * (esperan validacion; el que lleva mas tiempo esperando, arriba), luego
+ * los activos con retraso, luego el resto en proceso (por orden de pago) y
+ * al final los terminados, del mas reciente al mas viejo.
+ */
+export function agruparPedidos(lista: ListaPedidos): BloquesPedidos {
+  const activos = lista.activos ?? [];
+  return {
+    porValidar: [...(lista.por_validar ?? [])].sort(porFecha('creado_en', 1)),
+    conRetraso: activos.filter((p) => p.con_retraso).sort(porFecha('pagado_en', 1)),
+    enProceso: activos.filter((p) => !p.con_retraso).sort(porFecha('pagado_en', 1)),
+    terminados: [...(lista.terminados ?? [])].sort(porFecha('terminado_en', -1)),
+  };
+}

@@ -6,8 +6,9 @@
 //   INICIO   resumen del periodo (hoy / semana / mes): pedidos generados,
 //            plantas vendidas, valor, la calle (sin tomar / en camino /
 //            con retraso) y los tiempos de entrega.
-//   PEDIDOS  todos los activos con zona, articulos, quien lo lleva y desde
-//            cuando; retrasados destacados. Detalle con historial.
+//   PEDIDOS  la lista completa: por validar arriba, luego con retraso,
+//            en proceso y los terminados con "Ver mas" (paginados por
+//            cursor en el order-api). Detalle con historial.
 //   VALIDAR  marcar un pedido como pagado (accion_marcar_pagado en Odoo),
 //            con confirmacion explicita y constancia de quien lo hizo.
 //   STOCK    buscar una planta y ver su disponibilidad (via stock-proxy).
@@ -181,7 +182,7 @@ const CATALOGO = products.map((p) => ({
 </script>
 
 <script>
-  import { duracionLegible, minutosDesde, peticionAdmin } from '../lib/admin';
+  import { ETIQUETA_ESTADO, agruparPedidos, duracionLegible, minutosDesde, peticionAdmin } from '../lib/admin';
   import { instalarTirarParaRefrescar } from '../lib/refrescar';
 
   const $ = <T extends HTMLElement>(sel: string) => document.querySelector<T>(sel)!;
@@ -196,13 +197,6 @@ const CATALOGO = products.map((p) => ({
 
   const CATALOGO: { sku: string; nombre: string; image: string | null; emoji: string }[] =
     (window as any).CATALOGO_ADMIN ?? [];
-
-  const ETIQUETA_ESTADO: Record<string, string> = {
-    listo: 'Listo para salir',
-    saliendo: 'Saliendo',
-    en_camino: 'En camino',
-    entregado: 'Entregado',
-  };
 
   // -- credencial -----------------------------------------------------------
 
@@ -420,6 +414,12 @@ const CATALOGO = products.map((p) => ({
   // -- pantalla PEDIDOS y VALIDAR (comparten la carga) ----------------------
 
   let porValidar: any[] = [];
+  // Los bloques ordenados de la lista y el cursor del "Ver mas" de
+  // terminados (fecha de fin + numero del ultimo mostrado, como lo
+  // devuelve el order-api).
+  let bloques = agruparPedidos({});
+  let cursorAntesDe: string | null = null;
+  let cursorNumero: string | null = null;
 
   async function cargarPedidos() {
     vistaDetalle.hidden = true;
@@ -433,7 +433,10 @@ const CATALOGO = products.map((p) => ({
       if (!res.ok) throw await errorDe(res);
       const datos = await res.json();
       porValidar = datos.por_validar ?? [];
-      pintarPedidos(datos.activos ?? []);
+      bloques = agruparPedidos(datos);
+      cursorAntesDe = datos.siguiente_antes_de ?? null;
+      cursorNumero = datos.siguiente_numero ?? null;
+      pintarPedidos();
       pintarValidar();
       pintarGlobitoValidar();
     } catch (error) {
@@ -458,12 +461,21 @@ const CATALOGO = products.map((p) => ({
     const desde = p.en_camino_desde
       ? `hace ${duracionLegible(minutosDesde(p.en_camino_desde, new Date()))}`
       : null;
+    // La esquina de abajo: quien lo lleva, o desde cuando espera validacion.
+    const derecha =
+      p.estado === 'por_validar'
+        ? p.creado_en
+          ? `Pedido el ${cuando(p.creado_en)}`
+          : 'Esperando validación'
+        : p.repartidor
+          ? `${escapar(p.repartidor)}${desde ? ' · ' + desde : ''}`
+          : 'Sin repartidor';
     return `
       <button class="tarjeta pedido-card ${p.con_retraso ? 'pedido-card--retraso' : ''}"
               data-numero="${escapar(p.numero)}" type="button">
         <span class="pedido-linea1">
           <span class="pedido-numero">${escapar(p.numero)}</span>
-          <span class="chip chip--${p.estado_entrega}">${ETIQUETA_ESTADO[p.estado_entrega] ?? p.estado_entrega}</span>
+          <span class="chip chip--${p.estado}">${ETIQUETA_ESTADO[p.estado] ?? p.estado}</span>
         </span>
         <span class="pedido-linea2">
           <span>${escapar(p.cliente ?? 'Cliente')}${p.zona ? ' · ' + escapar(p.zona) : ''}</span>
@@ -471,36 +483,97 @@ const CATALOGO = products.map((p) => ({
         </span>
         <span class="pedido-linea2 suave">
           <span>${resumenArticulos(p.articulos ?? [])}</span>
-          <span>${
-            p.repartidor
-              ? `${escapar(p.repartidor)}${desde ? ' · ' + desde : ''}`
-              : 'Sin repartidor'
-          }</span>
+          <span>${derecha}</span>
         </span>
         ${p.con_retraso ? '<span class="chip chip--retraso">Con retraso</span>' : ''}
       </button>`;
   }
 
-  function pintarPedidos(activos: any[]) {
-    if (!activos.length) {
-      listaEl.innerHTML =
-        '<div class="tarjeta vacio"><p>No hay pedidos activos ahora mismo.</p></div>';
+  // Un terminado se lee de un vistazo: que paso y cuando termino.
+  function tarjetaTerminado(p: any): string {
+    return `
+      <button class="tarjeta pedido-card pedido-card--terminado"
+              data-numero="${escapar(p.numero)}" type="button">
+        <span class="pedido-linea1">
+          <span class="pedido-numero">${escapar(p.numero)}</span>
+          <span class="chip chip--${p.estado}">${ETIQUETA_ESTADO[p.estado] ?? p.estado}</span>
+        </span>
+        <span class="pedido-linea2">
+          <span>${escapar(p.cliente ?? 'Cliente')}${p.zona ? ' · ' + escapar(p.zona) : ''}</span>
+          <span class="pedido-total">$${Number(p.total).toFixed(2)}</span>
+        </span>
+        <span class="pedido-linea2 suave">
+          <span>${ETIQUETA_ESTADO[p.estado] ?? ''} el ${p.terminado_en ? cuando(p.terminado_en) : '—'}</span>
+        </span>
+      </button>`;
+  }
+
+  function pintarPedidos() {
+    const { porValidar: nuevos, conRetraso, enProceso, terminados } = bloques;
+    if (!nuevos.length && !conRetraso.length && !enProceso.length && !terminados.length) {
+      listaEl.innerHTML = '<div class="tarjeta vacio"><p>No hay pedidos todavía.</p></div>';
       return;
     }
-    // Los retrasados primero: son los que piden atencion.
-    const retrasados = activos.filter((p) => p.con_retraso);
-    const alDia = activos.filter((p) => !p.con_retraso);
     listaEl.innerHTML = [
-      retrasados.length
-        ? `<h2 class="bloque-titulo bloque-titulo--alerta">Con retraso</h2>` +
-          retrasados.map(tarjetaPedido).join('')
+      // El contador de arriba: cuantos esperan validacion, con el salto
+      // directo a la pestaña Validar. Con cero no se pinta.
+      nuevos.length
+        ? `<div class="banda-validar">
+             <p>${nuevos.length === 1 ? '1 pedido espera' : `${nuevos.length} pedidos esperan`} tu validación</p>
+             <button class="btn btn--green" data-ir-validar type="button">Validar</button>
+           </div>`
         : '',
-      retrasados.length && alDia.length ? '<h2 class="bloque-titulo">Al día</h2>' : '',
-      alDia.map(tarjetaPedido).join(''),
+      nuevos.length
+        ? '<h2 class="bloque-titulo">Por validar</h2>' + nuevos.map(tarjetaPedido).join('')
+        : '',
+      conRetraso.length
+        ? '<h2 class="bloque-titulo bloque-titulo--alerta">Con retraso</h2>' +
+          conRetraso.map(tarjetaPedido).join('')
+        : '',
+      enProceso.length
+        ? '<h2 class="bloque-titulo">En proceso</h2>' + enProceso.map(tarjetaPedido).join('')
+        : '',
+      terminados.length
+        ? '<h2 class="bloque-titulo">Terminados</h2>' + terminados.map(tarjetaTerminado).join('')
+        : '',
+      // La pagina siguiente de terminados: mas viejos que el cursor.
+      cursorAntesDe
+        ? '<button class="btn btn--ghost btn-ver-mas" data-ver-mas type="button">Ver más</button>'
+        : '',
     ].join('');
     listaEl.querySelectorAll('[data-numero]').forEach((el) =>
       el.addEventListener('click', () => abrirDetalle(el.getAttribute('data-numero')!)),
     );
+    listaEl
+      .querySelector('[data-ir-validar]')
+      ?.addEventListener('click', () => cambiarPantalla('validar'));
+    listaEl.querySelector('[data-ver-mas]')?.addEventListener('click', verMasTerminados);
+  }
+
+  async function verMasTerminados() {
+    const boton = listaEl.querySelector<HTMLButtonElement>('[data-ver-mas]');
+    if (!boton || !cursorAntesDe) return;
+    boton.disabled = true;
+    boton.textContent = 'Cargando…';
+    try {
+      const consulta = new URLSearchParams({ antes_de: cursorAntesDe });
+      if (cursorNumero) consulta.set('numero', cursorNumero);
+      const res = await pedirAdmin(`/api/admin/pedidos/terminados?${consulta}`);
+      if (res.status === 401) {
+        manejar401();
+        return;
+      }
+      if (!res.ok) throw await errorDe(res);
+      const datos = await res.json();
+      bloques.terminados.push(...(datos.terminados ?? []));
+      cursorAntesDe = datos.siguiente_antes_de ?? null;
+      cursorNumero = datos.siguiente_numero ?? null;
+      pintarPedidos();
+    } catch (error) {
+      boton.disabled = false;
+      boton.textContent = 'Ver más';
+      mensaje(textoDeError(error, 'No pudimos cargar más pedidos. Revisa tu señal e intenta de nuevo.'));
+    }
   }
 
   let numeroDetalleAbierto = '';
@@ -534,12 +607,18 @@ const CATALOGO = products.map((p) => ({
       .join('');
     // El historial: los hitos sellados del flujo, mas las notas del chatter
     // (ahi quedan las validaciones del panel, con quien y cuando).
-    const hitos = [
+    // Cancelado no es un paso del camino: si el pedido se cancelo, quedan
+    // solo los hitos que si pasaron y el sello de la cancelacion al final.
+    let pasos: [string, string | null | undefined][] = [
       ['Creado', p.hitos?.creado_en],
       ['Pagado', p.hitos?.pagado_en],
       ['En camino', p.hitos?.en_camino_en],
       ['Entregado', p.hitos?.entregado_en],
-    ]
+    ];
+    if (p.hitos?.cancelado_en) {
+      pasos = [...pasos.filter(([, fecha]) => fecha), ['Cancelado', p.hitos.cancelado_en]];
+    }
+    const hitos = pasos
       .map(
         ([nombre, fecha]) => `
         <p class="hito ${fecha ? '' : 'hito--pendiente'}">
@@ -562,7 +641,7 @@ const CATALOGO = products.map((p) => ({
       <div class="tarjeta ${p.con_retraso ? 'pedido-card--retraso' : ''}">
         <p class="pedido-linea1">
           <span class="pedido-numero">${escapar(p.numero)}</span>
-          <span class="chip chip--${p.estado_entrega}">${ETIQUETA_ESTADO[p.estado_entrega] ?? p.estado_entrega ?? 'Sin validar'}</span>
+          <span class="chip chip--${p.estado}">${ETIQUETA_ESTADO[p.estado] ?? p.estado ?? 'Sin validar'}</span>
         </p>
         <p class="detalle-cliente">${escapar(p.cliente ?? 'Cliente')}</p>
         ${p.repartidor ? `<p class="suave">Lo lleva ${escapar(p.repartidor)}</p>` : ''}
@@ -1150,6 +1229,21 @@ const CATALOGO = products.map((p) => ({
 
   .app .push-estado { color: var(--ink-soft); font-size: 0.92rem; }
 
+  .app .banda-validar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    background: var(--green-tint);
+    border: 1px solid rgba(21, 102, 47, 0.25);
+    border-radius: var(--radius-cart);
+    padding: 0.9rem 1.1rem;
+    margin-bottom: 1rem;
+  }
+
+  .app .banda-validar p { margin: 0; font-weight: 600; }
+  .app .banda-validar .btn { flex-shrink: 0; }
+
   .app .tarjeta {
     background: var(--surface);
     border: 1px solid var(--line);
@@ -1179,6 +1273,10 @@ const CATALOGO = products.map((p) => ({
 
   .app .pedido-card--retraso { border-left: 4px solid #a4322a; }
 
+  .app .pedido-card--terminado { opacity: 0.85; }
+
+  .app .btn-ver-mas { width: 100%; margin-top: 0.2rem; }
+
   .app .pedido-linea1,
   .app .pedido-linea2 {
     display: flex;
@@ -1206,10 +1304,15 @@ const CATALOGO = products.map((p) => ({
     white-space: nowrap;
   }
 
-  .app .chip--listo { background: var(--green-tint); color: var(--green-deep); }
+  /* El texto del chip siempre dice el estado; el color solo lo refuerza:
+     por validar verde, el flujo activo ambar, entregado gris, cancelado
+     rojo (y el chip de retraso sigue aparte, tambien en rojo). */
+  .app .chip--por_validar { background: var(--green-tint); color: var(--green-deep); }
+  .app .chip--listo,
   .app .chip--saliendo,
   .app .chip--en_camino { background: #fdf0d7; color: #7c5a12; }
-  .app .chip--entregado { background: var(--green-tint); color: var(--green-deep); }
+  .app .chip--entregado { background: var(--surface-tint); color: var(--ink-soft); }
+  .app .chip--cancelado { background: #f7e3e0; color: #a4322a; }
   .app .chip--retraso { background: #f7e3e0; color: #a4322a; align-self: flex-start; }
   .app .chip--stock { background: var(--green-tint); color: var(--green-deep); }
   .app .chip--agotado { background: #f7e3e0; color: #a4322a; }
