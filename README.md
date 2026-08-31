@@ -82,6 +82,7 @@ ya estan conectados:
   `src/pages/api/` son el unico puente. El checkout crea el pedido real (numero
   `VR-...`) y el pago se coordina por WhatsApp (Yappy, transferencia o efectivo);
   `/pedido` consulta el estado publico y `/cuenta` maneja registro, sesion e
-  historial. Wompi (pago online) queda disenado pero sin conectar.
+  historial. La tarjeta (PagueloFacil) pre-autoriza en linea y se captura
+  desde /admin tras validar el stock.
 
 El frontend **nunca** habla con Odoo directamente ni escribe stock.
