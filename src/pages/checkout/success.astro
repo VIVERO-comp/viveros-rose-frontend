@@ -14,18 +14,24 @@ import { whatsappLink } from '../../lib/site';
 >
   <section class="section">
     <div class="container success-container">
-      <div class="success-icon"><Icon name="badge-check" size={52} /></div>
-      <h1>¡Gracias por tu compra!</h1>
+      <div class="success-icon" data-icon-ok><Icon name="badge-check" size={52} /></div>
+      <div class="success-icon success-icon--alerta" hidden data-icon-alerta>
+        <Icon name="alert-triangle" size={52} />
+      </div>
+      <h1 data-titulo>¡Gracias por tu compra!</h1>
       <p class="lead" data-lead>
         Recibimos tu pedido y lo confirmamos contigo por WhatsApp, junto con el
         número de pedido para darle seguimiento.
       </p>
 
       <div class="card success-card">
-        <p><strong>Numero de pedido:</strong> <span data-order-number>—</span></p>
-        <p class="help">Guardalo: es lo unico que necesitas para rastrear tu entrega.</p>
+        <div data-order-info>
+          <p><strong>Numero de pedido:</strong> <span data-order-number>—</span></p>
+          <p class="help">Guardalo: es lo unico que necesitas para rastrear tu entrega.</p>
+        </div>
         <div class="success-actions">
           <a href="/pedido" class="btn btn--green" data-track-link>Rastrear mi pedido</a>
+          <a href="/checkout" class="btn btn--green" hidden data-retry>Intentar el pago de nuevo</a>
           <a
             href={whatsappLink('Hola, acabo de hacer un pedido en plantaspanama.com.')}
             class="btn btn--whatsapp"
@@ -68,6 +74,7 @@ import { whatsappLink } from '../../lib/site';
   // cliente ve una retencion en su tarjeta y el cobro real sale recien al
   // validar el stock (la captura desde /admin).
   const estadoPago = (params.get('Estado') ?? '').toLowerCase();
+  let pagoRechazado = false;
   if (params.get('Estado') || params.get('Oper')) {
     const lead = document.querySelector<HTMLElement>('[data-lead]');
     let texto: string;
@@ -83,14 +90,30 @@ import { whatsappLink } from '../../lib/site';
         'Tu pago con tarjeta quedó pendiente de confirmación del banco. Te avisamos por ' +
         'correo en cuanto se resuelva; también puedes escribirnos por WhatsApp.';
     } else {
+      pagoRechazado = true;
       const razon = params.get('Razon');
       texto =
         `No pudimos autorizar tu tarjeta${razon ? ` (${razon})` : ''}. No se hizo ningún ` +
-        'cobro. Puedes intentar de nuevo o escribirnos por WhatsApp para coordinar otro medio de pago.';
+        'cobro y este pedido quedó cancelado. Puedes intentar de nuevo con la misma tarjeta ' +
+        'u otra, o escribirnos por WhatsApp para coordinar otro medio de pago.';
     }
     if (lead) lead.textContent = texto;
     if (autorizada) {
       document.querySelector<HTMLElement>('[data-wa-fallback]')?.setAttribute('hidden', '');
+    }
+    if (pagoRechazado) {
+      // Un rechazo no se celebra: titulo e icono propios, sin numero ni
+      // rastreo ni oferta de cuenta (ese pedido quedo cancelado), y con el
+      // camino claro para reintentar. El carrito NO se vacia (ver abajo).
+      document.title = 'No pudimos autorizar tu tarjeta';
+      const titulo = document.querySelector<HTMLElement>('[data-titulo]');
+      if (titulo) titulo.textContent = 'No pudimos autorizar tu tarjeta';
+      document.querySelector<HTMLElement>('[data-icon-ok]')?.setAttribute('hidden', '');
+      document.querySelector<HTMLElement>('[data-icon-alerta]')?.removeAttribute('hidden');
+      document.querySelector<HTMLElement>('[data-order-info]')?.setAttribute('hidden', '');
+      document.querySelector<HTMLElement>('[data-track-link]')?.setAttribute('hidden', '');
+      document.querySelector<HTMLElement>('[data-retry]')?.removeAttribute('hidden');
+      document.querySelector<HTMLElement>('[data-cuenta-oferta]')?.setAttribute('hidden', '');
     }
   }
 
@@ -99,7 +122,9 @@ import { whatsappLink } from '../../lib/site';
     if (el) el.textContent = order;
     const link = document.querySelector<HTMLAnchorElement>('[data-track-link]');
     if (link) link.href = `/pedido?n=${encodeURIComponent(order)}`;
-    clearCart();
+    // Con el pago rechazado el carrito queda intacto: "Intentar el pago de
+    // nuevo" vuelve al checkout con todo cargado.
+    if (!pagoRechazado) clearCart();
   }
 
   // El checkout dejo el mensaje completo en sessionStorage: si el navegador
@@ -139,6 +164,12 @@ import { whatsappLink } from '../../lib/site';
     color: var(--green);
     margin-bottom: 1rem;
   }
+
+  /* El display:flex le ganaria al atributo hidden (mismo caso que el boton
+     de WhatsApp mas abajo). */
+  .success-icon[hidden] { display: none; }
+
+  .success-icon--alerta { color: #b3541e; }
 
   .success-card {
     margin-top: 2rem;
