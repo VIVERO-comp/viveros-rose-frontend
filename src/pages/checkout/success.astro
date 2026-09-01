@@ -69,22 +69,22 @@ import { whatsappLink } from '../../lib/site';
   const order = params.get('order');
 
   // Al volver de la pagina de pago de PagueloFacil la URL trae ademas el
-  // resultado de la PRE-AUTORIZACION (Estado, Oper, Razon...). Aqui no hay
-  // WhatsApp que abrir; el texto dice "autorizada", no "pagada", porque el
-  // cliente ve una retencion en su tarjeta y el cobro real sale recien al
-  // validar el stock (la captura desde /admin).
+  // resultado del cobro (Estado, Oper, Razon...). Aqui no hay WhatsApp que
+  // abrir; con venta directa el cobro es inmediato: el pago ya entro y el
+  // pedido queda confirmado (la validacion interna es antes de entregar,
+  // no antes de cobrar).
   const estadoPago = (params.get('Estado') ?? '').toLowerCase();
   let pagoRechazado = false;
   if (params.get('Estado') || params.get('Oper')) {
     const lead = document.querySelector<HTMLElement>('[data-lead]');
     let texto: string;
-    let autorizada = false;
+    let pagoAprobado = false;
     if (!estadoPago || estadoPago.startsWith('aprobad')) {
-      autorizada = true;
+      pagoAprobado = true;
       texto =
-        'Tu tarjeta quedó autorizada: los fondos están reservados, sin cobrar todavía. ' +
-        'Confirmamos tu pedido al validar el stock (normalmente el mismo día) y recién ' +
-        'ahí se hace el cobro. Si algo no está disponible, la retención se devuelve completa.';
+        'Recibimos tu pago con tarjeta y tu pedido quedó confirmado. Te llega el ' +
+        'comprobante por correo y preparamos la entrega (normalmente en 24–48 horas). ' +
+        'Si algo no estuviera disponible, te contactamos y devolvemos el cobro.';
     } else if (estadoPago.startsWith('pendient')) {
       texto =
         'Tu pago con tarjeta quedó pendiente de confirmación del banco. Te avisamos por ' +
@@ -93,21 +93,21 @@ import { whatsappLink } from '../../lib/site';
       pagoRechazado = true;
       const razon = params.get('Razon');
       texto =
-        `No pudimos autorizar tu tarjeta${razon ? ` (${razon})` : ''}. No se hizo ningún ` +
-        'cobro y este pedido quedó cancelado. Puedes intentar de nuevo con la misma tarjeta ' +
-        'u otra, o escribirnos por WhatsApp para coordinar otro medio de pago.';
+        `No pudimos procesar el pago con tu tarjeta${razon ? ` (${razon})` : ''}. No se ` +
+        'hizo ningún cobro y este pedido quedó cancelado. Puedes intentar de nuevo con la ' +
+        'misma tarjeta u otra, o escribirnos por WhatsApp para coordinar otro medio de pago.';
     }
     if (lead) lead.textContent = texto;
-    if (autorizada) {
+    if (pagoAprobado) {
       document.querySelector<HTMLElement>('[data-wa-fallback]')?.setAttribute('hidden', '');
     }
     if (pagoRechazado) {
       // Un rechazo no se celebra: titulo e icono propios, sin numero ni
       // rastreo ni oferta de cuenta (ese pedido quedo cancelado), y con el
       // camino claro para reintentar. El carrito NO se vacia (ver abajo).
-      document.title = 'No pudimos autorizar tu tarjeta';
+      document.title = 'No pudimos procesar tu pago';
       const titulo = document.querySelector<HTMLElement>('[data-titulo]');
-      if (titulo) titulo.textContent = 'No pudimos autorizar tu tarjeta';
+      if (titulo) titulo.textContent = 'No pudimos procesar tu pago';
       document.querySelector<HTMLElement>('[data-icon-ok]')?.setAttribute('hidden', '');
       document.querySelector<HTMLElement>('[data-icon-alerta]')?.removeAttribute('hidden');
       document.querySelector<HTMLElement>('[data-order-info]')?.setAttribute('hidden', '');
