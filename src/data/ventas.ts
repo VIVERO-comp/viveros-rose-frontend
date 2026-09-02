@@ -5,9 +5,9 @@
 // cancelados no se cuentan. Para actualizar, sumar las unidades nuevas a
 // cada SKU.
 //
-// Insumos vendidos que no estan en el catalogo del sitio (anotados para no
-// perder el dato): tierra negra 210, abono organico 37, cascarilla de
-// arroz 24.
+// Insumos vendidos que no estan en el catalogo del sitio (solo se venden a
+// supermercados; en Odoo llevan el prefijo IN-, anotados para no perder el
+// dato): IN-TIERRA-NEGRA 210, IN-ABONO-ORGANICO 37, IN-CASCARILLA-DE-ARROZ 24.
 export const ventasPorSku: Record<string, number> = {
   'PL-ROMERO': 74,
   'PL-ALBAHACA-VERDE': 50,
