@@ -2,7 +2,7 @@
 // order-api, que es quien decide el costo real del envio. Aqui solo se
 // muestra la misma regla en carrito y checkout para que el resumen coincida
 // al centavo con lo que registra el backend: con subtotal de productos (sin
-// ITBMS) desde el umbral, la entrega estandar sale gratis; express y retiro
+// ITBMS) desde el umbral, la entrega estandar sale gratis; prioritaria y retiro
 // no cambian. PUBLIC_ENVIO_GRATIS_DESDE_CENTAVOS vacia apaga la promocion
 // (apagarla tambien en el order-api, o los totales dejaran de coincidir).
 const crudo = (import.meta.env.PUBLIC_ENVIO_GRATIS_DESDE_CENTAVOS ?? '15000') as string;

@@ -9,13 +9,15 @@
 import Base from '../../layouts/Base.astro';
 import Icon from '../../components/Icon.astro';
 
-// Metodos de entrega del diseno: estandar $3 (gratis desde el umbral de
-// src/lib/envio.ts, la misma regla del order-api), express $9 y retiro sin
-// costo. El precio real siempre lo decide el order-api; aqui solo se espeja.
+// Metodos de entrega: estandar $5 (gratis desde el umbral de
+// src/lib/envio.ts, la misma regla del order-api), prioritaria $9 y retiro
+// sin costo. El precio real siempre lo decide el order-api; aqui solo se
+// espeja. Se reparte lunes a jueves y domingo (nunca viernes ni sabado),
+// por eso la prioritaria promete el siguiente dia de entrega y no "24 horas".
 const SHIPPING = [
-  { id: 'std', name: 'Entrega estándar', detail: '24–48 horas · ciudad de Panamá', price: 3 },
-  { id: 'exp', name: 'Entrega express', detail: '24 horas · ciudad de Panamá', price: 9 },
-  { id: 'pickup', name: 'Retiro en el vivero', detail: 'Ciudad de Panamá · Lun–Vie 9–5', price: 0 },
+  { id: 'std', name: 'Entrega estándar', detail: '24–72 horas · ciudad de Panamá', price: 5 },
+  { id: 'exp', name: 'Entrega prioritaria', detail: 'Sale en el siguiente día de entrega · ciudad de Panamá', price: 9 },
+  { id: 'pickup', name: 'Retiro en el vivero', detail: 'Ciudad de Panamá · Todos los días 10–6', price: 0 },
 ];
 
 // Metodos de pago del diseno. La tarjeta (PagueloFacil) vive detras de la bandera
@@ -67,7 +69,7 @@ const GOOGLE_MAPS_KEY = import.meta.env.PUBLIC_GOOGLE_MAPS_KEY ?? '';
       <div class="trust-row">
         <span><Icon name="package" size={22} class="trust-icon" /> Empaque seguro</span>
         <span><Icon name="smile" size={22} class="trust-icon" /> Satisfacción del cliente</span>
-        <span><Icon name="truck" size={22} class="trust-icon" /> Entrega 24–48 h</span>
+        <span><Icon name="truck" size={22} class="trust-icon" /> Entrega 24–72 h</span>
       </div>
 
       <form class="checkout-form" novalidate>
@@ -162,6 +164,10 @@ const GOOGLE_MAPS_KEY = import.meta.env.PUBLIC_GOOGLE_MAPS_KEY ?? '';
             </label>
           ))}
         </div>
+        <p class="pay-note">
+          Repartimos lunes a jueves y domingo. Los pedidos del jueves por la tarde,
+          viernes o sábado llegan el domingo.
+        </p>
 
         <h2>Pago</h2>
         <p class="pay-note">Todas las transacciones son seguras y encriptadas.</p>
@@ -298,10 +304,10 @@ const GOOGLE_MAPS_KEY = import.meta.env.PUBLIC_GOOGLE_MAPS_KEY ?? '';
     const toggleTotal = document.querySelector<HTMLElement>('[data-toggle-total]');
     if (toggleTotal) toggleTotal.textContent = money(total);
 
-    // La opcion estandar anuncia la promocion: $3 tachado y "Gratis".
+    // La opcion estandar anuncia la promocion: $5 tachado y "Gratis".
     const etiquetaStd = document.querySelector<HTMLElement>('[data-ship-price-label="std"]');
     if (etiquetaStd) {
-      etiquetaStd.innerHTML = envioGratis(subtotal) ? '<s>$3.00</s> Gratis' : '$3.00';
+      etiquetaStd.innerHTML = envioGratis(subtotal) ? '<s>$5.00</s> Gratis' : '$5.00';
     }
   }
 

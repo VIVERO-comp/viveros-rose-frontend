@@ -1,7 +1,7 @@
 ---
 // Pagina de entrega: PLACEHOLDER a proposito. Las zonas y tarifas por area
 // aun no estan definidas (ver PENDIENTES.md); aqui solo se muestra lo que ya
-// es real en el checkout (estandar $3, express $9, retiro gratis) sin
+// es real en el checkout (estandar $5, prioritaria $9, retiro gratis) sin
 // inventar una tabla de zonas.
 import Base from '../layouts/Base.astro';
 import Icon from '../components/Icon.astro';
@@ -25,23 +25,28 @@ import { whatsappLink } from '../lib/site';
       <div class="ship-options">
         <div class="ship-option">
           <p class="ship-name">Entrega estándar</p>
-          <p class="ship-detail">24–48 horas · ciudad de Panamá</p>
-          <p class="ship-price">$3.00</p>
+          <p class="ship-detail">24–72 horas · ciudad de Panamá</p>
+          <p class="ship-price">$5.00</p>
           {ENVIO_GRATIS_DESDE !== null && (
             <p class="ship-promo">Gratis en compras desde ${ENVIO_GRATIS_DESDE}</p>
           )}
         </div>
         <div class="ship-option">
-          <p class="ship-name">Entrega express</p>
-          <p class="ship-detail">24 horas · ciudad de Panamá</p>
+          <p class="ship-name">Entrega prioritaria</p>
+          <p class="ship-detail">Sale en el siguiente día de entrega · ciudad de Panamá</p>
           <p class="ship-price">$9.00</p>
         </div>
         <div class="ship-option">
           <p class="ship-name">Retiro en el vivero</p>
-          <p class="ship-detail">Ciudad de Panamá · Lun–Vie 9–5</p>
+          <p class="ship-detail">Ciudad de Panamá · Todos los días 10–6</p>
           <p class="ship-price">Gratis</p>
         </div>
       </div>
+
+      <p class="lead">
+        Repartimos lunes a jueves y domingo. Los pedidos del jueves por la tarde,
+        viernes o sábado llegan el domingo.
+      </p>
 
       <div class="pending-note">
         <Icon name="truck" size={18} class="note-icon" />

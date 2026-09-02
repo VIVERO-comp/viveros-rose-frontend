@@ -23,7 +23,7 @@ export const SITE = {
     addressLocality: 'Ciudad de Panamá',
     addressCountry: 'PA',
   },
-  hours: 'Lunes a viernes, 9:00 a.m. – 5:00 p.m.',
+  hours: 'Todos los días, 10:00 a.m. – 6:00 p.m.',
   whatsappNumber,
 };
 
