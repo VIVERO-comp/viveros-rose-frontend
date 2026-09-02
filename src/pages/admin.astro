@@ -424,6 +424,10 @@ const CATALOGO = products.map((p) => ({
     // Retenido > 0 es una decision pendiente (capturar o reversar): se
     // resalta como el retraso.
     const retenidoAlto = (retenido?.pedidos ?? 0) > 0;
+    // Las secciones operativas solo aparecen cuando hay algo que mirar:
+    // sin repartos en curso ni entregas medidas serian puras cifras en cero.
+    const hayCalle = (calle.sin_tomar ?? 0) > 0 || (calle.en_camino ?? 0) > 0 || retrasoAlto;
+    const hayTiempos = tiempos.promedio_minutos != null || tiempos.ultimo_minutos != null;
     resumenEl.innerHTML = `
       <div class="tarjeta-valor">
         <p class="valor-etiqueta">Vendido ${ETIQUETA_PERIODO[datos.periodo] ?? ''}</p>
@@ -462,7 +466,9 @@ const CATALOGO = products.map((p) => ({
         </div>
       </div>
 
-      <h2 class="bloque-titulo">La calle ahora</h2>
+      ${
+        hayCalle
+          ? `<h2 class="bloque-titulo">La calle ahora</h2>
       <div class="metricas metricas--tres">
         <div class="metrica">
           <span class="metrica-numero">${calle.sin_tomar ?? '—'}</span>
@@ -476,9 +482,13 @@ const CATALOGO = products.map((p) => ({
           <span class="metrica-numero">${calle.con_retraso ?? '—'}</span>
           <span class="metrica-nombre">Con retraso</span>
         </div>
-      </div>
+      </div>`
+          : ''
+      }
 
-      <h2 class="bloque-titulo">Tiempo de entrega</h2>
+      ${
+        hayTiempos
+          ? `<h2 class="bloque-titulo">Tiempo de entrega</h2>
       <div class="metricas">
         <div class="metrica">
           <span class="metrica-numero metrica-numero--chica">${duracionLegible(tiempos.promedio_minutos)}</span>
@@ -490,7 +500,9 @@ const CATALOGO = products.map((p) => ({
           <span class="metrica-numero metrica-numero--chica">${duracionLegible(tiempos.ultimo_minutos)}</span>
           <span class="metrica-nombre">Último pedido entregado</span>
         </div>
-      </div>`;
+      </div>`
+          : ''
+      }`;
   }
 
   // -- pantalla PEDIDOS y VALIDAR (comparten la carga) ----------------------
