@@ -785,7 +785,23 @@ const FOTOS_CATALOGO = Object.fromEntries(
     }
 
     if (entregado) {
-      acciones.innerHTML = '<p class="hecho">✅ Entregado</p>';
+      // La orden ya esta CERRADA (la pantalla lo dice primero); avisar al
+      // cliente por WhatsApp es el paso siguiente, opcional y repetible
+      // (sobrevive recargas y el ir y volver de WhatsApp). El mensaje es
+      // una linea sin URL — la puerta a calificar vive en /pedido.
+      const waEntregado = mio
+        ? enlaceWhatsApp(
+            telefono,
+            `✅ Tu pedido ${p.numero} fue entregado. ¡Gracias por comprar en Vivero Rose!`,
+          )
+        : null;
+      acciones.innerHTML =
+        '<p class="hecho">✅ Entregado</p>' +
+        (waEntregado
+          ? `<a class="btn btn--whatsapp btn-grande" href="${waEntregado}" target="_blank" rel="noopener">
+               Avisar “entregado” al cliente
+             </a>`
+          : '');
       return;
     }
     if (deOtro) return;
@@ -931,14 +947,12 @@ const FOTOS_CATALOGO = Object.fromEntries(
       });
       const datos = await res.json();
       if (!res.ok) throw new Error(datos.message);
-      const acciones = detalleEl.querySelector<HTMLElement>('[data-acciones]')!;
-      acciones.innerHTML =
-        '<p class="hecho">✅ Entregado. ¡Buen trabajo!</p>' +
-        (datos.whatsapp
-          ? `<a class="btn btn--whatsapp btn-grande" href="${datos.whatsapp}" target="_blank" rel="noopener">
-               Avisar “entregado” y pedir la calificación
-             </a>`
-          : '');
+      // Primero se CIERRA la orden en pantalla: chip "Entregado", animacion
+      // de exito y las acciones del estado cerrado (donde vive el boton de
+      // avisar por WhatsApp). Nada de saltos a otra app con la orden a
+      // medias (pedido de Abraham, 02/09/2026).
+      p.estado_entrega = 'entregado';
+      animarExito(() => pintarDetalle(p));
     } catch {
       estado.textContent =
         'La foto no subió (¿mala señal?). Vuelve a tocar “Entregar con foto”: reintentar es seguro.';

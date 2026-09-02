@@ -73,6 +73,9 @@ const steps = [
           si quieres detalles, escríbenos por WhatsApp.
         </p>
         <p class="tracking-message" data-result-message></p>
+        <a class="btn btn--green" data-result-calificar hidden>
+          Calificar la entrega
+        </a>
         <a class="btn btn--whatsapp" data-result-whatsapp target="_blank" rel="noopener">
           Preguntar por mi pedido
         </a>
@@ -99,6 +102,9 @@ const steps = [
   const messageEl = document.querySelector<HTMLElement>('[data-result-message]');
   const delayEl = document.querySelector<HTMLElement>('[data-result-delay]');
   const waLink = document.querySelector<HTMLAnchorElement>('[data-result-whatsapp]');
+  // La puerta a calificar (y dejar propina): solo con el pedido entregado.
+  // El WhatsApp del repartidor ya no lleva la URL, asi que esta es la via.
+  const calificarLink = document.querySelector<HTMLAnchorElement>('[data-result-calificar]');
 
   // Estados del order-api -> paso del recorrido visual. Los pasos anteriores
   // al actual tambien se marcan: es un progreso, no un unico punto.
@@ -166,6 +172,10 @@ const steps = [
                 ? `Entregado el ${formatearFecha(data.entregado_en)}.`
                 : `Estado actual: ${data.estado}`;
         }
+        if (calificarLink) {
+          calificarLink.hidden = data.estado !== 'Entregado';
+          calificarLink.href = `/calificar?n=${encodeURIComponent(orderNumber)}`;
+        }
         result?.removeAttribute('hidden');
         return;
       }
@@ -182,6 +192,7 @@ const steps = [
       if (res.status === 404) {
         pintarProgreso('');
         if (delayEl) delayEl.hidden = true;
+        if (calificarLink) calificarLink.hidden = true;
         if (messageEl) {
           messageEl.textContent = verifyField && !verifyField.hidden
             ? 'No encontramos un pedido con ese número y ese WhatsApp. Revisa ambos o escríbenos:'
@@ -196,6 +207,7 @@ const steps = [
 
     pintarProgreso('');
     if (delayEl) delayEl.hidden = true;
+    if (calificarLink) calificarLink.hidden = true;
     if (messageEl) {
       messageEl.textContent =
         'No pudimos consultar el estado en este momento. Consulta por WhatsApp con un solo clic:';
