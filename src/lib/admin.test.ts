@@ -60,6 +60,37 @@ test('la lista del panel pone primero lo que pide atencion', () => {
   assert.deepEqual(bloques.terminados.map((p) => p.numero), ['VR-T2', 'VR-T1']);
 });
 
+test('una tarjeta pagada por venta directa espera decision, no "esperando pago"', () => {
+  // El cobro ya entro (el webhook confirmo el pedido): lo que falta es que
+  // Abraham confirme el stock, asi que cuenta en el globito de Validar.
+  // Sin autorizar sigue sin ser accionable, y la autorizada (flujo dormido
+  // de la pre-autorizacion) sigue siendo decision.
+  const bloques = agruparPedidos({
+    por_validar: [
+      {
+        numero: 'VR-P1',
+        estado: 'por_validar',
+        creado_en: '2026-09-02 10:00:00',
+        pago: { tarjeta: true, estado: 'pagada' },
+      },
+      {
+        numero: 'VR-S1',
+        estado: 'por_validar',
+        creado_en: '2026-09-02 11:00:00',
+        pago: { tarjeta: true, estado: 'pendiente' },
+      },
+      {
+        numero: 'VR-U1',
+        estado: 'por_validar',
+        creado_en: '2026-09-02 12:00:00',
+        pago: { tarjeta: true, estado: 'autorizada' },
+      },
+    ],
+  });
+  assert.deepEqual(bloques.porValidar.map((p) => p.numero), ['VR-P1', 'VR-U1']);
+  assert.deepEqual(bloques.esperandoPago.map((p) => p.numero), ['VR-S1']);
+});
+
 test('terminados en el mismo segundo se desempatan por numero, como el cursor', () => {
   const bloques = agruparPedidos({
     terminados: [

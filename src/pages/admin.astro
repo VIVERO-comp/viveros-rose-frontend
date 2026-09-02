@@ -131,11 +131,11 @@ const CATALOGO = products.map((p) => ({
         <button class="btn btn--ghost btn-refrescar" data-refrescar-validar type="button">Actualizar</button>
       </header>
       <p class="suave intro-validar">
-        Pedidos del checkout esperando tu validación. Los pagos coordinados
-        (Yappy, transferencia o efectivo) se marcan como pagados; con tarjeta
-        (PagueloFacil) los fondos ya están retenidos y aquí decides: capturar
-        (cobra y prepara) o reversar (devuelve y cancela). Todo queda
-        registrado a tu nombre.
+        Pedidos del checkout esperando tu validación. Con tarjeta
+        (PagueloFacil) el cobro ya entró y aquí confirmas que hay stock y
+        sale; los pagos coordinados (Yappy, transferencia o efectivo) se
+        marcan como pagados cuando el dinero te llegó. Todo queda registrado
+        a tu nombre.
       </p>
       <div data-validar><p class="cargando">Cargando…</p></div>
     </section>
@@ -844,11 +844,18 @@ const CATALOGO = products.map((p) => ({
         '<p class="suave">Cuando entre un pedido nuevo aparecerá aquí.</p></div>';
       return;
     }
-    // Dos grupos, sin mezclar decisiones distintas: confirmar un pago
-    // coordinado (Yappy/transferencia/efectivo) y capturar o reversar una
-    // tarjeta autorizada.
+    // Tres grupos, sin mezclar decisiones distintas: confirmar el stock de
+    // una tarjeta ya cobrada (venta directa), confirmar un pago coordinado
+    // (Yappy/transferencia/efectivo) y capturar o reversar una tarjeta
+    // autorizada (flujo dormido de la pre-autorizacion). Las pagadas van
+    // arriba: el dinero ya entro y el pedido espera para salir.
+    const pagadas = porValidar.filter(
+      (p: any) => p.pago?.tarjeta && p.pago?.estado === 'pagada',
+    );
     const coordinados = porValidar.filter((p: any) => !p.pago?.tarjeta);
-    const tarjetas = porValidar.filter((p: any) => p.pago?.tarjeta);
+    const tarjetas = porValidar.filter(
+      (p: any) => p.pago?.tarjeta && p.pago?.estado !== 'pagada',
+    );
     const tarjetaValidar = (p: any) => {
       const metodo = metodoPagoCorto(p);
       return `
@@ -865,16 +872,18 @@ const CATALOGO = products.map((p) => ({
           ${zonaValidar(p)}
         </div>`;
     };
-    validarEl.innerHTML = [
-      coordinados.length
-        ? '<h2 class="bloque-titulo bloque-titulo--dentro">Pagos por confirmar</h2>' +
-          coordinados.map(tarjetaValidar).join('')
-        : '',
-      tarjetas.length
-        ? '<h2 class="bloque-titulo">Tarjetas autorizadas · capturar o reversar</h2>' +
-          tarjetas.map(tarjetaValidar).join('')
-        : '',
-    ].join('');
+    const secciones = [
+      { titulo: 'Pagados con tarjeta · confirmar stock', filas: pagadas },
+      { titulo: 'Pagos por confirmar', filas: coordinados },
+      { titulo: 'Tarjetas autorizadas · capturar o reversar', filas: tarjetas },
+    ].filter((s) => s.filas.length);
+    validarEl.innerHTML = secciones
+      .map(
+        (s, i) =>
+          `<h2 class="bloque-titulo${i === 0 ? ' bloque-titulo--dentro' : ''}">${s.titulo}</h2>` +
+          s.filas.map(tarjetaValidar).join(''),
+      )
+      .join('');
     validarEl.querySelectorAll<HTMLElement>('[data-validar-numero]').forEach((tarjeta) => {
       const numero = tarjeta.getAttribute('data-validar-numero')!;
       // Confirmacion explicita en dos pasos, nunca un toque suelto.
@@ -904,12 +913,38 @@ const CATALOGO = products.map((p) => ({
     });
   }
 
-  // La zona de acciones de cada "por validar": un pago coordinado (Yappy,
+  // La zona de acciones de cada "por validar": una tarjeta pagada por venta
+  // directa ya cobro y se confirma el stock; un pago coordinado (Yappy,
   // transferencia, efectivo) se marca pagado a mano; una tarjeta
-  // pre-autorizada (PagueloFacil) tiene los fondos retenidos y se captura o
-  // se reversa; una tarjeta que aun no autorizo no tiene nada que validar.
+  // pre-autorizada (flujo dormido) tiene los fondos retenidos y se captura
+  // o se reversa; una tarjeta que aun no autorizo no tiene nada que validar.
   function zonaValidar(p: any): string {
     const pago = p.pago;
+    if (pago?.tarjeta && pago.estado === 'pagada') {
+      // Venta directa: el dinero YA entro y el pedido ya esta confirmado en
+      // Odoo por el webhook. La decision de Abraham aqui es sobre el STOCK,
+      // no sobre el pago — y el texto deja explicito que a estas alturas no
+      // hay marcha atras gratis. El boton dispara el mismo validar-pago de
+      // siempre (accion_marcar_pagado): pasa el pedido a "listo" y entra al
+      // flujo de entrega.
+      return `
+          <div class="zona-validar">
+            <p class="pago-tarjeta">💳 Pagado con tarjeta: el cobro ya entró. Falta que confirmes el stock.</p>
+            <button class="btn btn--green btn-grande" type="button" data-pedir-confirmacion>
+              Confirmar stock y enviar
+            </button>
+            <div class="confirmacion" data-confirmacion hidden>
+              <p><strong>¿Hay stock y sale ${escapar(p.numero)}?</strong>
+                 El cobro YA se hizo — si no puedes entregar, tendrás que
+                 devolver el dinero desde el panel de PagueloFacil.</p>
+              <div class="confirmacion-botones">
+                <button class="btn btn--green btn-grande" type="button" data-confirmar>Sí, hay stock y sale</button>
+                <button class="btn btn--ghost" type="button" data-cancelar>Cancelar</button>
+              </div>
+            </div>
+            <p class="validar-estado" data-validar-estado hidden></p>
+          </div>`;
+    }
     if (pago?.tarjeta && pago.estado === 'autorizada') {
       const vence = pago.vence_en ? cuandoVence(pago.vence_en) : null;
       return `

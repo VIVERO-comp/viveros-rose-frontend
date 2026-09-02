@@ -111,15 +111,19 @@ const porFecha =
  */
 export function agruparPedidos(lista: ListaPedidos): BloquesPedidos {
   const activos = lista.activos ?? [];
-  // De los "por validar" del order-api, solo esperan una DECISION los pagos
-  // coordinados (marcar pagado) y las tarjetas autorizadas (capturar o
-  // reversar). Una tarjeta sin autorizar no es accionable: el cliente no
-  // completo el pago, y el pedido solo figura como "esperando pago" en la
-  // lista general. Sin anotacion de pago (base tienda caida) se trata como
-  // decision, igual que siempre: degradar, no esconder.
+  // De los "por validar" del order-api, esperan una DECISION los pagos
+  // coordinados (marcar pagado), las tarjetas pagadas por venta directa
+  // (confirmar el stock: el cobro ya entro) y las tarjetas autorizadas del
+  // flujo dormido (capturar o reversar). Una tarjeta sin autorizar no es
+  // accionable: el cliente no completo el pago, y el pedido solo figura
+  // como "esperando pago" en la lista general. Sin anotacion de pago (base
+  // tienda caida) se trata como decision, igual que siempre: degradar, no
+  // esconder.
   const pendientes = [...(lista.por_validar ?? [])].sort(porFecha('creado_en', 1));
   const sinDecision = (p: PedidoLista) =>
-    Boolean(p.pago?.tarjeta) && p.pago?.estado !== 'autorizada';
+    Boolean(p.pago?.tarjeta) &&
+    p.pago?.estado !== 'autorizada' &&
+    p.pago?.estado !== 'pagada';
   return {
     porValidar: pendientes.filter((p) => !sinDecision(p)),
     esperandoPago: pendientes.filter(sinDecision),
