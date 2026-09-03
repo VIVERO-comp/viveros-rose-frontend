@@ -114,7 +114,7 @@ const paisajismoMessage = whatsappLink('Hola, quiero cotizar un proyecto de pais
   description="Vivero propio en Panamá. Compra plantas cultivadas por nosotros, con entrega en la ciudad de Panamá y asesoría por WhatsApp."
 >
   <section class="hero">
-    <div class="hero-photo" style="background-image: url('/fotos_homepage/primerafoto.jpg'); background-size: cover; background-position: center;" aria-hidden="true"></div>
+    <div class="hero-photo" style="background-image: url('/fotos_homepage/hero_bolsa.jpg'); background-size: cover; background-position: right center;" aria-hidden="true"></div>
     <div class="hero-scrim" aria-hidden="true"></div>
     <div class="hero-content">
       <div class="container">
@@ -330,23 +330,25 @@ const paisajismoMessage = whatsappLink('Hola, quiero cotizar un proyecto de pais
     height: 620px;
     overflow: hidden;
     border-bottom: 1px solid var(--line);
-    background: var(--card-dark);
+    background: #f0e9dc;
   }
 
   .hero-photo {
     position: absolute;
     inset: 0;
-    background: linear-gradient(150deg, #2a4432, var(--card-dark) 70%);
+    background: linear-gradient(150deg, #f5efe3, #ece4d4 70%);
   }
 
+  /* La foto es clara (fondo beige): el velo solo refuerza un poco el lado
+     izquierdo para que el texto oscuro no compita con la foto. */
   .hero-scrim {
     position: absolute;
     inset: 0;
     background: linear-gradient(
       to right,
-      rgba(27, 42, 31, 0.88) 0%,
-      rgba(27, 42, 31, 0.7) 45%,
-      rgba(27, 42, 31, 0.42) 100%
+      rgba(240, 233, 220, 0.85) 0%,
+      rgba(240, 233, 220, 0.45) 45%,
+      rgba(240, 233, 220, 0) 75%
     );
   }
 
@@ -361,13 +363,13 @@ const paisajismoMessage = whatsappLink('Hola, quiero cotizar un proyecto de pais
      y el texto del hero queda centrado; el diseno lo lleva a la izquierda. */
   .hero-content .container { width: 100%; }
 
-  .hero-copy { max-width: 600px; color: #eef5f0; }
+  .hero-copy { max-width: 600px; color: var(--ink); }
 
   .hero-kicker {
     font-size: 11px;
     letter-spacing: 0.18em;
     text-transform: uppercase;
-    color: #ffffff;
+    color: var(--green-dark);
     margin: 0 0 18.4px;
   }
 
@@ -377,11 +379,11 @@ const paisajismoMessage = whatsappLink('Hola, quiero cotizar un proyecto de pais
     line-height: 1.06;
     letter-spacing: -0.015em;
     margin: 0 0 18.4px;
-    color: #eef5f0;
+    color: var(--ink);
   }
 
   .hero-underline {
-    color: var(--green-light);
+    color: var(--green-dark);
     text-decoration: underline;
     text-decoration-thickness: 2px;
     text-underline-offset: 6px;
@@ -390,7 +392,7 @@ const paisajismoMessage = whatsappLink('Hola, quiero cotizar un proyecto de pais
   .hero-sub {
     font-size: 17px;
     line-height: 1.6;
-    color: rgba(255, 255, 255, 0.86);
+    color: rgba(27, 42, 31, 0.78);
     max-width: 34rem;
     margin: 0 0 27.6px;
   }
@@ -400,12 +402,12 @@ const paisajismoMessage = whatsappLink('Hola, quiero cotizar un proyecto de pais
   .hero-btn { font-size: 16px; padding: 15px 28px; }
 
   .hero-btn--light {
-    background: #f4f7f1;
-    border-color: #f4f7f1;
+    background: #ffffff;
+    border-color: rgba(27, 42, 31, 0.25);
     color: #16321f;
   }
 
-  .hero-btn--light:hover { background: #ffffff; color: #16321f; }
+  .hero-btn--light:hover { border-color: rgba(27, 42, 31, 0.5); color: #16321f; }
 
   /* Franja de garantias */
   .assurance-band {
@@ -861,9 +863,9 @@ const paisajismoMessage = whatsappLink('Hola, quiero cotizar un proyecto de pais
     .hero-scrim {
       background: linear-gradient(
         to top,
-        rgba(27, 42, 31, 0.88) 0%,
-        rgba(27, 42, 31, 0.5) 45%,
-        rgba(27, 42, 31, 0.12) 100%
+        rgba(240, 233, 220, 0.95) 0%,
+        rgba(240, 233, 220, 0.55) 45%,
+        rgba(240, 233, 220, 0) 100%
       );
     }
 
