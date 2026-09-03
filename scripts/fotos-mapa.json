@@ -546,6 +546,16 @@
       "sku": "PL-PALMA-ZICA",
       "subida": true
     },
+    "59fb36ee39a5": {
+      "archivo": "aralias.jpg",
+      "cloud_sku": "PL-ARALIAS",
+      "descartada": false,
+      "fecha": "2026-09-03 18:33:14 +0000",
+      "orden": 1,
+      "principal": false,
+      "sku": "PL-ARALIAS",
+      "subida": true
+    },
     "5e8b0df021aa": {
       "archivo": "pino montesuma.jpeg",
       "descartada": false,
@@ -801,6 +811,16 @@
       "sku": "PL-AJI-BOLITA",
       "subida": true
     },
+    "8be00d16b8d7": {
+      "archivo": "cinta mala madre.jpg",
+      "cloud_sku": "PL-CINTA-MALA-MADRE",
+      "descartada": false,
+      "fecha": "2026-09-03 18:33:14 +0000",
+      "orden": 1,
+      "principal": false,
+      "sku": "PL-CINTA-MALA-MADRE",
+      "subida": true
+    },
     "8c822e07d824": {
       "archivo": "coleos.jpeg",
       "descartada": false,
@@ -1014,6 +1034,16 @@
       "sku": "PL-PINO-ESTRELLA",
       "subida": true
     },
+    "b7073f280a9c": {
+      "archivo": "cinta.jpg",
+      "cloud_sku": "PL-CINTA",
+      "descartada": false,
+      "fecha": "2026-09-03 18:33:14 +0000",
+      "orden": 1,
+      "principal": false,
+      "sku": "PL-CINTA",
+      "subida": true
+    },
     "b74eaf1402e1": {
       "archivo": "pino-hindu.jpg",
       "descartada": false,
@@ -1206,6 +1236,16 @@
       "orden": 1,
       "principal": false,
       "sku": "PL-MINI-JADE",
+      "subida": true
+    },
+    "e453618828d2": {
+      "archivo": "photus multirama.jpg",
+      "cloud_sku": "PL-PHOTOS-MULTI-RAMA",
+      "descartada": false,
+      "fecha": "2026-09-03 18:33:14 +0000",
+      "orden": 1,
+      "principal": false,
+      "sku": "PL-PHOTOS-MULTI-RAMA",
       "subida": true
     },
     "e7dd11ae1488": {
