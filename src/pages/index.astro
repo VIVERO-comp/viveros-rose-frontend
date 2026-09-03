@@ -854,20 +854,15 @@ const paisajismoMessage = whatsappLink('Hola, quiero cotizar un proyecto de pais
 
   /* Movil (768px, punto de quiebre unificado del handoff) */
   @media (max-width: 768px) {
-    /* Hero como el celular de la referencia: la foto llena la pantalla y el
-       texto va abajo, centrado, con los dos botones apilados. */
+    /* En movil la foto se muestra completa (misma proporcion que el archivo)
+       y el texto va debajo, centrado, sobre el mismo beige del fondo. */
     .hero { height: auto; }
 
-    .hero-content { position: relative; padding: 300px 0 44px; }
+    .hero-photo { position: static; aspect-ratio: 1774 / 887; }
 
-    .hero-scrim {
-      background: linear-gradient(
-        to top,
-        rgba(240, 233, 220, 0.95) 0%,
-        rgba(240, 233, 220, 0.55) 45%,
-        rgba(240, 233, 220, 0) 100%
-      );
-    }
+    .hero-scrim { display: none; }
+
+    .hero-content { position: relative; padding: 8px 0 44px; }
 
     .hero-copy { max-width: none; text-align: center; }
     .hero-kicker { display: none; }
