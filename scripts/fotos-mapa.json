@@ -841,7 +841,7 @@
     "964c1f25089d": {
       "archivo": "PHOTO-2026-09-03-08-49-45.jpg",
       "cloud_sku": "PL-MINI-CALATHEA",
-      "descartada": false,
+      "descartada": true,
       "fecha": "2026-09-03 16:00:17 +0000",
       "orden": null,
       "principal": false,
