@@ -22,10 +22,17 @@
     "PL-TRASDESCANTIA": "7db61b458983",
     "PLT-CHAVELITAS-01": "97c414192043",
     "PLT-HIERBABUENA-01": "0a1431e20aee",
+    "PLT-JADE-01": "7e0558b32180",
     "PLT-MENTA-01": "220026b0bdec",
     "PLT-RUDA-01": "6d4f6fd5d5e9"
   },
   "porSku": {
+    "PL-AGAVE-GIGANTE": [
+      "2f7968c812ea"
+    ],
+    "PL-AGLONEMAS": [
+      "34a89785695d"
+    ],
     "PL-AJI-BOLITA": [
       "8b125605186d"
     ],
@@ -44,6 +51,9 @@
       "e0e860e092e6",
       "25e4c5f5a6d0"
     ],
+    "PL-ARALIAS": [
+      "75d8343d9c0e"
+    ],
     "PL-BAMBU-ENTRENZAS": [
       "e7dd11ae1488"
     ],
@@ -56,12 +66,18 @@
     "PL-CACTUS-HUESO-DE-DRAGON": [
       "1df576063aff"
     ],
+    "PL-CACTUS-MEDIANO": [
+      "eda19e752adb"
+    ],
     "PL-CACTUS-PEQUENO": [
       "beeaaf274d6e"
     ],
     "PL-CALATHEA-CEBRINA": [
       "29debd6f2508",
       "6487f0697028"
+    ],
+    "PL-CELOCIA": [
+      "1a4c88ba90ba"
     ],
     "PL-CIELITO-AZUL": [
       "1caa63a836d4"
@@ -83,6 +99,12 @@
       "559f67c8ec3c",
       "1b474b91fa6b"
     ],
+    "PL-CORDILINIA": [
+      "6f4fd252477d"
+    ],
+    "PL-CORONITA": [
+      "6d6f10ce52cd"
+    ],
     "PL-CRINUM-ASIATICO-VARIEGADO": [
       "a163d864940e"
     ],
@@ -90,13 +112,15 @@
       "bc93bd32129e"
     ],
     "PL-DRACAENA-ROJA": [
-      "f212acbfea6a"
+      "f212acbfea6a",
+      "76cca1ba514b"
     ],
     "PL-ESCUDO-PERSA": [
       "368c35d72737"
     ],
     "PL-FICUS-ELASTICA": [
-      "01f835488b10"
+      "01f835488b10",
+      "32314d7b3bb1"
     ],
     "PL-FICUS-LYRATA": [
       "473aee587cda"
@@ -109,10 +133,14 @@
       "d338d33484ce"
     ],
     "PL-GINGER": [
-      "4c01bab2b04f"
+      "4c01bab2b04f",
+      "9efbf1120b89"
     ],
     "PL-HELECHOS": [
       "024ad5db9ce0"
+    ],
+    "PL-HYPOESTES": [
+      "072454db7feb"
     ],
     "PL-JAZMIN-BLANCO-ENANO": [
       "18f7ae9f65e4"
@@ -131,11 +159,24 @@
       "76db66709cc2"
     ],
     "PL-LIRIO": [
-      "3e7b517adb4b"
+      "3e7b517adb4b",
+      "788264b552e8"
+    ],
+    "PL-LIRIO-GIGANTE-MORADO": [
+      "fb2badac69da"
+    ],
+    "PL-MARGINATA": [
+      "bcc3c11b235d"
+    ],
+    "PL-MINI-CALATHEA": [
+      "964c1f25089d"
     ],
     "PL-MINI-JADE": [
       "9d091d10862a",
       "e32e9708ad99"
+    ],
+    "PL-MOLLEJA": [
+      "a457d9d76a52"
     ],
     "PL-MONSTERA-ADANSONII": [
       "c2bf7eddfd94"
@@ -149,6 +190,9 @@
     "PL-OREGANO": [
       "6ced31823982"
     ],
+    "PL-ORTENCIA": [
+      "24e47d84c326"
+    ],
     "PL-PALMA-ABANICO": [
       "3e9b9379a399"
     ],
@@ -156,13 +200,18 @@
       "a0e10f7d29dc"
     ],
     "PL-PALMA-BISMARKIA-MEDIANA": [
-      "3b9fc79a25b5"
+      "3b9fc79a25b5",
+      "d645a94c36a5"
     ],
     "PL-PALMA-BISMARKIA-PEQUENA": [
       "f15676a48344"
     ],
+    "PL-PALMA-FENIX": [
+      "e287fad6cf38"
+    ],
     "PL-PALMA-MADAGASCAR": [
-      "027e6e32cdfd"
+      "027e6e32cdfd",
+      "18a516258d21"
     ],
     "PL-PALMA-MULTIPLE": [
       "ead76ccf6693"
@@ -170,20 +219,32 @@
     "PL-PALMA-NAVIDAD": [
       "d22f5f63846a"
     ],
+    "PL-PALMA-ROJA": [
+      "99853811abfc"
+    ],
+    "PL-PALMA-WASHINTONIA": [
+      "ee1151b25c40"
+    ],
     "PL-PALMA-ZICA": [
       "582fecd58698"
     ],
     "PL-PINO-ENANO": [
       "47a4332ad831"
     ],
+    "PL-PINO-ESTRELLA": [
+      "b5846377d228"
+    ],
     "PL-PINO-HINDU": [
       "b74eaf1402e1"
     ],
     "PL-PINO-MONTESUMA": [
-      "5e8b0df021aa"
+      "5e8b0df021aa",
+      "44bb5b257752",
+      "36f1dc203581"
     ],
     "PL-PINO-ROMANO": [
-      "51dc67075729"
+      "51dc67075729",
+      "f04c7a3eda04"
     ],
     "PL-POTHOS": [
       "2b5e5f3b4a31"
@@ -221,7 +282,8 @@
       "0a1431e20aee"
     ],
     "PLT-JADE-01": [
-      "253c22f0869f"
+      "253c22f0869f",
+      "7e0558b32180"
     ],
     "PLT-MENTA-01": [
       "220026b0bdec"
@@ -233,5 +295,24 @@
       "853a3c9aa66c"
     ]
   },
-  "recortesPorHash": {}
+  "recortesPorHash": {
+    "2f7968c812ea": [
+      0.0033,
+      0.0038,
+      0.9933,
+      0.9211
+    ],
+    "582fecd58698": [
+      0.1806,
+      0.0056,
+      0.8027,
+      0.8064
+    ],
+    "e3128ed07d26": [
+      0.0726,
+      0.0508,
+      0.9274,
+      0.8308
+    ]
+  }
 }

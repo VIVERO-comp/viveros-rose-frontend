@@ -56,6 +56,16 @@
       "sku": "PL-CLAVELITO",
       "subida": true
     },
+    "072454db7feb": {
+      "archivo": "PHOTO-2026-09-03-09-04-22.jpg",
+      "cloud_sku": "PL-HYPOESTES",
+      "descartada": false,
+      "fecha": "2026-09-03 16:00:17 +0000",
+      "orden": null,
+      "principal": false,
+      "sku": "PL-HYPOESTES",
+      "subida": true
+    },
     "0a1431e20aee": {
       "archivo": "hierba buena.jpg",
       "descartada": false,
@@ -87,6 +97,16 @@
       "sku": null,
       "subida": true
     },
+    "18a516258d21": {
+      "archivo": "PHOTO-2026-09-03-08-45-11.jpg",
+      "cloud_sku": "PL-PALMA-MADAGASCAR",
+      "descartada": false,
+      "fecha": "2026-09-03 16:00:17 +0000",
+      "orden": null,
+      "principal": false,
+      "sku": "PL-PALMA-MADAGASCAR",
+      "subida": true
+    },
     "18f7ae9f65e4": {
       "archivo": "jazmin-blanco-enano.jpg",
       "descartada": false,
@@ -103,6 +123,16 @@
       "orden": 1,
       "principal": false,
       "sku": null,
+      "subida": true
+    },
+    "1a4c88ba90ba": {
+      "archivo": "PHOTO-2026-09-03-09-01-05.jpg",
+      "cloud_sku": "PL-CELOCIA",
+      "descartada": false,
+      "fecha": "2026-09-03 16:00:17 +0000",
+      "orden": null,
+      "principal": false,
+      "sku": "PL-CELOCIA",
       "subida": true
     },
     "1b474b91fa6b": {
@@ -151,6 +181,15 @@
       "principal": false,
       "sku": null,
       "subida": true
+    },
+    "20d97f186568": {
+      "archivo": "PHOTO-2026-09-03-08-41-44.jpg",
+      "descartada": false,
+      "fecha": "2026-09-03 16:00:17 +0000",
+      "orden": null,
+      "principal": false,
+      "sku": null,
+      "subida": false
     },
     "215d5da20753": {
       "archivo": "suculentas-grande.jpeg",
@@ -204,10 +243,21 @@
       "sku": "PL-ALBAHACA-VERDE",
       "subida": true
     },
+    "24e47d84c326": {
+      "archivo": "PHOTO-2026-09-03-09-00-03.jpg",
+      "cloud_sku": "PL-ORTENCIA",
+      "descartada": false,
+      "fecha": "2026-09-03 16:00:17 +0000",
+      "orden": null,
+      "principal": false,
+      "sku": "PL-ORTENCIA",
+      "subida": true
+    },
     "253c22f0869f": {
       "archivo": "jade.jpeg",
       "descartada": false,
       "fecha": "2026-08-26 21:57:12 +0000",
+      "mano": false,
       "orden": 1,
       "principal": false,
       "sku": "PLT-JADE-01",
@@ -249,6 +299,33 @@
       "sku": "PL-KALANCHOE",
       "subida": true
     },
+    "2f7968c812ea": {
+      "archivo": "agave.jpg",
+      "cloud_sku": "PL-AGAVE-GIGANTE",
+      "descartada": false,
+      "fecha": "2026-09-03 16:00:18 +0000",
+      "hover": true,
+      "orden": null,
+      "principal": false,
+      "recorte": [
+        0.0033,
+        0.0038,
+        0.9933,
+        0.9211
+      ],
+      "sku": "PL-AGAVE-GIGANTE",
+      "subida": true
+    },
+    "32314d7b3bb1": {
+      "archivo": "PHOTO-2026-09-03-08-52-16.jpg",
+      "cloud_sku": "PL-FICUS-ELASTICA",
+      "descartada": false,
+      "fecha": "2026-09-03 16:00:17 +0000",
+      "orden": null,
+      "principal": false,
+      "sku": "PL-FICUS-ELASTICA",
+      "subida": true
+    },
     "32caba1ca20b": {
       "archivo": "PHOTO-2026-08-28-08-56-56_3.jpg",
       "descartada": false,
@@ -258,6 +335,16 @@
       "orden": 4,
       "principal": false,
       "sku": "PL-ROSITA-MINIATURA",
+      "subida": true
+    },
+    "34a89785695d": {
+      "archivo": "PHOTO-2026-09-03-09-03-37.jpg",
+      "cloud_sku": "PL-AGLONEMAS",
+      "descartada": false,
+      "fecha": "2026-09-03 16:00:17 +0000",
+      "orden": null,
+      "principal": false,
+      "sku": "PL-AGLONEMAS",
       "subida": true
     },
     "3654a78c13de": {
@@ -276,6 +363,18 @@
       "orden": 1,
       "principal": false,
       "sku": "PL-ESCUDO-PERSA",
+      "subida": true
+    },
+    "36f1dc203581": {
+      "archivo": "PHOTO-2026-09-03-08-44-44.jpg",
+      "cloud_sku": "PL-PINO-MONTESUMA",
+      "descartada": false,
+      "fecha": "2026-09-03 16:00:17 +0000",
+      "hover": false,
+      "mano": false,
+      "orden": null,
+      "principal": false,
+      "sku": "PL-PINO-MONTESUMA",
       "subida": true
     },
     "39477335ae22": {
@@ -355,6 +454,16 @@
       "sku": null,
       "subida": true
     },
+    "44bb5b257752": {
+      "archivo": "PHOTO-2026-09-03-08-44-33.jpg",
+      "cloud_sku": "PL-PINO-MONTESUMA",
+      "descartada": false,
+      "fecha": "2026-09-03 16:00:17 +0000",
+      "orden": null,
+      "principal": false,
+      "sku": "PL-PINO-MONTESUMA",
+      "subida": true
+    },
     "473aee587cda": {
       "archivo": "ficus-lyrata.jpg",
       "descartada": false,
@@ -428,6 +537,12 @@
       "fecha": "2026-08-26 21:57:32 +0000",
       "orden": 1,
       "principal": false,
+      "recorte": [
+        0.1806,
+        0.0056,
+        0.8027,
+        0.8064
+      ],
       "sku": "PL-PALMA-ZICA",
       "subida": true
     },
@@ -502,6 +617,26 @@
       "sku": "PLT-RUDA-01",
       "subida": true
     },
+    "6d6f10ce52cd": {
+      "archivo": "PHOTO-2026-09-03-09-02-50.jpg",
+      "cloud_sku": "PL-CORONITA",
+      "descartada": false,
+      "fecha": "2026-09-03 16:00:17 +0000",
+      "orden": null,
+      "principal": false,
+      "sku": "PL-CORONITA",
+      "subida": true
+    },
+    "6f4fd252477d": {
+      "archivo": "PHOTO-2026-09-03-08-42-15.jpg",
+      "cloud_sku": "PL-CORDILINIA",
+      "descartada": false,
+      "fecha": "2026-09-03 16:00:17 +0000",
+      "orden": null,
+      "principal": false,
+      "sku": "PL-CORDILINIA",
+      "subida": true
+    },
     "6f595012aa8d": {
       "archivo": "cipre thuja.jpeg",
       "descartada": true,
@@ -519,6 +654,28 @@
       "orden": 1,
       "principal": false,
       "sku": "PL-SUCULENTA-PEQUENA",
+      "subida": true
+    },
+    "75d8343d9c0e": {
+      "archivo": "PHOTO-2026-09-03-08-52-25.jpg",
+      "cloud_sku": "PL-ARALIAS",
+      "descartada": false,
+      "fecha": "2026-09-03 16:00:17 +0000",
+      "orden": null,
+      "principal": false,
+      "sku": "PL-ARALIAS",
+      "subida": true
+    },
+    "76cca1ba514b": {
+      "archivo": "PHOTO-2026-09-03-08-44-38.jpg",
+      "cloud_sku": "PL-DRACAENA-ROJA",
+      "descartada": false,
+      "fecha": "2026-09-03 16:00:17 +0000",
+      "hover": false,
+      "mano": false,
+      "orden": null,
+      "principal": false,
+      "sku": "PL-DRACAENA-ROJA",
       "subida": true
     },
     "76db66709cc2": {
@@ -551,6 +708,16 @@
       "sku": "PL-LENGUA-DE-SUEGRA-MINI",
       "subida": true
     },
+    "788264b552e8": {
+      "archivo": "PHOTO-2026-09-03-08-50-19.jpg",
+      "cloud_sku": "PL-LIRIO",
+      "descartada": false,
+      "fecha": "2026-09-03 16:00:17 +0000",
+      "orden": null,
+      "principal": false,
+      "sku": "PL-LIRIO",
+      "subida": true
+    },
     "7db61b458983": {
       "archivo": "PHOTO-2026-08-28-08-56-59_2.jpg",
       "descartada": false,
@@ -559,6 +726,18 @@
       "orden": 1,
       "principal": false,
       "sku": "PL-TRASDESCANTIA",
+      "subida": true
+    },
+    "7e0558b32180": {
+      "archivo": "PHOTO-2026-09-03-09-00-44.jpg",
+      "cloud_sku": "PLT-JADE-01",
+      "descartada": false,
+      "fecha": "2026-09-03 16:00:17 +0000",
+      "hover": false,
+      "mano": true,
+      "orden": null,
+      "principal": false,
+      "sku": "PLT-JADE-01",
       "subida": true
     },
     "7e07209d103d": {
@@ -659,6 +838,16 @@
       "sku": "PLT-CRISANTEMOS-01",
       "subida": true
     },
+    "964c1f25089d": {
+      "archivo": "PHOTO-2026-09-03-08-49-45.jpg",
+      "cloud_sku": "PL-MINI-CALATHEA",
+      "descartada": false,
+      "fecha": "2026-09-03 16:00:17 +0000",
+      "orden": null,
+      "principal": false,
+      "sku": "PL-MINI-CALATHEA",
+      "subida": true
+    },
     "97c414192043": {
       "archivo": "PHOTO-2026-08-28-08-56-55_5.jpg",
       "descartada": false,
@@ -679,6 +868,16 @@
       "sku": "PL-ALBAHACA-VERDE",
       "subida": true
     },
+    "99853811abfc": {
+      "archivo": "PHOTO-2026-09-03-08-45-27.jpg",
+      "cloud_sku": "PL-PALMA-ROJA",
+      "descartada": false,
+      "fecha": "2026-09-03 16:00:17 +0000",
+      "orden": null,
+      "principal": false,
+      "sku": "PL-PALMA-ROJA",
+      "subida": true
+    },
     "9c42a839db3b": {
       "archivo": "PHOTO-2026-08-28-08-56-56.jpg",
       "descartada": false,
@@ -694,9 +893,32 @@
       "archivo": "mini jade.jpeg",
       "descartada": false,
       "fecha": "2026-08-26 21:57:04 +0000",
+      "mano": false,
       "orden": 1,
       "principal": false,
       "sku": "PL-MINI-JADE",
+      "subida": true
+    },
+    "9efbf1120b89": {
+      "archivo": "ginger.jpg",
+      "cloud_sku": "PL-GINGER",
+      "descartada": false,
+      "fecha": "2026-09-03 16:00:18 +0000",
+      "orden": null,
+      "principal": false,
+      "sku": "PL-GINGER",
+      "subida": true
+    },
+    "9f0137f53202": {
+      "archivo": "PHOTO-2026-09-03-08-42-33.jpg",
+      "cloud_sku": "PL-PINO-ESTRELLA",
+      "descartada": false,
+      "fecha": "2026-09-03 16:00:17 +0000",
+      "hover": false,
+      "mano": false,
+      "orden": null,
+      "principal": false,
+      "sku": null,
       "subida": true
     },
     "a0e10f7d29dc": {
@@ -726,6 +948,16 @@
       "orden": 2,
       "principal": false,
       "sku": "PL-SUCULENTAS-GRANDE",
+      "subida": true
+    },
+    "a457d9d76a52": {
+      "archivo": "PHOTO-2026-09-03-08-47-43.jpg",
+      "cloud_sku": "PL-MOLLEJA",
+      "descartada": false,
+      "fecha": "2026-09-03 16:00:17 +0000",
+      "orden": null,
+      "principal": false,
+      "sku": "PL-MOLLEJA",
       "subida": true
     },
     "b01a40787659": {
@@ -770,6 +1002,18 @@
       "sku": null,
       "subida": false
     },
+    "b5846377d228": {
+      "archivo": "PHOTO-2026-09-03-08-42-51.jpg",
+      "cloud_sku": "PL-PINO-ESTRELLA",
+      "descartada": false,
+      "fecha": "2026-09-03 16:00:17 +0000",
+      "hover": false,
+      "mano": false,
+      "orden": null,
+      "principal": false,
+      "sku": "PL-PINO-ESTRELLA",
+      "subida": true
+    },
     "b74eaf1402e1": {
       "archivo": "pino-hindu.jpg",
       "descartada": false,
@@ -789,6 +1033,18 @@
       "sku": "PL-ROMERO",
       "subida": true
     },
+    "bb202a8a25d8": {
+      "archivo": "PHOTO-2026-09-03-08-44-16.jpg",
+      "cloud_sku": "PL-DURANTA-LIMON",
+      "descartada": false,
+      "fecha": "2026-09-03 16:00:17 +0000",
+      "hover": false,
+      "mano": false,
+      "orden": null,
+      "principal": false,
+      "sku": null,
+      "subida": true
+    },
     "bc93bd32129e": {
       "archivo": "croto-mamy-amarillo.jpg",
       "descartada": false,
@@ -796,6 +1052,16 @@
       "orden": 1,
       "principal": false,
       "sku": "PL-CROTO-MAMY-AMARILLO",
+      "subida": true
+    },
+    "bcc3c11b235d": {
+      "archivo": "margitana.jpg",
+      "cloud_sku": "PL-MARGINATA",
+      "descartada": false,
+      "fecha": "2026-09-03 16:00:18 +0000",
+      "orden": null,
+      "principal": false,
+      "sku": "PL-MARGINATA",
       "subida": true
     },
     "beeaaf274d6e": {
@@ -823,6 +1089,7 @@
       "archivo": "monstera-adansonii.jpg",
       "descartada": false,
       "fecha": "2026-08-26 21:50:56 +0000",
+      "mano": false,
       "orden": 1,
       "principal": false,
       "sku": "PL-MONSTERA-ADANSONII",
@@ -886,6 +1153,16 @@
       "sku": "PL-FICUS-TRIANGULAR-GRANDE",
       "subida": true
     },
+    "d645a94c36a5": {
+      "archivo": "PHOTO-2026-09-03-08-59-43.jpg",
+      "cloud_sku": "PL-PALMA-BISMARKIA-MEDIANA",
+      "descartada": false,
+      "fecha": "2026-09-03 16:00:17 +0000",
+      "orden": null,
+      "principal": false,
+      "sku": "PL-PALMA-BISMARKIA-MEDIANA",
+      "subida": true
+    },
     "e0e860e092e6": {
       "archivo": "anthurio_principal.jpg",
       "descartada": false,
@@ -896,12 +1173,28 @@
       "sku": "PL-ANTHURIO-FLOR",
       "subida": true
     },
+    "e287fad6cf38": {
+      "archivo": "fenix algo asi.jpg",
+      "cloud_sku": "PL-PALMA-FENIX",
+      "descartada": false,
+      "fecha": "2026-09-03 16:00:18 +0000",
+      "orden": null,
+      "principal": false,
+      "sku": "PL-PALMA-FENIX",
+      "subida": true
+    },
     "e3128ed07d26": {
       "archivo": "ficus-lyrata-3-ramas-hasta-175cm.jpg",
       "descartada": false,
       "fecha": "2026-08-26 21:49:04 +0000",
       "orden": 1,
       "principal": false,
+      "recorte": [
+        0.0726,
+        0.0508,
+        0.9274,
+        0.8308
+      ],
       "sku": "PL-FICUS-LYRATA-3-RAMAS",
       "subida": true
     },
@@ -942,6 +1235,36 @@
       "sku": "PL-PALMA-MULTIPLE",
       "subida": true
     },
+    "eda19e752adb": {
+      "archivo": "PHOTO-2026-09-03-08-49-01.jpg",
+      "cloud_sku": "PL-CACTUS-MEDIANO",
+      "descartada": false,
+      "fecha": "2026-09-03 16:00:17 +0000",
+      "orden": null,
+      "principal": false,
+      "sku": "PL-CACTUS-MEDIANO",
+      "subida": true
+    },
+    "ee1151b25c40": {
+      "archivo": "PHOTO-2026-09-03-08-43-57.jpg",
+      "cloud_sku": "PL-PALMA-WASHINTONIA",
+      "descartada": false,
+      "fecha": "2026-09-03 16:00:17 +0000",
+      "orden": null,
+      "principal": false,
+      "sku": "PL-PALMA-WASHINTONIA",
+      "subida": true
+    },
+    "f04c7a3eda04": {
+      "archivo": "thuja.jpg",
+      "cloud_sku": "PL-PINO-ROMANO",
+      "descartada": false,
+      "fecha": "2026-08-28 15:02:36 +0000",
+      "orden": null,
+      "principal": false,
+      "sku": "PL-PINO-ROMANO",
+      "subida": true
+    },
     "f15676a48344": {
       "archivo": "palma-bismarkia-pequena.jpg",
       "descartada": false,
@@ -970,6 +1293,15 @@
       "sku": "PL-COLEOS",
       "subida": true
     },
+    "f2950484c900": {
+      "archivo": "PHOTO-2026-09-03-09-04-36.jpg",
+      "descartada": true,
+      "fecha": "2026-09-03 16:00:17 +0000",
+      "orden": null,
+      "principal": false,
+      "sku": null,
+      "subida": false
+    },
     "f35bf487bf59": {
       "archivo": "suculenta-pequena.jpeg",
       "descartada": false,
@@ -991,6 +1323,15 @@
       "sku": null,
       "subida": true
     },
+    "f708eed747ba": {
+      "archivo": "PHOTO-2026-09-03-08-43-02.jpg",
+      "descartada": false,
+      "fecha": "2026-09-03 16:00:17 +0000",
+      "orden": null,
+      "principal": false,
+      "sku": null,
+      "subida": false
+    },
     "fa416c7b9195": {
       "archivo": "clavelito.jpeg",
       "descartada": false,
@@ -999,6 +1340,16 @@
       "orden": 1,
       "principal": false,
       "sku": "PL-CLAVELITO",
+      "subida": true
+    },
+    "fb2badac69da": {
+      "archivo": "lirio gigante .jpg",
+      "cloud_sku": "PL-LIRIO-GIGANTE-MORADO",
+      "descartada": false,
+      "fecha": "2026-09-03 16:00:18 +0000",
+      "orden": null,
+      "principal": false,
+      "sku": "PL-LIRIO-GIGANTE-MORADO",
       "subida": true
     }
   },
