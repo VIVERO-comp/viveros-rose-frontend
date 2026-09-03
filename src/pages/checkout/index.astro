@@ -201,9 +201,10 @@ const GOOGLE_MAPS_KEY = import.meta.env.PUBLIC_GOOGLE_MAPS_KEY ?? '';
         </p>
         {TARJETA_ACTIVA && (
           <p class="help center" data-help-tarjeta hidden>
-            Al confirmar te llevamos a la página segura de PagueloFacil para pagar con
-            tu tarjeta. Recibes el comprobante por correo y preparamos tu entrega; si
-            algo no estuviera disponible, te devolvemos el cobro.
+            Al confirmar te llevamos a la página segura de PagueloFacil. Tu tarjeta
+            queda con una retención por el total (aún sin cobro): confirmamos el cobro
+            al validar tu pedido y, si algo no estuviera disponible, la retención se
+            libera sin costo.
           </p>
         )}
       </form>
@@ -652,8 +653,9 @@ const GOOGLE_MAPS_KEY = import.meta.env.PUBLIC_GOOGLE_MAPS_KEY ?? '';
       }
     }
 
-    // Con tarjeta no hay WhatsApp: el pedido ya quedo registrado y el pago se
-    // hace en la pagina de PagueloFacil, que al terminar regresa a /checkout/success.
+    // Con tarjeta no hay WhatsApp: el pedido ya quedo registrado y la tarjeta
+    // se PRE-AUTORIZA en la pagina de PagueloFacil (retencion, sin cobro; el
+    // cobro se captura al validar), que al terminar regresa a /checkout/success.
     if (pagoId === 'tarjeta' && pedido.url_pago) {
       window.location.assign(pedido.url_pago);
       return;

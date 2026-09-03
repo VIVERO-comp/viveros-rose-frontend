@@ -69,10 +69,11 @@ import { whatsappLink } from '../../lib/site';
   const order = params.get('order');
 
   // Al volver de la pagina de pago de PagueloFacil la URL trae ademas el
-  // resultado del cobro (Estado, Oper, Razon...). Aqui no hay WhatsApp que
-  // abrir; con venta directa el cobro es inmediato: el pago ya entro y el
-  // pedido queda confirmado (la validacion interna es antes de entregar,
-  // no antes de cobrar).
+  // resultado (Estado, Oper, Razon...). Aqui no hay WhatsApp que abrir; el
+  // checkout PRE-AUTORIZA (LinkDeamon /AUTH, decision del 03/09/2026): la
+  // tarjeta queda con una RETENCION, no con un cobro, y el cobro real se
+  // confirma cuando validamos el pedido (o la retencion se libera si no
+  // podemos cumplirlo).
   const estadoPago = (params.get('Estado') ?? '').toLowerCase();
   let pagoRechazado = false;
   if (params.get('Estado') || params.get('Oper')) {
@@ -82,10 +83,11 @@ import { whatsappLink } from '../../lib/site';
     if (!estadoPago || estadoPago.startsWith('aprobad')) {
       pagoAprobado = true;
       texto =
-        'Recibimos tu pago con tarjeta y tu pedido quedó confirmado. Te llega el ' +
-        'comprobante por correo y preparamos la entrega para el siguiente día de ' +
-        'reparto (lunes a jueves y domingo). ' +
-        'Si algo no estuviera disponible, te contactamos y devolvemos el cobro.';
+        'Tu tarjeta quedó autorizada y tu pedido está confirmado. Verás una ' +
+        'retención por el total, todavía no un cobro: lo confirmamos al validar tu ' +
+        'pedido y preparamos la entrega para el siguiente día de reparto (lunes a ' +
+        'jueves y domingo). Si algo no estuviera disponible, te contactamos y la ' +
+        'retención se libera sin costo.';
     } else if (estadoPago.startsWith('pendient')) {
       texto =
         'Tu pago con tarjeta quedó pendiente de confirmación del banco. Te avisamos por ' +
