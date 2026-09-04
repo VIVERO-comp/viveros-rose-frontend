@@ -854,25 +854,28 @@ const paisajismoMessage = whatsappLink('Hola, quiero cotizar un proyecto de pais
 
   /* Movil (768px, punto de quiebre unificado del handoff) */
   @media (max-width: 768px) {
-    /* En movil la foto se muestra completa (misma proporcion que el archivo)
-       y el texto va debajo, centrado, sobre el mismo beige del fondo. */
-    .hero { height: auto; }
+    /* El hero conserva la composicion de escritorio (texto a la izquierda
+       sobre la foto, con su velo), solo mas compacto. El velo se refuerza
+       porque en angosto el texto queda sobre la parte ocupada de la foto. */
+    .hero { height: 420px; }
 
-    .hero-photo { position: static; aspect-ratio: 1774 / 887; }
+    .hero-scrim {
+      background: linear-gradient(
+        to right,
+        rgba(240, 233, 220, 0.92) 0%,
+        rgba(240, 233, 220, 0.65) 55%,
+        rgba(240, 233, 220, 0.25) 100%
+      );
+    }
 
-    .hero-scrim { display: none; }
+    .hero-kicker { font-size: 10px; margin-bottom: 12px; }
 
-    .hero-content { position: relative; padding: 8px 0 44px; }
-
-    .hero-copy { max-width: none; text-align: center; }
-    .hero-kicker { display: none; }
-    .hero h1 { font-size: 32px; }
+    .hero h1 { font-size: clamp(26px, 7vw, 34px); }
 
     .hero-sub {
-      font-size: 15px;
-      margin-left: auto;
-      margin-right: auto;
-      max-width: 26rem;
+      font-size: 14px;
+      max-width: 24rem;
+      margin-bottom: 20px;
     }
 
     /* Franja de garantias oscura en 2×2, como los sellos de confianza de la
@@ -895,13 +898,10 @@ const paisajismoMessage = whatsappLink('Hola, quiero cotizar un proyecto de pais
 
     .cards-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 13.8px; }
 
-    .hero-ctas { flex-direction: column; }
+    /* Botones en linea como en escritorio, solo mas chicos. */
+    .hero-ctas { gap: 10px; }
 
-    .hero-btn {
-      width: 100%;
-      box-sizing: border-box;
-      justify-content: center;
-    }
+    .hero-btn { font-size: 14px; padding: 11px 18px; }
 
     .duo-grid { grid-template-columns: 1fr; }
 
