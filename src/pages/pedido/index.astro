@@ -73,12 +73,14 @@ const steps = [
           si quieres detalles, escríbenos por WhatsApp.
         </p>
         <p class="tracking-message" data-result-message></p>
-        <a class="btn btn--green" data-result-calificar hidden>
-          Calificar la entrega
-        </a>
-        <a class="btn btn--whatsapp" data-result-whatsapp target="_blank" rel="noopener">
-          Preguntar por mi pedido
-        </a>
+        <div class="result-actions">
+          <a class="btn btn--green" data-result-calificar hidden>
+            Calificar la entrega
+          </a>
+          <a class="btn btn--whatsapp" data-result-whatsapp target="_blank" rel="noopener">
+            Preguntar por mi pedido
+          </a>
+        </div>
       </div>
 
       <p class="lost-link">
@@ -233,7 +235,17 @@ const steps = [
 </script>
 
 <style>
-  .tracking-container { max-width: 44rem; }
+  /* El colchon de abajo deja que el final de la tarjeta quede por encima
+     del boton flotante de WhatsApp (56px + su margen) al llegar al fondo. */
+  .tracking-container { max-width: 44rem; padding-bottom: 6rem; }
+
+  /* Los botones del resultado nunca se tocan entre si, apilados o en fila. */
+  .result-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 1.15rem;
+  }
 
   h1 { font-weight: 400; margin-bottom: 0.2rem; }
 
