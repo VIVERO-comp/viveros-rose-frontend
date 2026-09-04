@@ -846,27 +846,23 @@ const CATALOGO = products.map((p) => ({
         </p>
         ${esperaDecision ? '<p class="suave">⏳ Este pedido espera tu decisión: está en la pestaña <strong>Validar</strong>.</p>' : ''}
         <p class="detalle-cliente">${escapar(p.cliente ?? 'Cliente')}</p>
-        ${
-          p.telefono
-            ? `<p class="suave detalle-contacto">
-                 <a class="detalle-telefono" href="tel:${escapar(p.telefono)}">📞 ${escapar(p.telefono)}</a>
-                 ${
-                   numeroWhatsApp(p.telefono)
-                     ? ` · <a class="detalle-telefono" target="_blank" rel="noopener"
-                             href="https://wa.me/${numeroWhatsApp(p.telefono)}">WhatsApp</a>`
-                     : ''
-                 }
-               </p>`
-            : ''
-        }
-        ${
-          destinoMaps
-            ? `<a class="btn btn--ghost btn-maps" target="_blank" rel="noopener"
-                  href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(destinoMaps)}">
-                 📍 Ver dirección en Maps${p.ubicacion ? '' : ' (dirección escrita)'}
-               </a>`
-            : ''
-        }
+        <div class="detalle-acciones">
+          ${p.telefono ? `<a class="btn btn--ghost" href="tel:${escapar(p.telefono)}">📞 ${escapar(p.telefono)}</a>` : ''}
+          ${
+            p.telefono && numeroWhatsApp(p.telefono)
+              ? `<a class="btn btn--whatsapp" target="_blank" rel="noopener"
+                    href="https://wa.me/${numeroWhatsApp(p.telefono)}">WhatsApp</a>`
+              : ''
+          }
+          ${
+            destinoMaps
+              ? `<a class="btn btn--ghost" target="_blank" rel="noopener"
+                    href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(destinoMaps)}">
+                   📍 Maps${p.ubicacion ? '' : ' (dirección escrita)'}
+                 </a>`
+              : ''
+          }
+        </div>
         ${p.repartidor ? `<p class="suave">Lo lleva ${escapar(p.repartidor)}</p>` : ''}
         ${p.con_retraso ? '<span class="chip chip--retraso">Con retraso</span>' : ''}
         <ul class="items">${items}</ul>
@@ -1935,8 +1931,15 @@ const CATALOGO = products.map((p) => ({
   }
 
   .app .detalle-cliente { margin: 0.2rem 0; font-size: 1.05rem; }
-  .app .detalle-telefono { color: inherit; }
-  .app .btn-maps { margin: 0.4rem 0; text-decoration: none; }
+  /* La fila de acciones del detalle: llamar, WhatsApp y Maps como botones
+     que nunca se tocan entre si. */
+  .app .detalle-acciones {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin: 0.6rem 0;
+  }
+  .app .detalle-acciones .btn { text-decoration: none; }
 
   .app .items { list-style: none; margin: 0.8rem 0; padding: 0; }
 
